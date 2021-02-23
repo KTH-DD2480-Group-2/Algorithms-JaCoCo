@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NetworkFlowSolverBase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">NetworkFlowSolverBase.java</span></div><h1>NetworkFlowSolverBase.java</h1><pre class="source lang-java linenums">/** @author William Fiset, william.alexandre.fiset@gmail.com */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public abstract class NetworkFlowSolverBase {
+
+  // To avoid overflow, set infinity to a value less than Long.MAX_VALUE;
+  protected static final long INF = Long.MAX_VALUE / 2;
+
+  public static class Edge {
+    public int from, to;
+    public Edge residual;
+    public long flow, cost;
+    public final long capacity, originalCost;
+
+    public Edge(int from, int to, long capacity) {
+<span class="fc" id="L19">      this(from, to, capacity, 0 /* unused */);</span>
+<span class="fc" id="L20">    }</span>
+
+<span class="fc" id="L22">    public Edge(int from, int to, long capacity, long cost) {</span>
+<span class="fc" id="L23">      this.from = from;</span>
+<span class="fc" id="L24">      this.to = to;</span>
+<span class="fc" id="L25">      this.capacity = capacity;</span>
+<span class="fc" id="L26">      this.originalCost = this.cost = cost;</span>
+<span class="fc" id="L27">    }</span>
+
+    public boolean isResidual() {
+<span class="nc bnc" id="L30" title="All 2 branches missed.">      return capacity == 0;</span>
+    }
+
+    public long remainingCapacity() {
+<span class="fc" id="L34">      return capacity - flow;</span>
+    }
+
+    public void augment(long bottleNeck) {
+<span class="fc" id="L38">      flow += bottleNeck;</span>
+<span class="fc" id="L39">      residual.flow -= bottleNeck;</span>
+<span class="fc" id="L40">    }</span>
+
+    public String toString(int s, int t) {
+<span class="nc bnc" id="L43" title="All 4 branches missed.">      String u = (from == s) ? &quot;s&quot; : ((from == t) ? &quot;t&quot; : String.valueOf(from));</span>
+<span class="nc bnc" id="L44" title="All 4 branches missed.">      String v = (to == s) ? &quot;s&quot; : ((to == t) ? &quot;t&quot; : String.valueOf(to));</span>
+<span class="nc" id="L45">      return String.format(</span>
+          &quot;Edge %s -&gt; %s | flow = %d | capacity = %d | is residual: %s&quot;,
+<span class="nc" id="L47">          u, v, flow, capacity, isResidual());</span>
+    }
+  }
+
+  // Inputs: n = number of nodes, s = source, t = sink
+  protected final int n, s, t;
+
+  protected long maxFlow;
+  protected long minCost;
+
+  protected boolean[] minCut;
+  protected List&lt;Edge&gt;[] graph;
+
+  // 'visited' and 'visitedToken' are variables used for graph sub-routines to
+  // track whether a node has been visited or not. In particular, node 'i' was
+  // recently visited if visited[i] == visitedToken is true. This is handy
+  // because to mark all nodes as unvisited simply increment the visitedToken.
+<span class="fc" id="L64">  private int visitedToken = 1;</span>
+  private int[] visited;
+
+  // Indicates whether the network flow algorithm has ran. We should not need to
+  // run the solver multiple times, because it always yields the same result.
+  private boolean solved;
+
+  /**
+   * Creates an instance of a flow network solver. Use the {@link #addEdge} method to add edges to
+   * the graph.
+   *
+   * @param n - The number of nodes in the graph including source and sink nodes.
+   * @param s - The index of the source node, 0 &lt;= s &lt; n
+   * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+   */
+<span class="fc" id="L79">  public NetworkFlowSolverBase(int n, int s, int t) {</span>
+<span class="fc" id="L80">    this.n = n;</span>
+<span class="fc" id="L81">    this.s = s;</span>
+<span class="fc" id="L82">    this.t = t;</span>
+<span class="fc" id="L83">    initializeGraph();</span>
+<span class="fc" id="L84">    minCut = new boolean[n];</span>
+<span class="fc" id="L85">    visited = new int[n];</span>
+<span class="fc" id="L86">  }</span>
+
+  // Construct an empty graph with n nodes including the source and sink nodes.
+  @SuppressWarnings(&quot;unchecked&quot;)
+  private void initializeGraph() {
+<span class="fc" id="L91">    graph = new List[n];</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) graph[i] = new ArrayList&lt;Edge&gt;();</span>
+<span class="fc" id="L93">  }</span>
+
+  /**
+   * Adds a directed edge (and residual edge) to the flow graph.
+   *
+   * @param from - The index of the node the directed edge starts at.
+   * @param to - The index of the node the directed edge ends at.
+   * @param capacity - The capacity of the edge.
+   */
+  public void addEdge(int from, int to, long capacity) {
+<span class="pc bpc" id="L103" title="1 of 2 branches missed.">    if (capacity &lt; 0) throw new IllegalArgumentException(&quot;Capacity &lt; 0&quot;);</span>
+<span class="fc" id="L104">    Edge e1 = new Edge(from, to, capacity);</span>
+<span class="fc" id="L105">    Edge e2 = new Edge(to, from, 0);</span>
+<span class="fc" id="L106">    e1.residual = e2;</span>
+<span class="fc" id="L107">    e2.residual = e1;</span>
+<span class="fc" id="L108">    graph[from].add(e1);</span>
+<span class="fc" id="L109">    graph[to].add(e2);</span>
+<span class="fc" id="L110">  }</span>
+
+  /** Cost variant of {@link #addEdge(int, int, int)} for min-cost max-flow */
+  public void addEdge(int from, int to, long capacity, long cost) {
+<span class="fc" id="L114">    Edge e1 = new Edge(from, to, capacity, cost);</span>
+<span class="fc" id="L115">    Edge e2 = new Edge(to, from, 0, -cost);</span>
+<span class="fc" id="L116">    e1.residual = e2;</span>
+<span class="fc" id="L117">    e2.residual = e1;</span>
+<span class="fc" id="L118">    graph[from].add(e1);</span>
+<span class="fc" id="L119">    graph[to].add(e2);</span>
+<span class="fc" id="L120">  }</span>
+
+  // Marks node 'i' as visited.
+  public void visit(int i) {
+<span class="fc" id="L124">    visited[i] = visitedToken;</span>
+<span class="fc" id="L125">  }</span>
+
+  // Returns whether or not node 'i' has been visited.
+  public boolean visited(int i) {
+<span class="fc bfc" id="L129" title="All 2 branches covered.">    return visited[i] == visitedToken;</span>
+  }
+
+  // Resets all nodes as unvisited. This is especially useful to do
+  // between iterations of finding augmenting paths, O(1)
+  public void markAllNodesAsUnvisited() {
+<span class="fc" id="L135">    visitedToken++;</span>
+<span class="fc" id="L136">  }</span>
+
+  /**
+   * Returns the graph after the solver has been executed. This allow you to inspect the {@link
+   * Edge#flow} compared to the {@link Edge#capacity} in each edge. This is useful if you want to
+   * figure out which edges were used during the max flow.
+   */
+  public List&lt;Edge&gt;[] getGraph() {
+<span class="fc" id="L144">    execute();</span>
+<span class="fc" id="L145">    return graph;</span>
+  }
+
+  // Returns the maximum flow from the source to the sink.
+  public long getMaxFlow() {
+<span class="fc" id="L150">    execute();</span>
+<span class="fc" id="L151">    return maxFlow;</span>
+  }
+
+  // Returns the min cost from the source to the sink.
+  // NOTE: This method only applies to min-cost max-flow algorithms.
+  public long getMinCost() {
+<span class="fc" id="L157">    execute();</span>
+<span class="fc" id="L158">    return minCost;</span>
+  }
+
+  // Returns the min-cut of this flow network in which the nodes on the &quot;left side&quot;
+  // of the cut with the source are marked as true and those on the &quot;right side&quot;
+  // of the cut with the sink are marked as false.
+  public boolean[] getMinCut() {
+<span class="nc" id="L165">    execute();</span>
+<span class="nc" id="L166">    return minCut;</span>
+  }
+
+  // Wrapper method that ensures we only call solve() once
+  private void execute() {
+<span class="fc bfc" id="L171" title="All 2 branches covered.">    if (solved) return;</span>
+<span class="fc" id="L172">    solved = true;</span>
+<span class="fc" id="L173">    solve();</span>
+<span class="fc" id="L174">  }</span>
+
+  // Method to implement which solves the network flow problem.
+  public abstract void solve();
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

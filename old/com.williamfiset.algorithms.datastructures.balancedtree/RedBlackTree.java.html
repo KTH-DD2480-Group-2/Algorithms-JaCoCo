@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RedBlackTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.balancedtree</a> &gt; <span class="el_source">RedBlackTree.java</span></div><h1>RedBlackTree.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of a Red-Black tree. A RB tree is a special type of binary
+ * tree which self balances itself to keep operations logarithmic.
+ *
+ * &lt;p&gt;Great visualization tool: https://www.cs.usfca.edu/~galles/visualization/RedBlack.html
+ *
+ * @author nishantc1527
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.balancedtree;
+
+import java.awt.*;
+
+public class RedBlackTree&lt;T extends Comparable&lt;T&gt;&gt; implements Iterable&lt;T&gt; {
+
+  public static final boolean RED = true;
+  public static final boolean BLACK = false;
+
+  public class Node {
+
+    // The color of this node. By default all nodes start red.
+<span class="pc" id="L22">    public boolean color = RED;</span>
+
+    // The value/data contained within the node.
+    public T value;
+
+    // The left, right and parent references of this node.
+    public Node left, right, parent;
+
+<span class="nc" id="L30">    public Node(T value, Node parent) {</span>
+<span class="nc" id="L31">      this.value = value;</span>
+<span class="nc" id="L32">      this.parent = parent;</span>
+<span class="nc" id="L33">    }</span>
+
+<span class="fc" id="L35">    public Node(boolean color, T value) {</span>
+<span class="fc" id="L36">      this.color = color;</span>
+<span class="fc" id="L37">      this.value = value;</span>
+<span class="fc" id="L38">    }</span>
+
+<span class="fc" id="L40">    Node(T key, boolean color, Node parent, Node left, Node right) {</span>
+<span class="fc" id="L41">      this.value = key;</span>
+<span class="fc" id="L42">      this.color = color;</span>
+
+<span class="pc bpc" id="L44" title="5 of 6 branches missed.">      if (parent == null &amp;&amp; left == null &amp;&amp; right == null) {</span>
+<span class="nc" id="L45">        parent = this;</span>
+<span class="nc" id="L46">        left = this;</span>
+<span class="nc" id="L47">        right = this;</span>
+      }
+
+<span class="fc" id="L50">      this.parent = parent;</span>
+<span class="fc" id="L51">      this.left = left;</span>
+<span class="fc" id="L52">      this.right = right;</span>
+<span class="fc" id="L53">    }</span>
+
+    public boolean getColor() {
+<span class="fc" id="L56">      return color;</span>
+    }
+
+    public void setColor(boolean color) {
+<span class="fc" id="L60">      this.color = color;</span>
+<span class="fc" id="L61">    }</span>
+
+    public T getValue() {
+<span class="fc" id="L64">      return value;</span>
+    }
+
+    public void setValue(T value) {
+<span class="nc" id="L68">      this.value = value;</span>
+<span class="nc" id="L69">    }</span>
+
+    public Node getLeft() {
+<span class="fc" id="L72">      return left;</span>
+    }
+
+    public void setLeft(Node left) {
+<span class="fc" id="L76">      this.left = left;</span>
+<span class="fc" id="L77">    }</span>
+
+    public Node getRight() {
+<span class="fc" id="L80">      return right;</span>
+    }
+
+    public void setRight(Node right) {
+<span class="fc" id="L84">      this.right = right;</span>
+<span class="fc" id="L85">    }</span>
+
+    public Node getParent() {
+<span class="fc" id="L88">      return parent;</span>
+    }
+
+    public void setParent(Node parent) {
+<span class="fc" id="L92">      this.parent = parent;</span>
+<span class="fc" id="L93">    }</span>
+  }
+
+  // The root node of the RB tree.
+  public Node root;
+
+  // Tracks the number of nodes inside the tree.
+<span class="fc" id="L100">  private int nodeCount = 0;</span>
+
+  public final Node NIL;
+
+<span class="fc" id="L104">  public RedBlackTree() {</span>
+<span class="fc" id="L105">    NIL = new Node(BLACK, null);</span>
+<span class="fc" id="L106">    NIL.left = NIL;</span>
+<span class="fc" id="L107">    NIL.right = NIL;</span>
+<span class="fc" id="L108">    NIL.parent = NIL;</span>
+
+<span class="fc" id="L110">    root = NIL;</span>
+<span class="fc" id="L111">  }</span>
+
+  // Returns the number of nodes in the tree.
+  public int size() {
+<span class="fc" id="L115">    return nodeCount;</span>
+  }
+
+  // Returns whether or not the tree is empty.
+  public boolean isEmpty() {
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">    return size() == 0;</span>
+  }
+
+  public boolean contains(T value) {
+
+<span class="fc" id="L125">    Node node = root;</span>
+
+<span class="pc bpc" id="L127" title="1 of 4 branches missed.">    if (node == null || value == null) return false;</span>
+
+<span class="fc bfc" id="L129" title="All 2 branches covered.">    while (node != NIL) {</span>
+
+      // Compare current value to the value in the node.
+<span class="fc" id="L132">      int cmp = value.compareTo(node.value);</span>
+
+      // Dig into left subtree.
+<span class="fc bfc" id="L135" title="All 2 branches covered.">      if (cmp &lt; 0) node = node.left;</span>
+
+      // Dig into right subtree.
+<span class="fc bfc" id="L138" title="All 2 branches covered.">      else if (cmp &gt; 0) node = node.right;</span>
+
+      // Found value in tree.
+<span class="fc" id="L141">      else return true;</span>
+<span class="fc" id="L142">    }</span>
+
+<span class="fc" id="L144">    return false;</span>
+  }
+
+  public boolean insert(T val) {
+<span class="fc bfc" id="L148" title="All 2 branches covered.">    if (val == null) {</span>
+<span class="fc" id="L149">      throw new IllegalArgumentException(&quot;Red-Black tree does not allow null values.&quot;);</span>
+    }
+
+<span class="fc" id="L152">    Node x = root, y = NIL;</span>
+
+<span class="fc bfc" id="L154" title="All 2 branches covered.">    while (x != NIL) {</span>
+<span class="fc" id="L155">      y = x;</span>
+
+<span class="fc bfc" id="L157" title="All 2 branches covered.">      if (x.getValue().compareTo(val) &gt; 0) {</span>
+<span class="fc" id="L158">        x = x.left;</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">      } else if (x.getValue().compareTo(val) &lt; 0) {</span>
+<span class="fc" id="L160">        x = x.right;</span>
+      } else {
+<span class="fc" id="L162">        return false;</span>
+      }
+    }
+
+<span class="fc" id="L166">    Node z = new Node(val, RED, y, NIL, NIL);</span>
+
+<span class="fc bfc" id="L168" title="All 2 branches covered.">    if (y == NIL) {</span>
+<span class="fc" id="L169">      root = z;</span>
+<span class="fc bfc" id="L170" title="All 2 branches covered.">    } else if (z.getValue().compareTo(y.getValue()) &lt; 0) {</span>
+<span class="fc" id="L171">      y.left = z;</span>
+    } else {
+<span class="fc" id="L173">      y.right = z;</span>
+    }
+<span class="fc" id="L175">    insertFix(z);</span>
+
+<span class="fc" id="L177">    nodeCount++;</span>
+<span class="fc" id="L178">    return true;</span>
+  }
+
+  private void insertFix(Node z) {
+    Node y;
+<span class="fc bfc" id="L183" title="All 2 branches covered.">    while (z.parent.color == RED) {</span>
+<span class="fc bfc" id="L184" title="All 2 branches covered.">      if (z.parent == z.parent.parent.left) {</span>
+<span class="fc" id="L185">        y = z.parent.parent.right;</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">        if (y.color == RED) {</span>
+<span class="fc" id="L187">          z.parent.color = BLACK;</span>
+<span class="fc" id="L188">          y.color = BLACK;</span>
+<span class="fc" id="L189">          z.parent.parent.color = RED;</span>
+<span class="fc" id="L190">          z = z.parent.parent;</span>
+        } else {
+<span class="fc bfc" id="L192" title="All 2 branches covered.">          if (z == z.parent.right) {</span>
+<span class="fc" id="L193">            z = z.parent;</span>
+<span class="fc" id="L194">            leftRotate(z);</span>
+          }
+<span class="fc" id="L196">          z.parent.color = BLACK;</span>
+<span class="fc" id="L197">          z.parent.parent.color = RED;</span>
+<span class="fc" id="L198">          rightRotate(z.parent.parent);</span>
+        }
+      } else {
+<span class="fc" id="L201">        y = z.parent.parent.left;</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">        if (y.color == RED) {</span>
+<span class="fc" id="L203">          z.parent.color = BLACK;</span>
+<span class="fc" id="L204">          y.color = BLACK;</span>
+<span class="fc" id="L205">          z.parent.parent.color = RED;</span>
+<span class="fc" id="L206">          z = z.parent.parent;</span>
+        } else {
+<span class="fc bfc" id="L208" title="All 2 branches covered.">          if (z == z.parent.left) {</span>
+<span class="fc" id="L209">            z = z.parent;</span>
+<span class="fc" id="L210">            rightRotate(z);</span>
+          }
+<span class="fc" id="L212">          z.parent.color = BLACK;</span>
+<span class="fc" id="L213">          z.parent.parent.color = RED;</span>
+<span class="fc" id="L214">          leftRotate(z.parent.parent);</span>
+        }
+      }
+    }
+<span class="fc" id="L218">    root.setColor(BLACK);</span>
+<span class="fc" id="L219">    NIL.setParent(null);</span>
+<span class="fc" id="L220">  }</span>
+
+  private void leftRotate(Node x) {
+<span class="fc" id="L223">    Node y = x.right;</span>
+<span class="fc" id="L224">    x.setRight(y.getLeft());</span>
+<span class="fc bfc" id="L225" title="All 2 branches covered.">    if (y.getLeft() != NIL) y.getLeft().setParent(x);</span>
+<span class="fc" id="L226">    y.setParent(x.getParent());</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">    if (x.getParent() == NIL) root = y;</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">    if (x == x.getParent().getLeft()) x.getParent().setLeft(y);</span>
+<span class="fc" id="L229">    else x.getParent().setRight(y);</span>
+<span class="fc" id="L230">    y.setLeft(x);</span>
+<span class="fc" id="L231">    x.setParent(y);</span>
+<span class="fc" id="L232">  }</span>
+
+  private void rightRotate(Node y) {
+<span class="fc" id="L235">    Node x = y.left;</span>
+<span class="fc" id="L236">    y.left = x.right;</span>
+<span class="fc bfc" id="L237" title="All 2 branches covered.">    if (x.right != NIL) x.right.parent = y;</span>
+<span class="fc" id="L238">    x.parent = y.parent;</span>
+<span class="fc bfc" id="L239" title="All 2 branches covered.">    if (y.parent == NIL) root = x;</span>
+<span class="fc bfc" id="L240" title="All 2 branches covered.">    if (y == y.parent.left) y.parent.left = x;</span>
+<span class="fc" id="L241">    else y.parent.right = x;</span>
+<span class="fc" id="L242">    x.right = y;</span>
+<span class="fc" id="L243">    y.parent = x;</span>
+<span class="fc" id="L244">  }</span>
+
+  public boolean delete(T key) {
+    Node z;
+<span class="fc bfc" id="L248" title="All 4 branches covered.">    if (key == null || (z = (search(key, root))) == NIL) return false;</span>
+    Node x;
+<span class="fc" id="L250">    Node y = z; // temporary reference y</span>
+<span class="fc" id="L251">    boolean y_original_color = y.getColor();</span>
+
+<span class="fc bfc" id="L253" title="All 2 branches covered.">    if (z.getLeft() == NIL) {</span>
+<span class="fc" id="L254">      x = z.getRight();</span>
+<span class="fc" id="L255">      transplant(z, z.getRight());</span>
+<span class="fc bfc" id="L256" title="All 2 branches covered.">    } else if (z.getRight() == NIL) {</span>
+<span class="fc" id="L257">      x = z.getLeft();</span>
+<span class="fc" id="L258">      transplant(z, z.getLeft());</span>
+    } else {
+<span class="fc" id="L260">      y = successor(z.getRight());</span>
+<span class="fc" id="L261">      y_original_color = y.getColor();</span>
+<span class="fc" id="L262">      x = y.getRight();</span>
+<span class="fc bfc" id="L263" title="All 2 branches covered.">      if (y.getParent() == z) x.setParent(y);</span>
+      else {
+<span class="fc" id="L265">        transplant(y, y.getRight());</span>
+<span class="fc" id="L266">        y.setRight(z.getRight());</span>
+<span class="fc" id="L267">        y.getRight().setParent(y);</span>
+      }
+<span class="fc" id="L269">      transplant(z, y);</span>
+<span class="fc" id="L270">      y.setLeft(z.getLeft());</span>
+<span class="fc" id="L271">      y.getLeft().setParent(y);</span>
+<span class="fc" id="L272">      y.setColor(z.getColor());</span>
+    }
+<span class="fc bfc" id="L274" title="All 2 branches covered.">    if (y_original_color == BLACK) deleteFix(x);</span>
+<span class="fc" id="L275">    nodeCount--;</span>
+<span class="fc" id="L276">    return true;</span>
+  }
+
+  private void deleteFix(Node x) {
+<span class="fc bfc" id="L280" title="All 4 branches covered.">    while (x != root &amp;&amp; x.getColor() == BLACK) {</span>
+<span class="fc bfc" id="L281" title="All 2 branches covered.">      if (x == x.getParent().getLeft()) {</span>
+<span class="fc" id="L282">        Node w = x.getParent().getRight();</span>
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        if (w.getColor() == RED) {</span>
+<span class="fc" id="L284">          w.setColor(BLACK);</span>
+<span class="fc" id="L285">          x.getParent().setColor(RED);</span>
+<span class="fc" id="L286">          leftRotate(x.parent);</span>
+<span class="fc" id="L287">          w = x.getParent().getRight();</span>
+        }
+<span class="fc bfc" id="L289" title="All 4 branches covered.">        if (w.getLeft().getColor() == BLACK &amp;&amp; w.getRight().getColor() == BLACK) {</span>
+<span class="fc" id="L290">          w.setColor(RED);</span>
+<span class="fc" id="L291">          x = x.getParent();</span>
+<span class="fc" id="L292">          continue;</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        } else if (w.getRight().getColor() == BLACK) {</span>
+<span class="fc" id="L294">          w.getLeft().setColor(BLACK);</span>
+<span class="fc" id="L295">          w.setColor(RED);</span>
+<span class="fc" id="L296">          rightRotate(w);</span>
+<span class="fc" id="L297">          w = x.getParent().getRight();</span>
+        }
+<span class="pc bpc" id="L299" title="1 of 2 branches missed.">        if (w.getRight().getColor() == RED) {</span>
+<span class="fc" id="L300">          w.setColor(x.getParent().getColor());</span>
+<span class="fc" id="L301">          x.getParent().setColor(BLACK);</span>
+<span class="fc" id="L302">          w.getRight().setColor(BLACK);</span>
+<span class="fc" id="L303">          leftRotate(x.getParent());</span>
+<span class="fc" id="L304">          x = root;</span>
+        }
+<span class="fc" id="L306">      } else {</span>
+<span class="fc" id="L307">        Node w = (x.getParent().getLeft());</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">        if (w.color == RED) {</span>
+<span class="fc" id="L309">          w.color = BLACK;</span>
+<span class="fc" id="L310">          x.getParent().setColor(RED);</span>
+<span class="fc" id="L311">          rightRotate(x.getParent());</span>
+<span class="fc" id="L312">          w = (x.getParent()).getLeft();</span>
+        }
+<span class="fc bfc" id="L314" title="All 4 branches covered.">        if (w.right.color == BLACK &amp;&amp; w.left.color == BLACK) {</span>
+<span class="fc" id="L315">          w.color = RED;</span>
+<span class="fc" id="L316">          x = x.getParent();</span>
+<span class="fc" id="L317">          continue;</span>
+<span class="fc bfc" id="L318" title="All 2 branches covered.">        } else if (w.left.color == BLACK) {</span>
+<span class="fc" id="L319">          w.right.color = BLACK;</span>
+<span class="fc" id="L320">          w.color = RED;</span>
+<span class="fc" id="L321">          leftRotate(w);</span>
+<span class="fc" id="L322">          w = (x.getParent().getLeft());</span>
+        }
+<span class="pc bpc" id="L324" title="1 of 2 branches missed.">        if (w.left.color == RED) {</span>
+<span class="fc" id="L325">          w.color = x.getParent().getColor();</span>
+<span class="fc" id="L326">          x.getParent().setColor(BLACK);</span>
+<span class="fc" id="L327">          w.left.color = BLACK;</span>
+<span class="fc" id="L328">          rightRotate(x.getParent());</span>
+<span class="fc" id="L329">          x = root;</span>
+        }
+<span class="fc" id="L331">      }</span>
+    }
+<span class="fc" id="L333">    x.setColor(BLACK);</span>
+<span class="fc" id="L334">  }</span>
+
+  private Node successor(Node root) {
+<span class="pc bpc" id="L337" title="1 of 4 branches missed.">    if (root == NIL || root.left == NIL) return root;</span>
+<span class="fc" id="L338">    else return successor(root.left);</span>
+  }
+
+  private void transplant(Node u, Node v) {
+<span class="fc bfc" id="L342" title="All 2 branches covered.">    if (u.parent == NIL) {</span>
+<span class="fc" id="L343">      root = v;</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">    } else if (u == u.parent.left) {</span>
+<span class="fc" id="L345">      u.parent.left = v;</span>
+<span class="fc" id="L346">    } else u.parent.right = v;</span>
+<span class="fc" id="L347">    v.parent = u.parent;</span>
+<span class="fc" id="L348">  }</span>
+
+  private Node search(T val, Node curr) {
+<span class="fc bfc" id="L351" title="All 2 branches covered.">    if (curr == NIL) return NIL;</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">    else if (curr.value.equals(val)) return curr;</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">    else if (curr.value.compareTo(val) &lt; 0) return search(val, curr.right);</span>
+<span class="fc" id="L354">    else return search(val, curr.left);</span>
+  }
+
+  public int height() {
+<span class="fc" id="L358">    return height(root);</span>
+  }
+
+  private int height(Node curr) {
+<span class="fc bfc" id="L362" title="All 2 branches covered.">    if (curr == NIL) {</span>
+<span class="fc" id="L363">      return 0;</span>
+    }
+<span class="fc bfc" id="L365" title="All 4 branches covered.">    if (curr.left == NIL &amp;&amp; curr.right == NIL) {</span>
+<span class="fc" id="L366">      return 1;</span>
+    }
+
+<span class="fc" id="L369">    return 1 + Math.max(height(curr.left), height(curr.right));</span>
+  }
+
+  private void swapColors(Node a, Node b) {
+<span class="nc" id="L373">    boolean tmpColor = a.color;</span>
+<span class="nc" id="L374">    a.color = b.color;</span>
+<span class="nc" id="L375">    b.color = tmpColor;</span>
+<span class="nc" id="L376">  }</span>
+
+  // Sometimes the left or right child node of a parent changes and the
+  // parent's reference needs to be updated to point to the new child.
+  // This is a helper method to do just that.
+  private void updateParentChildLink(Node parent, Node oldChild, Node newChild) {
+<span class="nc bnc" id="L382" title="All 2 branches missed.">    if (parent != NIL) {</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">      if (parent.left == oldChild) {</span>
+<span class="nc" id="L384">        parent.left = newChild;</span>
+      } else {
+<span class="nc" id="L386">        parent.right = newChild;</span>
+      }
+    }
+<span class="nc" id="L389">  }</span>
+
+  // Helper method to find the leftmost node (which has the smallest value)
+  private Node findMin(Node node) {
+<span class="nc bnc" id="L393" title="All 2 branches missed.">    while (node.left != NIL) node = node.left;</span>
+<span class="nc" id="L394">    return node;</span>
+  }
+
+  // Helper method to find the rightmost node (which has the largest value)
+  private Node findMax(Node node) {
+<span class="nc bnc" id="L399" title="All 2 branches missed.">    while (node.right != NIL) node = node.right;</span>
+<span class="nc" id="L400">    return node;</span>
+  }
+
+  // Returns as iterator to traverse the tree in order.
+  @Override
+  public java.util.Iterator&lt;T&gt; iterator() {
+
+<span class="nc" id="L407">    final int expectedNodeCount = nodeCount;</span>
+<span class="nc" id="L408">    final java.util.Stack&lt;Node&gt; stack = new java.util.Stack&lt;&gt;();</span>
+<span class="nc" id="L409">    stack.push(root);</span>
+
+<span class="nc" id="L411">    return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="nc" id="L412">      Node trav = root;</span>
+
+      @Override
+      public boolean hasNext() {
+<span class="nc bnc" id="L416" title="All 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="nc bnc" id="L417" title="All 4 branches missed.">        return root != NIL &amp;&amp; !stack.isEmpty();</span>
+      }
+
+      @Override
+      public T next() {
+
+<span class="nc bnc" id="L423" title="All 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+
+<span class="nc bnc" id="L425" title="All 4 branches missed.">        while (trav != NIL &amp;&amp; trav.left != NIL) {</span>
+<span class="nc" id="L426">          stack.push(trav.left);</span>
+<span class="nc" id="L427">          trav = trav.left;</span>
+        }
+
+<span class="nc" id="L430">        Node node = stack.pop();</span>
+
+<span class="nc bnc" id="L432" title="All 2 branches missed.">        if (node.right != NIL) {</span>
+<span class="nc" id="L433">          stack.push(node.right);</span>
+<span class="nc" id="L434">          trav = node.right;</span>
+        }
+
+<span class="nc" id="L437">        return node.value;</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L442">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+
+  // Example usage of RB tree:
+  public static void main(String[] args) {
+
+<span class="nc" id="L450">    int[] values = {5, 8, 1, -4, 6, -2, 0, 7};</span>
+<span class="nc" id="L451">    RedBlackTree&lt;Integer&gt; rbTree = new RedBlackTree&lt;&gt;();</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">    for (int v : values) rbTree.insert(v);</span>
+
+<span class="nc" id="L454">    System.out.printf(&quot;RB tree contains %d: %s\n&quot;, 6, rbTree.contains(6));</span>
+<span class="nc" id="L455">    System.out.printf(&quot;RB tree contains %d: %s\n&quot;, -5, rbTree.contains(-5));</span>
+<span class="nc" id="L456">    System.out.printf(&quot;RB tree contains %d: %s\n&quot;, 1, rbTree.contains(1));</span>
+<span class="nc" id="L457">    System.out.printf(&quot;RB tree contains %d: %s\n&quot;, 99, rbTree.contains(99));</span>
+<span class="nc" id="L458">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

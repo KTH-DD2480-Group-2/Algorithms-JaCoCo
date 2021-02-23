@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AVLTreeRecursive.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.balancedtree</a> &gt; <span class="el_source">AVLTreeRecursive.java</span></div><h1>AVLTreeRecursive.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of an AVL tree. An AVL tree is a special type of binary tree
+ * which self balances itself to keep operations logarithmic.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.balancedtree;
+
+import com.williamfiset.algorithms.datastructures.utils.TreePrinter;
+import com.williamfiset.algorithms.datastructures.utils.TreePrinter.PrintableNode;
+
+<span class="fc" id="L12">public class AVLTreeRecursive&lt;T extends Comparable&lt;T&gt;&gt; implements Iterable&lt;T&gt; {</span>
+
+  public class Node implements PrintableNode {
+
+    // 'bf' is short for Balance Factor
+    public int bf;
+
+    // The value/data contained within the node.
+    public T value;
+
+    // The height of this node in the tree.
+    public int height;
+
+    // The left and the right children of this node.
+    public Node left, right;
+
+<span class="fc" id="L28">    public Node(T value) {</span>
+<span class="fc" id="L29">      this.value = value;</span>
+<span class="fc" id="L30">    }</span>
+
+    @Override
+    public PrintableNode getLeft() {
+<span class="nc" id="L34">      return left;</span>
+    }
+
+    @Override
+    public PrintableNode getRight() {
+<span class="nc" id="L39">      return right;</span>
+    }
+
+    @Override
+    public String getText() {
+<span class="nc" id="L44">      return value.toString();</span>
+    }
+  }
+
+  // The root node of the AVL tree.
+  public Node root;
+
+  // Tracks the number of nodes inside the tree.
+<span class="fc" id="L52">  private int nodeCount = 0;</span>
+
+  // The height of a rooted tree is the number of edges between the tree's
+  // root and its furthest leaf. This means that a tree containing a single
+  // node has a height of 0.
+  public int height() {
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">    if (root == null) return 0;</span>
+<span class="fc" id="L59">    return root.height;</span>
+  }
+
+  // Returns the number of nodes in the tree.
+  public int size() {
+<span class="fc" id="L64">    return nodeCount;</span>
+  }
+
+  // Returns whether or not the tree is empty.
+  public boolean isEmpty() {
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">    return size() == 0;</span>
+  }
+
+  // Return true/false depending on whether a value exists in the tree.
+  public boolean contains(T value) {
+<span class="fc" id="L74">    return contains(root, value);</span>
+  }
+
+  // Recursive contains helper method.
+  private boolean contains(Node node, T value) {
+<span class="fc bfc" id="L79" title="All 2 branches covered.">    if (node == null) return false;</span>
+
+    // Compare current value to the value in the node.
+<span class="fc" id="L82">    int cmp = value.compareTo(node.value);</span>
+
+    // Dig into left subtree.
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    if (cmp &lt; 0) return contains(node.left, value);</span>
+
+    // Dig into right subtree.
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    if (cmp &gt; 0) return contains(node.right, value);</span>
+
+    // Found value in tree.
+<span class="fc" id="L91">    return true;</span>
+  }
+
+  // Insert/add a value to the AVL tree. The value must not be null, O(log(n))
+  public boolean insert(T value) {
+<span class="fc bfc" id="L96" title="All 2 branches covered.">    if (value == null) return false;</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    if (!contains(root, value)) {</span>
+<span class="fc" id="L98">      root = insert(root, value);</span>
+<span class="fc" id="L99">      nodeCount++;</span>
+<span class="fc" id="L100">      return true;</span>
+    }
+<span class="fc" id="L102">    return false;</span>
+  }
+
+  // Inserts a value inside the AVL tree.
+  private Node insert(Node node, T value) {
+    // Base case.
+<span class="fc bfc" id="L108" title="All 2 branches covered.">    if (node == null) return new Node(value);</span>
+
+    // Compare current value to the value in the node.
+<span class="fc" id="L111">    int cmp = value.compareTo(node.value);</span>
+
+    // Insert node in left subtree.
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    if (cmp &lt; 0) {</span>
+<span class="fc" id="L115">      node.left = insert(node.left, value);</span>
+
+      // Insert node in right subtree.
+    } else {
+<span class="fc" id="L119">      node.right = insert(node.right, value);</span>
+    }
+
+    // Update balance factor and height values.
+<span class="fc" id="L123">    update(node);</span>
+
+    // Re-balance tree.
+<span class="fc" id="L126">    return balance(node);</span>
+  }
+
+  // Update a node's height and balance factor.
+  private void update(Node node) {
+<span class="fc bfc" id="L131" title="All 2 branches covered.">    int leftNodeHeight = (node.left == null) ? -1 : node.left.height;</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">    int rightNodeHeight = (node.right == null) ? -1 : node.right.height;</span>
+
+    // Update this node's height.
+<span class="fc" id="L135">    node.height = 1 + Math.max(leftNodeHeight, rightNodeHeight);</span>
+
+    // Update balance factor.
+<span class="fc" id="L138">    node.bf = rightNodeHeight - leftNodeHeight;</span>
+<span class="fc" id="L139">  }</span>
+
+  // Re-balance a node if its balance factor is +2 or -2.
+  private Node balance(Node node) {
+    // Left heavy subtree.
+<span class="fc bfc" id="L144" title="All 2 branches covered.">    if (node.bf == -2) {</span>
+
+      // Left-Left case.
+<span class="fc bfc" id="L147" title="All 2 branches covered.">      if (node.left.bf &lt;= 0) {</span>
+<span class="fc" id="L148">        return leftLeftCase(node);</span>
+
+        // Left-Right case.
+      } else {
+<span class="fc" id="L152">        return leftRightCase(node);</span>
+      }
+
+      // Right heavy subtree needs balancing.
+<span class="fc bfc" id="L156" title="All 2 branches covered.">    } else if (node.bf == +2) {</span>
+
+      // Right-Right case.
+<span class="fc bfc" id="L159" title="All 2 branches covered.">      if (node.right.bf &gt;= 0) {</span>
+<span class="fc" id="L160">        return rightRightCase(node);</span>
+
+        // Right-Left case.
+      } else {
+<span class="fc" id="L164">        return rightLeftCase(node);</span>
+      }
+    }
+
+    // Node either has a balance factor of 0, +1 or -1 which is fine.
+<span class="fc" id="L169">    return node;</span>
+  }
+
+  private Node leftLeftCase(Node node) {
+<span class="fc" id="L173">    return rightRotation(node);</span>
+  }
+
+  private Node leftRightCase(Node node) {
+<span class="fc" id="L177">    node.left = leftRotation(node.left);</span>
+<span class="fc" id="L178">    return leftLeftCase(node);</span>
+  }
+
+  private Node rightRightCase(Node node) {
+<span class="fc" id="L182">    return leftRotation(node);</span>
+  }
+
+  private Node rightLeftCase(Node node) {
+<span class="fc" id="L186">    node.right = rightRotation(node.right);</span>
+<span class="fc" id="L187">    return rightRightCase(node);</span>
+  }
+
+  private Node leftRotation(Node node) {
+<span class="fc" id="L191">    Node newParent = node.right;</span>
+<span class="fc" id="L192">    node.right = newParent.left;</span>
+<span class="fc" id="L193">    newParent.left = node;</span>
+<span class="fc" id="L194">    update(node);</span>
+<span class="fc" id="L195">    update(newParent);</span>
+<span class="fc" id="L196">    return newParent;</span>
+  }
+
+  private Node rightRotation(Node node) {
+<span class="fc" id="L200">    Node newParent = node.left;</span>
+<span class="fc" id="L201">    node.left = newParent.right;</span>
+<span class="fc" id="L202">    newParent.right = node;</span>
+<span class="fc" id="L203">    update(node);</span>
+<span class="fc" id="L204">    update(newParent);</span>
+<span class="fc" id="L205">    return newParent;</span>
+  }
+
+  // Remove a value from this binary tree if it exists, O(log(n))
+  public boolean remove(T elem) {
+<span class="fc bfc" id="L210" title="All 2 branches covered.">    if (elem == null) return false;</span>
+
+<span class="pc bpc" id="L212" title="1 of 2 branches missed.">    if (contains(root, elem)) {</span>
+<span class="fc" id="L213">      root = remove(root, elem);</span>
+<span class="fc" id="L214">      nodeCount--;</span>
+<span class="fc" id="L215">      return true;</span>
+    }
+
+<span class="nc" id="L218">    return false;</span>
+  }
+
+  // Removes a value from the AVL tree.
+  private Node remove(Node node, T elem) {
+<span class="pc bpc" id="L223" title="1 of 2 branches missed.">    if (node == null) return null;</span>
+
+<span class="fc" id="L225">    int cmp = elem.compareTo(node.value);</span>
+
+    // Dig into left subtree, the value we're looking
+    // for is smaller than the current value.
+<span class="fc bfc" id="L229" title="All 2 branches covered.">    if (cmp &lt; 0) {</span>
+<span class="fc" id="L230">      node.left = remove(node.left, elem);</span>
+
+      // Dig into right subtree, the value we're looking
+      // for is greater than the current value.
+<span class="fc bfc" id="L234" title="All 2 branches covered.">    } else if (cmp &gt; 0) {</span>
+<span class="fc" id="L235">      node.right = remove(node.right, elem);</span>
+
+      // Found the node we wish to remove.
+    } else {
+
+      // This is the case with only a right subtree or no subtree at all.
+      // In this situation just swap the node we wish to remove
+      // with its right child.
+<span class="fc bfc" id="L243" title="All 2 branches covered.">      if (node.left == null) {</span>
+<span class="fc" id="L244">        return node.right;</span>
+
+        // This is the case with only a left subtree or
+        // no subtree at all. In this situation just
+        // swap the node we wish to remove with its left child.
+<span class="fc bfc" id="L249" title="All 2 branches covered.">      } else if (node.right == null) {</span>
+<span class="fc" id="L250">        return node.left;</span>
+
+        // When removing a node from a binary tree with two links the
+        // successor of the node being removed can either be the largest
+        // value in the left subtree or the smallest value in the right
+        // subtree. As a heuristic, I will remove from the subtree with
+        // the greatest hieght in hopes that this may help with balancing.
+      } else {
+
+        // Choose to remove from left subtree
+<span class="fc bfc" id="L260" title="All 2 branches covered.">        if (node.left.height &gt; node.right.height) {</span>
+
+          // Swap the value of the successor into the node.
+<span class="fc" id="L263">          T successorValue = findMax(node.left);</span>
+<span class="fc" id="L264">          node.value = successorValue;</span>
+
+          // Find the largest node in the left subtree.
+<span class="fc" id="L267">          node.left = remove(node.left, successorValue);</span>
+
+<span class="fc" id="L269">        } else {</span>
+
+          // Swap the value of the successor into the node.
+<span class="fc" id="L272">          T successorValue = findMin(node.right);</span>
+<span class="fc" id="L273">          node.value = successorValue;</span>
+
+          // Go into the right subtree and remove the leftmost node we
+          // found and swapped data with. This prevents us from having
+          // two nodes in our tree with the same value.
+<span class="fc" id="L278">          node.right = remove(node.right, successorValue);</span>
+        }
+      }
+    }
+
+    // Update balance factor and height values.
+<span class="fc" id="L284">    update(node);</span>
+
+    // Re-balance tree.
+<span class="fc" id="L287">    return balance(node);</span>
+  }
+
+  // Helper method to find the leftmost node (which has the smallest value)
+  private T findMin(Node node) {
+<span class="fc bfc" id="L292" title="All 2 branches covered.">    while (node.left != null) node = node.left;</span>
+<span class="fc" id="L293">    return node.value;</span>
+  }
+
+  // Helper method to find the rightmost node (which has the largest value)
+  private T findMax(Node node) {
+<span class="fc bfc" id="L298" title="All 2 branches covered.">    while (node.right != null) node = node.right;</span>
+<span class="fc" id="L299">    return node.value;</span>
+  }
+
+  // Returns as iterator to traverse the tree in order.
+  public java.util.Iterator&lt;T&gt; iterator() {
+
+<span class="nc" id="L305">    final int expectedNodeCount = nodeCount;</span>
+<span class="nc" id="L306">    final java.util.Stack&lt;Node&gt; stack = new java.util.Stack&lt;&gt;();</span>
+<span class="nc" id="L307">    stack.push(root);</span>
+
+<span class="nc" id="L309">    return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="nc" id="L310">      Node trav = root;</span>
+
+      @Override
+      public boolean hasNext() {
+<span class="nc bnc" id="L314" title="All 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="nc bnc" id="L315" title="All 4 branches missed.">        return root != null &amp;&amp; !stack.isEmpty();</span>
+      }
+
+      @Override
+      public T next() {
+
+<span class="nc bnc" id="L321" title="All 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+
+<span class="nc bnc" id="L323" title="All 4 branches missed.">        while (trav != null &amp;&amp; trav.left != null) {</span>
+<span class="nc" id="L324">          stack.push(trav.left);</span>
+<span class="nc" id="L325">          trav = trav.left;</span>
+        }
+
+<span class="nc" id="L328">        Node node = stack.pop();</span>
+
+<span class="nc bnc" id="L330" title="All 2 branches missed.">        if (node.right != null) {</span>
+<span class="nc" id="L331">          stack.push(node.right);</span>
+<span class="nc" id="L332">          trav = node.right;</span>
+        }
+
+<span class="nc" id="L335">        return node.value;</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L340">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+
+  @Override
+  public String toString() {
+<span class="nc" id="L347">    return TreePrinter.getTreeDisplay(root);</span>
+  }
+
+  // Make sure all left child nodes are smaller in value than their parent and
+  // make sure all right child nodes are greater in value than their parent.
+  // (Used only for testing)
+  public boolean validateBSTInvarient(Node node) {
+<span class="fc bfc" id="L354" title="All 2 branches covered.">    if (node == null) return true;</span>
+<span class="fc" id="L355">    T val = node.value;</span>
+<span class="fc" id="L356">    boolean isValid = true;</span>
+<span class="pc bpc" id="L357" title="2 of 6 branches missed.">    if (node.left != null) isValid = isValid &amp;&amp; node.left.value.compareTo(val) &lt; 0;</span>
+<span class="pc bpc" id="L358" title="2 of 6 branches missed.">    if (node.right != null) isValid = isValid &amp;&amp; node.right.value.compareTo(val) &gt; 0;</span>
+<span class="pc bpc" id="L359" title="3 of 6 branches missed.">    return isValid &amp;&amp; validateBSTInvarient(node.left) &amp;&amp; validateBSTInvarient(node.right);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

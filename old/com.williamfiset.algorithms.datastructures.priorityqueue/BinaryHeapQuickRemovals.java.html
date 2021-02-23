@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinaryHeapQuickRemovals.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.priorityqueue</a> &gt; <span class="el_source">BinaryHeapQuickRemovals.java</span></div><h1>BinaryHeapQuickRemovals.java</h1><pre class="source lang-java linenums">/**
+ * A min priority queue implementation using a binary heap. This implementation tracks each element
+ * inside the binary heap with a hashtable for quick removals.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.priorityqueue;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+public class BinaryHeapQuickRemovals&lt;T extends Comparable&lt;T&gt;&gt; {
+
+  // A dynamic list to track the elements inside the heap
+<span class="fc" id="L20">  private List&lt;T&gt; heap = null;</span>
+
+  // This map keeps track of the possible indices a particular
+  // node value is found in the heap. Having this mapping lets
+  // us have O(log(n)) removals and O(1) element containment check
+  // at the cost of some additional space and minor overhead
+<span class="fc" id="L26">  private Map&lt;T, TreeSet&lt;Integer&gt;&gt; map = new HashMap&lt;&gt;();</span>
+
+  // Construct and initially empty priority queue
+  public BinaryHeapQuickRemovals() {
+<span class="fc" id="L30">    this(1);</span>
+<span class="fc" id="L31">  }</span>
+
+  // Construct a priority queue with an initial capacity
+<span class="fc" id="L34">  public BinaryHeapQuickRemovals(int sz) {</span>
+<span class="fc" id="L35">    heap = new ArrayList&lt;&gt;(sz);</span>
+<span class="fc" id="L36">  }</span>
+
+  // Construct a priority queue using heapify in O(n) time, a great explanation can be found at:
+  // http://www.cs.umd.edu/~meesh/351/mount/lectures/lect14-heapsort-analysis-part.pdf
+<span class="fc" id="L40">  public BinaryHeapQuickRemovals(T[] elems) {</span>
+
+<span class="fc" id="L42">    int heapSize = elems.length;</span>
+<span class="fc" id="L43">    heap = new ArrayList&lt;T&gt;(heapSize);</span>
+
+    // Place all element in heap
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    for (int i = 0; i &lt; heapSize; i++) {</span>
+<span class="fc" id="L47">      mapAdd(elems[i], i);</span>
+<span class="fc" id="L48">      heap.add(elems[i]);</span>
+    }
+
+    // Heapify process, O(n)
+<span class="fc bfc" id="L52" title="All 2 branches covered.">    for (int i = Math.max(0, (heapSize / 2) - 1); i &gt;= 0; i--) sink(i);</span>
+<span class="fc" id="L53">  }</span>
+
+  // Priority queue construction, O(nlog(n))
+  public BinaryHeapQuickRemovals(Collection&lt;T&gt; elems) {
+<span class="nc" id="L57">    this(elems.size());</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    for (T elem : elems) add(elem);</span>
+<span class="nc" id="L59">  }</span>
+
+  // Returns true/false depending on if the priority queue is empty
+  public boolean isEmpty() {
+<span class="fc bfc" id="L63" title="All 2 branches covered.">    return size() == 0;</span>
+  }
+
+  // Clears everything inside the heap, O(n)
+  public void clear() {
+<span class="fc" id="L68">    heap.clear();</span>
+<span class="fc" id="L69">    map.clear();</span>
+<span class="fc" id="L70">  }</span>
+
+  // Return the size of the heap
+  public int size() {
+<span class="fc" id="L74">    return heap.size();</span>
+  }
+
+  // Returns the value of the element with the lowest
+  // priority in this priority queue. If the priority
+  // queue is empty null is returned.
+  public T peek() {
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    if (isEmpty()) return null;</span>
+<span class="fc" id="L82">    return heap.get(0);</span>
+  }
+
+  // Removes the root of the heap, O(log(n))
+  public T poll() {
+<span class="fc" id="L87">    return removeAt(0);</span>
+  }
+
+  // Test if an element is in heap, O(1)
+  public boolean contains(T elem) {
+
+    // Map lookup to check containment, O(1)
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">    if (elem == null) return false;</span>
+<span class="fc" id="L95">    return map.containsKey(elem);</span>
+
+    // Linear scan to check containment, O(n)
+    // for(int i = 0; i &lt; heapSize; i++)
+    //   if (heap.get(i).equals(elem))
+    //     return true;
+    // return false;
+
+  }
+
+  // Adds an element to the priority queue, the
+  // element must not be null, O(log(n))
+  public void add(T elem) {
+
+<span class="pc bpc" id="L109" title="1 of 2 branches missed.">    if (elem == null) throw new IllegalArgumentException();</span>
+
+<span class="fc" id="L111">    heap.add(elem);</span>
+<span class="fc" id="L112">    int indexOfLastElem = size() - 1;</span>
+<span class="fc" id="L113">    mapAdd(elem, indexOfLastElem);</span>
+
+<span class="fc" id="L115">    swim(indexOfLastElem);</span>
+<span class="fc" id="L116">  }</span>
+
+  // Tests if the value of node i &lt;= node j
+  // This method assumes i &amp; j are valid indices, O(1)
+  private boolean less(int i, int j) {
+
+<span class="fc" id="L122">    T node1 = heap.get(i);</span>
+<span class="fc" id="L123">    T node2 = heap.get(j);</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">    return node1.compareTo(node2) &lt;= 0;</span>
+  }
+
+  // Perform bottom up node swim, O(log(n))
+  private void swim(int k) {
+
+    // Grab the index of the next parent node WRT to k
+<span class="fc" id="L131">    int parent = (k - 1) / 2;</span>
+
+    // Keep swimming while we have not reached the
+    // root and while we're less than our parent.
+<span class="fc bfc" id="L135" title="All 4 branches covered.">    while (k &gt; 0 &amp;&amp; less(k, parent)) {</span>
+
+      // Exchange k with the parent
+<span class="fc" id="L138">      swap(parent, k);</span>
+<span class="fc" id="L139">      k = parent;</span>
+
+      // Grab the index of the next parent node WRT to k
+<span class="fc" id="L142">      parent = (k - 1) / 2;</span>
+    }
+<span class="fc" id="L144">  }</span>
+
+  // Top down node sink, O(log(n))
+  private void sink(int k) {
+<span class="fc" id="L148">    int heapSize = size();</span>
+
+    while (true) {
+
+<span class="fc" id="L152">      int left = 2 * k + 1; // Left  node</span>
+<span class="fc" id="L153">      int right = 2 * k + 2; // Right node</span>
+<span class="fc" id="L154">      int smallest = left; // Assume left is the smallest node of the two children</span>
+
+      // Find which is smaller left or right
+      // If right is smaller set smallest to be right
+<span class="fc bfc" id="L158" title="All 4 branches covered.">      if (right &lt; heapSize &amp;&amp; less(right, left)) smallest = right;</span>
+
+      // Stop if we're outside the bounds of the tree
+      // or stop early if we cannot sink k anymore
+<span class="fc bfc" id="L162" title="All 4 branches covered.">      if (left &gt;= heapSize || less(k, smallest)) break;</span>
+
+      // Move down the tree following the smallest node
+<span class="fc" id="L165">      swap(smallest, k);</span>
+<span class="fc" id="L166">      k = smallest;</span>
+<span class="fc" id="L167">    }</span>
+<span class="fc" id="L168">  }</span>
+
+  // Swap two nodes. Assumes i &amp; j are valid, O(1)
+  private void swap(int i, int j) {
+
+<span class="fc" id="L173">    T i_elem = heap.get(i);</span>
+<span class="fc" id="L174">    T j_elem = heap.get(j);</span>
+
+<span class="fc" id="L176">    heap.set(i, j_elem);</span>
+<span class="fc" id="L177">    heap.set(j, i_elem);</span>
+
+<span class="fc" id="L179">    mapSwap(i_elem, j_elem, i, j);</span>
+<span class="fc" id="L180">  }</span>
+
+  // Removes a particular element in the heap, O(log(n))
+  public boolean remove(T element) {
+
+<span class="pc bpc" id="L185" title="1 of 2 branches missed.">    if (element == null) return false;</span>
+
+    // Linear removal via search, O(n)
+    // for (int i = 0; i &lt; heapSize; i++) {
+    //   if (element.equals(heap.get(i))) {
+    //     removeAt(i);
+    //     return true;
+    //   }
+    // }
+
+    // Logarithmic removal with map, O(log(n))
+<span class="fc" id="L196">    Integer index = mapGet(element);</span>
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">    if (index != null) removeAt(index);</span>
+<span class="pc bpc" id="L198" title="1 of 2 branches missed.">    return index != null;</span>
+  }
+
+  // Removes a node at particular index, O(log(n))
+  private T removeAt(int i) {
+
+<span class="fc bfc" id="L204" title="All 2 branches covered.">    if (isEmpty()) return null;</span>
+
+<span class="fc" id="L206">    int indexOfLastElem = size() - 1;</span>
+<span class="fc" id="L207">    T removed_data = heap.get(i);</span>
+<span class="fc" id="L208">    swap(i, indexOfLastElem);</span>
+
+    // Obliterate the value
+<span class="fc" id="L211">    heap.remove(indexOfLastElem);</span>
+<span class="fc" id="L212">    mapRemove(removed_data, indexOfLastElem);</span>
+
+    // Removed last element
+<span class="fc bfc" id="L215" title="All 2 branches covered.">    if (i == indexOfLastElem) return removed_data;</span>
+
+<span class="fc" id="L217">    T elem = heap.get(i);</span>
+
+    // Try sinking element
+<span class="fc" id="L220">    sink(i);</span>
+
+    // If sinking did not work try swimming
+<span class="fc bfc" id="L223" title="All 2 branches covered.">    if (heap.get(i).equals(elem)) swim(i);</span>
+
+<span class="fc" id="L225">    return removed_data;</span>
+  }
+
+  // Recursively checks if this heap is a min heap
+  // This method is just for testing purposes to make
+  // sure the heap invariant is still being maintained
+  // Called this method with k=0 to start at the root
+  public boolean isMinHeap(int k) {
+
+    // If we are outside the bounds of the heap return true
+<span class="fc" id="L235">    int heapSize = size();</span>
+<span class="fc bfc" id="L236" title="All 2 branches covered.">    if (k &gt;= heapSize) return true;</span>
+
+<span class="fc" id="L238">    int left = 2 * k + 1;</span>
+<span class="fc" id="L239">    int right = 2 * k + 2;</span>
+
+    // Make sure that the current node k is less than
+    // both of its children left, and right if they exist
+    // return false otherwise to indicate an invalid heap
+<span class="pc bpc" id="L244" title="1 of 4 branches missed.">    if (left &lt; heapSize &amp;&amp; !less(k, left)) return false;</span>
+<span class="pc bpc" id="L245" title="1 of 4 branches missed.">    if (right &lt; heapSize &amp;&amp; !less(k, right)) return false;</span>
+
+    // Recurse on both children to make sure they're also valid heaps
+<span class="pc bpc" id="L248" title="2 of 4 branches missed.">    return isMinHeap(left) &amp;&amp; isMinHeap(right);</span>
+  }
+
+  // Add a node value and its index to the map
+  private void mapAdd(T value, int index) {
+
+<span class="fc" id="L254">    TreeSet&lt;Integer&gt; set = map.get(value);</span>
+
+    // New value being inserted in map
+<span class="fc bfc" id="L257" title="All 2 branches covered.">    if (set == null) {</span>
+
+<span class="fc" id="L259">      set = new TreeSet&lt;&gt;();</span>
+<span class="fc" id="L260">      set.add(index);</span>
+<span class="fc" id="L261">      map.put(value, set);</span>
+
+      // Value already exists in map
+<span class="fc" id="L264">    } else set.add(index);</span>
+<span class="fc" id="L265">  }</span>
+
+  // Removes the index at a given value, O(log(n))
+  private void mapRemove(T value, int index) {
+<span class="fc" id="L269">    TreeSet&lt;Integer&gt; set = map.get(value);</span>
+<span class="fc" id="L270">    set.remove(index); // TreeSets take O(log(n)) removal time</span>
+<span class="fc bfc" id="L271" title="All 2 branches covered.">    if (set.size() == 0) map.remove(value);</span>
+<span class="fc" id="L272">  }</span>
+
+  // Extract an index position for the given value
+  // NOTE: If a value exists multiple times in the heap the highest
+  // index is returned (this has arbitrarily been chosen)
+  private Integer mapGet(T value) {
+<span class="fc" id="L278">    TreeSet&lt;Integer&gt; set = map.get(value);</span>
+<span class="pc bpc" id="L279" title="1 of 2 branches missed.">    if (set != null) return set.last();</span>
+<span class="nc" id="L280">    return null;</span>
+  }
+
+  // Exchange the index of two nodes internally within the map
+  private void mapSwap(T val1, T val2, int val1Index, int val2Index) {
+
+<span class="fc" id="L286">    Set&lt;Integer&gt; set1 = map.get(val1);</span>
+<span class="fc" id="L287">    Set&lt;Integer&gt; set2 = map.get(val2);</span>
+
+<span class="fc" id="L289">    set1.remove(val1Index);</span>
+<span class="fc" id="L290">    set2.remove(val2Index);</span>
+
+<span class="fc" id="L292">    set1.add(val2Index);</span>
+<span class="fc" id="L293">    set2.add(val1Index);</span>
+<span class="fc" id="L294">  }</span>
+
+  @Override
+  public String toString() {
+<span class="nc" id="L298">    return heap.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

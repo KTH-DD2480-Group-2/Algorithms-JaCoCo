@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuickSort.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.sorting</a> &gt; <span class="el_source">QuickSort.java</span></div><h1>QuickSort.java</h1><pre class="source lang-java linenums">/**
+ * Quicksort implementation using Hoare partitioning
+ *
+ * &lt;p&gt;Run with:
+ *
+ * &lt;p&gt;$ ./gradlew run -Palgorithm=sorting.QuickSort
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.sorting;
+
+<span class="fc" id="L12">public class QuickSort implements InplaceSort {</span>
+
+  @Override
+  public void sort(int[] values) {
+<span class="fc" id="L16">    QuickSort.quicksort(values);</span>
+<span class="fc" id="L17">  }</span>
+
+  public static void quicksort(int[] ar) {
+<span class="pc bpc" id="L20" title="1 of 2 branches missed.">    if (ar == null) return;</span>
+<span class="fc" id="L21">    quicksort(ar, 0, ar.length - 1);</span>
+<span class="fc" id="L22">  }</span>
+
+  // Sort interval [lo, hi] inplace recursively
+  private static void quicksort(int[] ar, int lo, int hi) {
+<span class="fc bfc" id="L26" title="All 2 branches covered.">    if (lo &lt; hi) {</span>
+<span class="fc" id="L27">      int splitPoint = partition(ar, lo, hi);</span>
+<span class="fc" id="L28">      quicksort(ar, lo, splitPoint);</span>
+<span class="fc" id="L29">      quicksort(ar, splitPoint + 1, hi);</span>
+    }
+<span class="fc" id="L31">  }</span>
+
+  // Performs Hoare partition algorithm for quicksort
+  private static int partition(int[] ar, int lo, int hi) {
+<span class="fc" id="L35">    int pivot = ar[lo];</span>
+<span class="fc" id="L36">    int i = lo - 1, j = hi + 1;</span>
+    while (true) {
+      do {
+<span class="fc" id="L39">        i++;</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">      } while (ar[i] &lt; pivot);</span>
+      do {
+<span class="fc" id="L42">        j--;</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">      } while (ar[j] &gt; pivot);</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">      if (i &lt; j) swap(ar, i, j);</span>
+<span class="fc" id="L45">      else return j;</span>
+    }
+  }
+
+  // Swap two elements
+  private static void swap(int[] ar, int i, int j) {
+<span class="fc" id="L51">    int tmp = ar[i];</span>
+<span class="fc" id="L52">    ar[i] = ar[j];</span>
+<span class="fc" id="L53">    ar[j] = tmp;</span>
+<span class="fc" id="L54">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L57">    InplaceSort sorter = new QuickSort();</span>
+<span class="nc" id="L58">    int[] array = {10, 4, 6, 4, 8, -13, 2, 3};</span>
+<span class="nc" id="L59">    sorter.sort(array);</span>
+    // Prints:
+    // [-13, 2, 3, 4, 4, 6, 8, 10]
+<span class="nc" id="L62">    System.out.println(java.util.Arrays.toString(array));</span>
+<span class="nc" id="L63">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

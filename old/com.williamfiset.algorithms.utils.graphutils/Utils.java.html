@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Utils.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.utils.graphutils</a> &gt; <span class="el_source">Utils.java</span></div><h1>Utils.java</h1><pre class="source lang-java linenums">/**
+ * A set of common graph theory functions.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.utils.graphutils;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L11">public final class Utils {</span>
+
+  /**
+   * Creates an empty graph represented as an adjacency list of size n
+   *
+   * @param n The maximum number of nodes in the graph.
+   */
+  public static List&lt;List&lt;Integer&gt;&gt; createEmptyAdjacencyList(int n) {
+<span class="pc bpc" id="L19" title="1 of 2 branches missed.">    if (n &lt; 0) throw new IllegalArgumentException(&quot;n cannot be negative; received: &quot; + n);</span>
+<span class="fc" id="L20">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L22">    return graph;</span>
+  }
+
+  /** Adds an unweighted directed edge from the node at index 'from' to the node at index 'to'. */
+  public static void addDirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">    if (graph == null) throw new IllegalArgumentException(&quot;graph cannot be null&quot;);</span>
+<span class="fc" id="L28">    int n = graph.size();</span>
+<span class="pc bpc" id="L29" title="2 of 4 branches missed.">    if (from &lt; 0 || from &gt;= n)</span>
+<span class="nc" id="L30">      throw new IllegalArgumentException(&quot;'from' node index out of bounds; received: &quot; + from);</span>
+<span class="pc bpc" id="L31" title="2 of 4 branches missed.">    if (to &lt; 0 || to &gt;= n)</span>
+<span class="nc" id="L32">      throw new IllegalArgumentException(&quot;'to' node index out of bounds; received: &quot; + to);</span>
+<span class="fc" id="L33">    graph.get(from).add(to);</span>
+<span class="fc" id="L34">  }</span>
+
+  /** Adds an unweighted undirected edge from the node at index 'from' to the node at index 'to'. */
+  public static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="fc" id="L38">    addDirectedEdge(graph, from, to);</span>
+<span class="fc" id="L39">    addDirectedEdge(graph, to, from);</span>
+<span class="fc" id="L40">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

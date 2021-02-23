@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoothsAlgorithm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.strings</a> &gt; <span class="el_source">BoothsAlgorithm.java</span></div><h1>BoothsAlgorithm.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of Booths algorithms which finds the lexicographically
+ * smallest string rotation.
+ */
+package com.williamfiset.algorithms.strings;
+
+<span class="nc" id="L7">public class BoothsAlgorithm {</span>
+
+  // Performs Booths algorithm returning the earliest index of the
+  // lexicographically smallest string rotation. Note that comparisons
+  // are done using ASCII values, so mixing lowercase and uppercase
+  // letters may give you unexpected results, O(n)
+  public static int leastCyclicRotation(String s) {
+<span class="nc" id="L14">    s += s;</span>
+<span class="nc" id="L15">    int[] f = new int[s.length()];</span>
+<span class="nc" id="L16">    java.util.Arrays.fill(f, -1);</span>
+<span class="nc" id="L17">    int k = 0;</span>
+<span class="nc bnc" id="L18" title="All 2 branches missed.">    for (int j = 1; j &lt; s.length(); j++) {</span>
+<span class="nc" id="L19">      char sj = s.charAt(j);</span>
+<span class="nc" id="L20">      int i = f[j - k - 1];</span>
+<span class="nc bnc" id="L21" title="All 4 branches missed.">      while (i != -1 &amp;&amp; sj != s.charAt(k + i + 1)) {</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">        if (sj &lt; s.charAt(k + i + 1)) k = j - i - 1;</span>
+<span class="nc" id="L23">        i = f[i];</span>
+      }
+<span class="nc bnc" id="L25" title="All 2 branches missed.">      if (sj != s.charAt(k + i + 1)) {</span>
+<span class="nc bnc" id="L26" title="All 2 branches missed.">        if (sj &lt; s.charAt(k)) k = j;</span>
+<span class="nc" id="L27">        f[j - k] = -1;</span>
+<span class="nc" id="L28">      } else f[j - k] = i + 1;</span>
+    }
+<span class="nc" id="L30">    return k;</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L35">    String s = &quot;abcde&quot;;</span>
+<span class="nc" id="L36">    int index = leastCyclicRotation(s);</span>
+
+    // Outputs 0 since the string is already in its least rotation
+<span class="nc" id="L39">    System.out.println(index);</span>
+
+<span class="nc" id="L41">    s = &quot;cdeab&quot;;</span>
+<span class="nc" id="L42">    index = leastCyclicRotation(s);</span>
+
+    // Outputs 3 since rotating the string 3 times to the left makes
+    // the smallest rotation: &quot;cdeab&quot; -&gt; &quot;deabc&quot; -&gt; &quot;eabcd&quot; -&gt; &quot;abcde&quot;
+<span class="nc" id="L46">    System.out.println(index);</span>
+<span class="nc" id="L47">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LowestCommonAncestorEulerTour.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms</a> &gt; <span class="el_source">LowestCommonAncestorEulerTour.java</span></div><h1>LowestCommonAncestorEulerTour.java</h1><pre class="source lang-java linenums">/**
+ * Implementation of finding the Lowest Common Ancestor (LCA) of a tree. This impl first finds an
+ * Euler tour from the root node which visits all the nodes in the tree. The node height values
+ * obtained from the Euler tour can then be used in combination with a sparse table to find the LCA
+ * in O(1).
+ *
+ * &lt;p&gt;Time Complexity: O(1) queries, O(n*log2(n)) pre-processing.
+ *
+ * &lt;p&gt;Space Complexity: O(n*log2(n))
+ *
+ * &lt;p&gt;To run script:
+ *
+ * &lt;p&gt;./gradlew run -Palgorithm=graphtheory.treealgorithms.LowestCommonAncestorEulerTour
+ *
+ * @author William Fiset
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms;
+
+import java.util.*;
+
+public class LowestCommonAncestorEulerTour {
+
+  public static void main(String[] args) {
+<span class="nc" id="L24">    TreeNode root = createFirstTreeFromSlides();</span>
+<span class="nc" id="L25">    LowestCommonAncestorEulerTour solver = new LowestCommonAncestorEulerTour(root);</span>
+
+    // LCA of 13 and 14 = 2
+<span class="nc" id="L28">    TreeNode lca = solver.lca(13, 14);</span>
+<span class="nc" id="L29">    System.out.printf(&quot;LCA of 13 and 14 = %s\n&quot;, lca);</span>
+<span class="nc bnc" id="L30" title="All 2 branches missed.">    if (lca.index() != 2) {</span>
+<span class="nc" id="L31">      System.out.println(&quot;Error, expected lca to be 2&quot;);</span>
+    }
+
+    // LCA of 9 and 11 = 0
+<span class="nc" id="L35">    lca = solver.lca(9, 11);</span>
+<span class="nc" id="L36">    System.out.printf(&quot;LCA of 9 and 11 = %s\n&quot;, lca);</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    if (lca.index() != 0) {</span>
+<span class="nc" id="L38">      System.out.println(&quot;Error, expected lca to be 0&quot;);</span>
+    }
+
+    // LCA of 12 and 12 = 12
+<span class="nc" id="L42">    lca = solver.lca(12, 12);</span>
+<span class="nc" id="L43">    System.out.printf(&quot;LCA of 12 and 12 = %s\n&quot;, lca);</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">    if (lca.index() != 12) {</span>
+<span class="nc" id="L45">      System.out.println(&quot;Error, expected lca to be 12&quot;);</span>
+    }
+<span class="nc" id="L47">  }</span>
+
+  private static TreeNode createFirstTreeFromSlides() {
+<span class="nc" id="L50">    int n = 17;</span>
+<span class="nc" id="L51">    List&lt;List&lt;Integer&gt;&gt; tree = createEmptyGraph(n);</span>
+
+<span class="nc" id="L53">    addUndirectedEdge(tree, 0, 1);</span>
+<span class="nc" id="L54">    addUndirectedEdge(tree, 0, 2);</span>
+<span class="nc" id="L55">    addUndirectedEdge(tree, 1, 3);</span>
+<span class="nc" id="L56">    addUndirectedEdge(tree, 1, 4);</span>
+<span class="nc" id="L57">    addUndirectedEdge(tree, 2, 5);</span>
+<span class="nc" id="L58">    addUndirectedEdge(tree, 2, 6);</span>
+<span class="nc" id="L59">    addUndirectedEdge(tree, 2, 7);</span>
+<span class="nc" id="L60">    addUndirectedEdge(tree, 3, 8);</span>
+<span class="nc" id="L61">    addUndirectedEdge(tree, 3, 9);</span>
+<span class="nc" id="L62">    addUndirectedEdge(tree, 5, 10);</span>
+<span class="nc" id="L63">    addUndirectedEdge(tree, 5, 11);</span>
+<span class="nc" id="L64">    addUndirectedEdge(tree, 7, 12);</span>
+<span class="nc" id="L65">    addUndirectedEdge(tree, 7, 13);</span>
+<span class="nc" id="L66">    addUndirectedEdge(tree, 11, 14);</span>
+<span class="nc" id="L67">    addUndirectedEdge(tree, 11, 15);</span>
+<span class="nc" id="L68">    addUndirectedEdge(tree, 11, 16);</span>
+
+<span class="nc" id="L70">    return TreeNode.rootTree(tree, 0);</span>
+  }
+
+  /* Graph/Tree creation helper methods. */
+
+  // Create a graph as a adjacency list with 'n' nodes.
+  public static List&lt;List&lt;Integer&gt;&gt; createEmptyGraph(int n) {
+<span class="fc" id="L77">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) graph.add(new LinkedList&lt;&gt;());</span>
+<span class="fc" id="L79">    return graph;</span>
+  }
+
+  public static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="fc" id="L83">    graph.get(from).add(to);</span>
+<span class="fc" id="L84">    graph.get(to).add(from);</span>
+<span class="fc" id="L85">  }</span>
+
+  public static class TreeNode {
+    // Number of nodes in the subtree. Computed when tree is built.
+    private int n;
+
+    private int index;
+    private TreeNode parent;
+    private List&lt;TreeNode&gt; children;
+
+    // Useful constructor for root node.
+    public TreeNode(int index) {
+<span class="fc" id="L97">      this(index, /*parent=*/ null);</span>
+<span class="fc" id="L98">    }</span>
+
+<span class="fc" id="L100">    public TreeNode(int index, TreeNode parent) {</span>
+<span class="fc" id="L101">      this.index = index;</span>
+<span class="fc" id="L102">      this.parent = parent;</span>
+<span class="fc" id="L103">      children = new LinkedList&lt;&gt;();</span>
+<span class="fc" id="L104">    }</span>
+
+    public void addChildren(TreeNode... nodes) {
+<span class="fc bfc" id="L107" title="All 2 branches covered.">      for (TreeNode node : nodes) {</span>
+<span class="fc" id="L108">        children.add(node);</span>
+      }
+<span class="fc" id="L110">    }</span>
+
+    public void setSize(int n) {
+<span class="fc" id="L113">      this.n = n;</span>
+<span class="fc" id="L114">    }</span>
+
+    // Number of nodes in the subtree (including the node itself)
+    public int size() {
+<span class="fc" id="L118">      return n;</span>
+    }
+
+    public int index() {
+<span class="fc" id="L122">      return index;</span>
+    }
+
+    public TreeNode parent() {
+<span class="fc" id="L126">      return parent;</span>
+    }
+
+    public List&lt;TreeNode&gt; children() {
+<span class="fc" id="L130">      return children;</span>
+    }
+
+    public static TreeNode rootTree(List&lt;List&lt;Integer&gt;&gt; graph, int rootId) {
+<span class="fc" id="L134">      TreeNode root = new TreeNode(rootId);</span>
+<span class="fc" id="L135">      TreeNode rootedTree = buildTree(graph, root);</span>
+<span class="pc bpc" id="L136" title="1 of 2 branches missed.">      if (rootedTree.size() &lt; graph.size()) {</span>
+<span class="nc" id="L137">        System.out.println(</span>
+            &quot;WARNING: Input graph malformed. Did you forget to include all n-1 edges?&quot;);
+      }
+<span class="fc" id="L140">      return rootedTree;</span>
+    }
+
+    // Do dfs to construct rooted tree.
+    private static TreeNode buildTree(List&lt;List&lt;Integer&gt;&gt; graph, TreeNode node) {
+<span class="fc" id="L145">      int subtreeNodeCount = 1;</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">      for (int neighbor : graph.get(node.index())) {</span>
+        // Ignore adding an edge pointing back to parent.
+<span class="fc bfc" id="L148" title="All 4 branches covered.">        if (node.parent() != null &amp;&amp; neighbor == node.parent().index()) {</span>
+<span class="fc" id="L149">          continue;</span>
+        }
+
+<span class="fc" id="L152">        TreeNode child = new TreeNode(neighbor, node);</span>
+<span class="fc" id="L153">        node.addChildren(child);</span>
+
+<span class="fc" id="L155">        buildTree(graph, child);</span>
+<span class="fc" id="L156">        subtreeNodeCount += child.size();</span>
+<span class="fc" id="L157">      }</span>
+<span class="fc" id="L158">      node.setSize(subtreeNodeCount);</span>
+<span class="fc" id="L159">      return node;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L164">      return String.valueOf(index);</span>
+    }
+  }
+
+  private final int n;
+
+<span class="fc" id="L170">  private int tourIndex = 0;</span>
+
+  // Populated when constructing Euler Tour.
+  private long[] nodeDepth;
+  private TreeNode[] nodeOrder;
+
+  // The last occurrence mapping. This mapping keeps track of the last occurrence of a TreeNode in
+  // the Euler tour for easy indexing.
+  private int[] last;
+
+  // Sparse table impl which can efficiently do Range Minimum Queries (RMQs).
+  private MinSparseTable sparseTable;
+
+<span class="fc" id="L183">  public LowestCommonAncestorEulerTour(TreeNode root) {</span>
+<span class="fc" id="L184">    this.n = root.size();</span>
+<span class="fc" id="L185">    setup(root);</span>
+<span class="fc" id="L186">  }</span>
+
+  private void setup(TreeNode root) {
+<span class="fc" id="L189">    int eulerTourSize = 2 * n - 1;</span>
+<span class="fc" id="L190">    nodeOrder = new TreeNode[eulerTourSize];</span>
+<span class="fc" id="L191">    nodeDepth = new long[eulerTourSize];</span>
+<span class="fc" id="L192">    last = new int[n];</span>
+
+    // Do depth first search to construct Euler tour.
+<span class="fc" id="L195">    dfs(root, /*depth=*/ 0);</span>
+
+    // Initialize and build sparse table on the `nodeDepth` array which will
+    // allow us to index into the `nodeOrder` array and return the LCA.
+<span class="fc" id="L199">    sparseTable = new MinSparseTable(nodeDepth);</span>
+<span class="fc" id="L200">  }</span>
+
+  // Construct Euler Tour by populating the `nodeDepth` and `nodeOrder` arrays.
+  private void dfs(TreeNode node, long depth) {
+<span class="pc bpc" id="L204" title="1 of 2 branches missed.">    if (node == null) {</span>
+<span class="nc" id="L205">      return;</span>
+    }
+
+<span class="fc" id="L208">    visit(node, depth);</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">    for (TreeNode child : node.children()) {</span>
+<span class="fc" id="L210">      dfs(child, depth + 1);</span>
+<span class="fc" id="L211">      visit(node, depth);</span>
+<span class="fc" id="L212">    }</span>
+<span class="fc" id="L213">  }</span>
+
+  private void visit(TreeNode node, long depth) {
+<span class="fc" id="L216">    nodeOrder[tourIndex] = node;</span>
+<span class="fc" id="L217">    nodeDepth[tourIndex] = depth;</span>
+<span class="fc" id="L218">    last[node.index()] = tourIndex;</span>
+<span class="fc" id="L219">    tourIndex++;</span>
+<span class="fc" id="L220">  }</span>
+
+  // Finds the lowest common ancestor of the nodes with `index1` and `index2`.
+  public TreeNode lca(int index1, int index2) {
+<span class="fc" id="L224">    int l = Math.min(last[index1], last[index2]);</span>
+<span class="fc" id="L225">    int r = Math.max(last[index1], last[index2]);</span>
+<span class="fc" id="L226">    int i = sparseTable.queryIndex(l, r);</span>
+<span class="fc" id="L227">    return nodeOrder[i];</span>
+  }
+
+  // Sparse table for efficient minimum range queries in O(1) with O(nlogn) space
+  private static class MinSparseTable {
+
+    // The number of elements in the original input array.
+    private int n;
+
+    // The maximum power of 2 needed. This value is floor(log2(n))
+    private int P;
+
+    // Fast log base 2 logarithm lookup table, 1 &lt;= i &lt;= n
+    private int[] log2;
+
+    // The sparse table values.
+    private long[][] dp;
+
+    // Index Table (IT) associated with the values in the sparse table.
+    private int[][] it;
+
+<span class="fc" id="L248">    public MinSparseTable(long[] values) {</span>
+<span class="fc" id="L249">      init(values);</span>
+<span class="fc" id="L250">    }</span>
+
+    private void init(long[] v) {
+<span class="fc" id="L253">      n = v.length;</span>
+<span class="fc" id="L254">      P = (int) (Math.log(n) / Math.log(2));</span>
+<span class="fc" id="L255">      dp = new long[P + 1][n];</span>
+<span class="fc" id="L256">      it = new int[P + 1][n];</span>
+
+<span class="fc bfc" id="L258" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L259">        dp[0][i] = v[i];</span>
+<span class="fc" id="L260">        it[0][i] = i;</span>
+      }
+
+<span class="fc" id="L263">      log2 = new int[n + 1];</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">      for (int i = 2; i &lt;= n; i++) {</span>
+<span class="fc" id="L265">        log2[i] = log2[i / 2] + 1;</span>
+      }
+
+      // Build sparse table combining the values of the previous intervals.
+<span class="fc bfc" id="L269" title="All 2 branches covered.">      for (int p = 1; p &lt;= P; p++) {</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">        for (int i = 0; i + (1 &lt;&lt; p) &lt;= n; i++) {</span>
+<span class="fc" id="L271">          long leftInterval = dp[p - 1][i];</span>
+<span class="fc" id="L272">          long rightInterval = dp[p - 1][i + (1 &lt;&lt; (p - 1))];</span>
+<span class="fc" id="L273">          dp[p][i] = Math.min(leftInterval, rightInterval);</span>
+
+          // Propagate the index of the best value
+<span class="fc bfc" id="L276" title="All 2 branches covered.">          if (leftInterval &lt;= rightInterval) {</span>
+<span class="fc" id="L277">            it[p][i] = it[p - 1][i];</span>
+          } else {
+<span class="fc" id="L279">            it[p][i] = it[p - 1][i + (1 &lt;&lt; (p - 1))];</span>
+          }
+        }
+      }
+<span class="fc" id="L283">    }</span>
+
+    // Returns the index of the minimum element in the range [l, r].
+    public int queryIndex(int l, int r) {
+<span class="fc" id="L287">      int len = r - l + 1;</span>
+<span class="fc" id="L288">      int p = log2[r - l + 1];</span>
+<span class="fc" id="L289">      long leftInterval = dp[p][l];</span>
+<span class="fc" id="L290">      long rightInterval = dp[p][r - (1 &lt;&lt; p) + 1];</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">      if (leftInterval &lt;= rightInterval) {</span>
+<span class="fc" id="L292">        return it[p][l];</span>
+      } else {
+<span class="fc" id="L294">        return it[p][r - (1 &lt;&lt; p) + 1];</span>
+      }
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

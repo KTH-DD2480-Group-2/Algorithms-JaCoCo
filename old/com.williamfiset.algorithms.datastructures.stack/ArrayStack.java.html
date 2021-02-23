@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ArrayStack.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.stack</a> &gt; <span class="el_source">ArrayStack.java</span></div><h1>ArrayStack.java</h1><pre class="source lang-java linenums">package com.williamfiset.algorithms.datastructures.stack;
+
+import java.util.Arrays;
+import java.util.EmptyStackException;
+
+/** @author liujingkun */
+public class ArrayStack&lt;T&gt; implements Stack&lt;T&gt; {
+  private int size;
+  private int capacity;
+  private Object[] data;
+
+<span class="fc" id="L12">  public ArrayStack() {</span>
+<span class="fc" id="L13">    capacity = 16;</span>
+<span class="fc" id="L14">    data = new Object[capacity];</span>
+<span class="fc" id="L15">  }</span>
+
+  @Override
+  public int size() {
+<span class="fc" id="L19">    return size;</span>
+  }
+
+  @Override
+  public boolean isEmpty() {
+<span class="fc bfc" id="L24" title="All 2 branches covered.">    return size == 0;</span>
+  }
+
+  @Override
+  public void push(T elem) {
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">    if (size == capacity) {</span>
+<span class="nc" id="L30">      increaseCapacity();</span>
+    }
+<span class="fc" id="L32">    data[size++] = elem;</span>
+<span class="fc" id="L33">  }</span>
+
+  // Increase the capacity to store more elements.
+  private void increaseCapacity() {
+<span class="nc" id="L37">    capacity *= 2;</span>
+<span class="nc" id="L38">    data = Arrays.copyOf(data, capacity);</span>
+<span class="nc" id="L39">  }</span>
+
+  @Override
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public T pop() {
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">    if (isEmpty()) throw new EmptyStackException();</span>
+<span class="fc" id="L45">    T elem = (T) data[--size];</span>
+<span class="fc" id="L46">    data[size] = null;</span>
+<span class="fc" id="L47">    return elem;</span>
+  }
+
+  @Override
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public T peek() {
+<span class="pc bpc" id="L53" title="1 of 2 branches missed.">    if (isEmpty()) throw new EmptyStackException();</span>
+<span class="fc" id="L54">    return (T) data[size - 1];</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

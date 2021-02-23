@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinIndexedDHeap.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.priorityqueue</a> &gt; <span class="el_source">MinIndexedDHeap.java</span></div><h1>MinIndexedDHeap.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of an indexed min D-ary heap priority queue.
+ *
+ * &lt;p&gt;This implementation supports arbitrary keys with comparable values. To use arbitrary keys
+ * (such as strings or objects) first map all your keys to the integer domain [0, N) where N is the
+ * number of keys you have and then use the mapping with this indexed priority queue.
+ *
+ * &lt;p&gt;As convention, I denote 'ki' as the index value in the domain [0, N) associated with a key k,
+ * therefore: ki = map[k]
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.priorityqueue;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+public class MinIndexedDHeap&lt;T extends Comparable&lt;T&gt;&gt; {
+
+  // Current number of elements in the heap.
+  private int sz;
+
+  // Maximum number of elements in the heap.
+  private final int N;
+
+  // The degree of every node in the heap.
+  private final int D;
+
+  // Lookup arrays to track the child/parent indexes of each node.
+  private final int[] child, parent;
+
+  // The Position Map (pm) maps Key Indexes (ki) to where the position of that
+  // key is represented in the priority queue in the domain [0, sz).
+  public final int[] pm;
+
+  // The Inverse Map (im) stores the indexes of the keys in the range
+  // [0, sz) which make up the priority queue. It should be noted that
+  // 'im' and 'pm' are inverses of each other, so: pm[im[i]] = im[pm[i]] = i
+  public final int[] im;
+
+  // The values associated with the keys. It is very important  to note
+  // that this array is indexed by the key indexes (aka 'ki').
+  public final Object[] values;
+
+  // Initializes a D-ary heap with a maximum capacity of maxSize.
+<span class="fc" id="L50">  public MinIndexedDHeap(int degree, int maxSize) {</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    if (maxSize &lt;= 0) throw new IllegalArgumentException(&quot;maxSize &lt;= 0&quot;);</span>
+
+<span class="fc" id="L53">    D = max(2, degree);</span>
+<span class="fc" id="L54">    N = max(D + 1, maxSize);</span>
+
+<span class="fc" id="L56">    im = new int[N];</span>
+<span class="fc" id="L57">    pm = new int[N];</span>
+<span class="fc" id="L58">    child = new int[N];</span>
+<span class="fc" id="L59">    parent = new int[N];</span>
+<span class="fc" id="L60">    values = new Object[N];</span>
+
+<span class="fc bfc" id="L62" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L63">      parent[i] = (i - 1) / D;</span>
+<span class="fc" id="L64">      child[i] = i * D + 1;</span>
+<span class="fc" id="L65">      pm[i] = im[i] = -1;</span>
+    }
+<span class="fc" id="L67">  }</span>
+
+  public int size() {
+<span class="fc" id="L70">    return sz;</span>
+  }
+
+  public boolean isEmpty() {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    return sz == 0;</span>
+  }
+
+  public boolean contains(int ki) {
+<span class="fc" id="L78">    keyInBoundsOrThrow(ki);</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">    return pm[ki] != -1;</span>
+  }
+
+  public int peekMinKeyIndex() {
+<span class="fc" id="L83">    isNotEmptyOrThrow();</span>
+<span class="fc" id="L84">    return im[0];</span>
+  }
+
+  public int pollMinKeyIndex() {
+<span class="fc" id="L88">    int minki = peekMinKeyIndex();</span>
+<span class="fc" id="L89">    delete(minki);</span>
+<span class="fc" id="L90">    return minki;</span>
+  }
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public T peekMinValue() {
+<span class="fc" id="L95">    isNotEmptyOrThrow();</span>
+<span class="fc" id="L96">    return (T) values[im[0]];</span>
+  }
+
+  public T pollMinValue() {
+<span class="fc" id="L100">    T minValue = peekMinValue();</span>
+<span class="fc" id="L101">    delete(peekMinKeyIndex());</span>
+<span class="fc" id="L102">    return minValue;</span>
+  }
+
+  public void insert(int ki, T value) {
+<span class="fc bfc" id="L106" title="All 2 branches covered.">    if (contains(ki)) throw new IllegalArgumentException(&quot;index already exists; received: &quot; + ki);</span>
+<span class="fc" id="L107">    valueNotNullOrThrow(value);</span>
+<span class="fc" id="L108">    pm[ki] = sz;</span>
+<span class="fc" id="L109">    im[sz] = ki;</span>
+<span class="fc" id="L110">    values[ki] = value;</span>
+<span class="fc" id="L111">    swim(sz++);</span>
+<span class="fc" id="L112">  }</span>
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public T valueOf(int ki) {
+<span class="fc" id="L116">    keyExistsOrThrow(ki);</span>
+<span class="fc" id="L117">    return (T) values[ki];</span>
+  }
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public T delete(int ki) {
+<span class="fc" id="L122">    keyExistsOrThrow(ki);</span>
+<span class="fc" id="L123">    final int i = pm[ki];</span>
+<span class="fc" id="L124">    swap(i, --sz);</span>
+<span class="fc" id="L125">    sink(i);</span>
+<span class="fc" id="L126">    swim(i);</span>
+<span class="fc" id="L127">    T value = (T) values[ki];</span>
+<span class="fc" id="L128">    values[ki] = null;</span>
+<span class="fc" id="L129">    pm[ki] = -1;</span>
+<span class="fc" id="L130">    im[sz] = -1;</span>
+<span class="fc" id="L131">    return value;</span>
+  }
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  public T update(int ki, T value) {
+<span class="fc" id="L136">    keyExistsAndValueNotNullOrThrow(ki, value);</span>
+<span class="fc" id="L137">    final int i = pm[ki];</span>
+<span class="fc" id="L138">    T oldValue = (T) values[ki];</span>
+<span class="fc" id="L139">    values[ki] = value;</span>
+<span class="fc" id="L140">    sink(i);</span>
+<span class="fc" id="L141">    swim(i);</span>
+<span class="fc" id="L142">    return oldValue;</span>
+  }
+
+  // Strictly decreases the value associated with 'ki' to 'value'
+  public void decrease(int ki, T value) {
+<span class="fc" id="L147">    keyExistsAndValueNotNullOrThrow(ki, value);</span>
+<span class="fc bfc" id="L148" title="All 2 branches covered.">    if (less(value, values[ki])) {</span>
+<span class="fc" id="L149">      values[ki] = value;</span>
+<span class="fc" id="L150">      swim(pm[ki]);</span>
+    }
+<span class="fc" id="L152">  }</span>
+
+  // Strictly increases the value associated with 'ki' to 'value'
+  public void increase(int ki, T value) {
+<span class="fc" id="L156">    keyExistsAndValueNotNullOrThrow(ki, value);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">    if (less(values[ki], value)) {</span>
+<span class="fc" id="L158">      values[ki] = value;</span>
+<span class="fc" id="L159">      sink(pm[ki]);</span>
+    }
+<span class="fc" id="L161">  }</span>
+
+  /* Helper functions */
+
+  private void sink(int i) {
+<span class="fc bfc" id="L166" title="All 2 branches covered.">    for (int j = minChild(i); j != -1; ) {</span>
+<span class="fc" id="L167">      swap(i, j);</span>
+<span class="fc" id="L168">      i = j;</span>
+<span class="fc" id="L169">      j = minChild(i);</span>
+    }
+<span class="fc" id="L171">  }</span>
+
+  private void swim(int i) {
+<span class="fc bfc" id="L174" title="All 2 branches covered.">    while (less(i, parent[i])) {</span>
+<span class="fc" id="L175">      swap(i, parent[i]);</span>
+<span class="fc" id="L176">      i = parent[i];</span>
+    }
+<span class="fc" id="L178">  }</span>
+
+  // From the parent node at index i find the minimum child below it
+  private int minChild(int i) {
+<span class="fc" id="L182">    int index = -1, from = child[i], to = min(sz, from + D);</span>
+<span class="fc bfc" id="L183" title="All 4 branches covered.">    for (int j = from; j &lt; to; j++) if (less(j, i)) index = i = j;</span>
+<span class="fc" id="L184">    return index;</span>
+  }
+
+  private void swap(int i, int j) {
+<span class="fc" id="L188">    pm[im[j]] = i;</span>
+<span class="fc" id="L189">    pm[im[i]] = j;</span>
+<span class="fc" id="L190">    int tmp = im[i];</span>
+<span class="fc" id="L191">    im[i] = im[j];</span>
+<span class="fc" id="L192">    im[j] = tmp;</span>
+<span class="fc" id="L193">  }</span>
+
+  // Tests if the value of node i &lt; node j
+  @SuppressWarnings(&quot;unchecked&quot;)
+  private boolean less(int i, int j) {
+<span class="fc bfc" id="L198" title="All 2 branches covered.">    return ((Comparable&lt;? super T&gt;) values[im[i]]).compareTo((T) values[im[j]]) &lt; 0;</span>
+  }
+
+  @SuppressWarnings(&quot;unchecked&quot;)
+  private boolean less(Object obj1, Object obj2) {
+<span class="fc bfc" id="L203" title="All 2 branches covered.">    return ((Comparable&lt;? super T&gt;) obj1).compareTo((T) obj2) &lt; 0;</span>
+  }
+
+  @Override
+  public String toString() {
+<span class="nc" id="L208">    List&lt;Integer&gt; lst = new ArrayList&lt;&gt;(sz);</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">    for (int i = 0; i &lt; sz; i++) lst.add(im[i]);</span>
+<span class="nc" id="L210">    return lst.toString();</span>
+  }
+
+  /* Helper functions to make the code more readable. */
+
+  private void isNotEmptyOrThrow() {
+<span class="pc bpc" id="L216" title="1 of 2 branches missed.">    if (isEmpty()) throw new NoSuchElementException(&quot;Priority queue underflow&quot;);</span>
+<span class="fc" id="L217">  }</span>
+
+  private void keyExistsAndValueNotNullOrThrow(int ki, Object value) {
+<span class="fc" id="L220">    keyExistsOrThrow(ki);</span>
+<span class="fc" id="L221">    valueNotNullOrThrow(value);</span>
+<span class="fc" id="L222">  }</span>
+
+  private void keyExistsOrThrow(int ki) {
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">    if (!contains(ki)) throw new NoSuchElementException(&quot;Index does not exist; received: &quot; + ki);</span>
+<span class="fc" id="L226">  }</span>
+
+  private void valueNotNullOrThrow(Object value) {
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">    if (value == null) throw new IllegalArgumentException(&quot;value cannot be null&quot;);</span>
+<span class="fc" id="L230">  }</span>
+
+  private void keyInBoundsOrThrow(int ki) {
+<span class="pc bpc" id="L233" title="2 of 4 branches missed.">    if (ki &lt; 0 || ki &gt;= N)</span>
+<span class="nc" id="L234">      throw new IllegalArgumentException(&quot;Key index out of bounds; received: &quot; + ki);</span>
+<span class="fc" id="L235">  }</span>
+
+  /* Test functions */
+
+  // Recursively checks if this heap is a min heap. This method is used
+  // for testing purposes to validate the heap invariant.
+  public boolean isMinHeap() {
+<span class="fc" id="L242">    return isMinHeap(0);</span>
+  }
+
+  private boolean isMinHeap(int i) {
+<span class="fc" id="L246">    int from = child[i], to = min(sz, from + D);</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">    for (int j = from; j &lt; to; j++) {</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">      if (!less(i, j)) return false;</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">      if (!isMinHeap(j)) return false;</span>
+    }
+<span class="fc" id="L251">    return true;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

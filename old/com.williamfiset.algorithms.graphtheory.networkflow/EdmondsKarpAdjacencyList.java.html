@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EdmondsKarpAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">EdmondsKarpAdjacencyList.java</span></div><h1>EdmondsKarpAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the Edmonds-Karp algorithm which is essentially Ford-Fulkerson with a BFS as
+ * a method of finding augmenting paths. This Edmonds-Karp algorithm will allow you to find the max
+ * flow through a directed graph and the min cut as a byproduct.
+ *
+ * &lt;p&gt;Time Complexity: O(VE^2)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import static java.lang.Math.min;
+
+import java.util.*;
+
+public class EdmondsKarpAdjacencyList extends NetworkFlowSolverBase {
+
+  /**
+   * Creates an instance of a flow network solver. Use the {@link #addEdge(int, int, int)} method to
+   * add edges to the graph.
+   *
+   * @param n - The number of nodes in the graph including source and sink nodes.
+   * @param s - The index of the source node, 0 &lt;= s &lt; n
+   * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+   */
+  public EdmondsKarpAdjacencyList(int n, int s, int t) {
+<span class="fc" id="L27">    super(n, s, t);</span>
+<span class="fc" id="L28">  }</span>
+
+  // Run Edmonds-Karp and compute the max flow from the source to the sink node.
+  @Override
+  public void solve() {
+    long flow;
+    do {
+<span class="fc" id="L35">      markAllNodesAsUnvisited();</span>
+<span class="fc" id="L36">      flow = bfs();</span>
+<span class="fc" id="L37">      maxFlow += flow;</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">    } while (flow != 0);</span>
+
+<span class="fc bfc" id="L40" title="All 4 branches covered.">    for (int i = 0; i &lt; n; i++) if (visited(i)) minCut[i] = true;</span>
+<span class="fc" id="L41">  }</span>
+
+  private long bfs() {
+<span class="fc" id="L44">    Edge[] prev = new Edge[n];</span>
+
+    // The queue can be optimized to use a faster queue
+<span class="fc" id="L47">    Queue&lt;Integer&gt; q = new ArrayDeque&lt;&gt;(n);</span>
+<span class="fc" id="L48">    visit(s);</span>
+<span class="fc" id="L49">    q.offer(s);</span>
+
+    // Perform BFS from source to sink
+<span class="fc bfc" id="L52" title="All 2 branches covered.">    while (!q.isEmpty()) {</span>
+<span class="fc" id="L53">      int node = q.poll();</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">      if (node == t) break;</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">      for (Edge edge : graph[node]) {</span>
+<span class="fc" id="L57">        long cap = edge.remainingCapacity();</span>
+<span class="fc bfc" id="L58" title="All 4 branches covered.">        if (cap &gt; 0 &amp;&amp; !visited(edge.to)) {</span>
+<span class="fc" id="L59">          visit(edge.to);</span>
+<span class="fc" id="L60">          prev[edge.to] = edge;</span>
+<span class="fc" id="L61">          q.offer(edge.to);</span>
+        }
+<span class="fc" id="L63">      }</span>
+<span class="fc" id="L64">    }</span>
+
+    // Sink not reachable!
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    if (prev[t] == null) return 0;</span>
+
+<span class="fc" id="L69">    long bottleNeck = Long.MAX_VALUE;</span>
+
+    // Find augmented path and bottle neck
+<span class="fc bfc" id="L72" title="All 2 branches covered.">    for (Edge edge = prev[t]; edge != null; edge = prev[edge.from])</span>
+<span class="fc" id="L73">      bottleNeck = min(bottleNeck, edge.remainingCapacity());</span>
+
+    // Retrace augmented path and update flow values.
+<span class="fc bfc" id="L76" title="All 2 branches covered.">    for (Edge edge = prev[t]; edge != null; edge = prev[edge.from]) edge.augment(bottleNeck);</span>
+
+    // Return bottleneck flow
+<span class="fc" id="L79">    return bottleNeck;</span>
+  }
+
+  /* Example */
+
+  public static void main(String[] args) {
+<span class="nc" id="L85">    testSmallFlowGraph();</span>
+<span class="nc" id="L86">  }</span>
+
+  // Testing graph from:
+  // http://crypto.cs.mcgill.ca/~crepeau/COMP251/KeyNoteSlides/07demo-maxflowCS-C.pdf
+  private static void testSmallFlowGraph() {
+<span class="nc" id="L91">    int n = 6;</span>
+<span class="nc" id="L92">    int s = n - 1;</span>
+<span class="nc" id="L93">    int t = n - 2;</span>
+
+    EdmondsKarpAdjacencyList solver;
+<span class="nc" id="L96">    solver = new EdmondsKarpAdjacencyList(n, s, t);</span>
+
+    // Source edges
+<span class="nc" id="L99">    solver.addEdge(s, 0, 10);</span>
+<span class="nc" id="L100">    solver.addEdge(s, 1, 10);</span>
+
+    // Sink edges
+<span class="nc" id="L103">    solver.addEdge(2, t, 10);</span>
+<span class="nc" id="L104">    solver.addEdge(3, t, 10);</span>
+
+    // Middle edges
+<span class="nc" id="L107">    solver.addEdge(0, 1, 2);</span>
+<span class="nc" id="L108">    solver.addEdge(0, 2, 4);</span>
+<span class="nc" id="L109">    solver.addEdge(0, 3, 8);</span>
+<span class="nc" id="L110">    solver.addEdge(1, 3, 9);</span>
+<span class="nc" id="L111">    solver.addEdge(3, 2, 6);</span>
+
+<span class="nc" id="L113">    System.out.println(solver.getMaxFlow()); // 19</span>
+<span class="nc" id="L114">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

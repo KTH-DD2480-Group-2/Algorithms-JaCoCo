@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TwoSatSolverAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">TwoSatSolverAdjacencyList.java</span></div><h1>TwoSatSolverAdjacencyList.java</h1><pre class="source lang-java linenums">/** NOTE: This file is still in development! */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+
+public class TwoSatSolverAdjacencyList {
+
+  private int n;
+  private List&lt;List&lt;Integer&gt;&gt; graph;
+
+  private boolean solved;
+  private boolean isSatisfiable;
+  private TarjanSccSolverAdjacencyList sccSolver;
+
+<span class="fc" id="L15">  public TwoSatSolverAdjacencyList(List&lt;List&lt;Integer&gt;&gt; graph) {</span>
+<span class="fc" id="L16">    n = graph.size() / 2;</span>
+<span class="fc" id="L17">    sccSolver = new TarjanSccSolverAdjacencyList(graph);</span>
+<span class="fc" id="L18">  }</span>
+
+  // Returns true/false depending on whether this 2SAT problem is satisfiable
+  public boolean isSatisfiable() {
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">    if (!solved) solve();</span>
+<span class="fc" id="L23">    return isSatisfiable;</span>
+  }
+
+  public void solve() {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">    if (solved) return;</span>
+
+<span class="fc" id="L29">    int[] sccs = sccSolver.getSccs();</span>
+    // System.out.println(Arrays.toString(sccs));
+
+    // Assume that this 2SAT problem is satisfiable and try to
+    // disprove it by looking at which SCCs p and ~p belong to.
+<span class="fc" id="L34">    isSatisfiable = true;</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    for (int i = 0; i &lt; sccs.length; i += 2) {</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">      if (sccs[i] == sccs[i ^ 1]) {</span>
+<span class="fc" id="L37">        isSatisfiable = false;</span>
+<span class="fc" id="L38">        break;</span>
+      }
+    }
+
+    // Find a truth assignment.
+<span class="fc bfc" id="L43" title="All 2 branches covered.">    if (isSatisfiable) {</span>
+      // get topsort ordering
+    }
+
+<span class="fc" id="L47">    solved = true;</span>
+<span class="fc" id="L48">  }</span>
+
+  // Creates an implication graph.
+  //
+  // NOTE: In the implication graph node i should be stored in position 2i
+  // and its negation in position 2i + 1. This is done so that we can quickly
+  // access the negation of a node by doing an xor operation. For example:
+  // Node 4's negation is 5 since 4 âŠ• 1 = 5 and 5's negation is 4 since 5 âŠ• 1 = 4.
+  public static List&lt;List&lt;Integer&gt;&gt; createImplicationGraph(int n) {
+<span class="nc" id="L57">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(2 * n);</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    for (int i = 0; i &lt; 2 * n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L59">    return graph;</span>
+  }
+
+  // Make sure 0 &lt;= p, q &lt; 2n
+  public static void addXorClause(List&lt;List&lt;Integer&gt;&gt; graph, int p, int q) {
+    // xor(p, q) = (p or q) and (~p or ~q)
+<span class="nc" id="L65">    addOrClause(graph, p, q);</span>
+<span class="nc" id="L66">    addOrClause(graph, p ^ 1, q ^ 1);</span>
+<span class="nc" id="L67">  }</span>
+
+  // Add p or q to the graph where p, q come from the CNF
+  // Make sure 0 &lt;= p, q &lt; 2n
+  public static void addOrClause(List&lt;List&lt;Integer&gt;&gt; graph, int p, int q) {
+    // Add the edges ~p -&gt; q and ~q -&gt; p to implication graph.
+    // System.out.printf(&quot;p = %d, ~p = %d, q = %d, ~q = %d\n&quot;, p, p ^ 1, q, q ^ 1);
+    // System.out.printf(&quot;%d -&gt; %d\n&quot;, p^1, q);
+    // System.out.printf(&quot;%d -&gt; %d\n&quot;, q^1, p);
+<span class="fc" id="L76">    graph.get(p ^ 1).add(q);</span>
+<span class="fc" id="L77">    graph.get(q ^ 1).add(p);</span>
+<span class="fc" id="L78">  }</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L82">    int n = 2;</span>
+<span class="nc" id="L83">    List&lt;List&lt;Integer&gt;&gt; graph = createImplicationGraph(n);</span>
+
+    // addOrClause(graph, n, 0, negate(1, n));
+    // addOrClause(graph, n, negate(0, n), 2);
+    // addOrClause(graph, n, negate(1, n), negate(3, n));
+    // addOrClause(graph, n, 3, 0);
+    // addOrClause(graph, n, negate(2, n), 4);
+    // addOrClause(graph, n, negate(1, n), 4);
+
+    // addOrClause(graph, n, 0, 1^1);
+    // addOrClause(graph, n, 0, 1);
+    // addOrClause(graph, n, 0^1, 1);
+    // System.out.println(graph);
+
+    // TwoSatSolverAdjacencyList solver = new TwoSatSolverAdjacencyList(graph);
+    // int[] sccs = solver.sccSolver.getSccs();
+    // System.out.println(Arrays.toString(sccs));
+
+<span class="nc" id="L101">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LazyRangeAdder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.other</a> &gt; <span class="el_source">LazyRangeAdder.java</span></div><h1>LazyRangeAdder.java</h1><pre class="source lang-java linenums">/**
+ * The LazyRangerAdder is a handy class for performing addition range updates of constant values on
+ * an array. This range adder is especially useful for offline algorithms which know all range
+ * updates ahead of time.
+ *
+ * &lt;p&gt;Time complexity to update O(1) but time complexity to finalize all additions is O(n)
+ *
+ * @author Atharva Thorve, aaathorve@gmail.com
+ */
+package com.williamfiset.algorithms.other;
+
+public class LazyRangeAdder {
+
+  // The number of elements in the input array.
+  private int n;
+
+  // The original input array
+  private int[] array;
+
+  // The difference array with the deltas between values, size n+1
+  private int[] differenceArray;
+
+  // Initialize an instance of a LazyRangeAdder on some input values
+<span class="fc" id="L24">  public LazyRangeAdder(int[] array) {</span>
+<span class="fc" id="L25">    this.array = array;</span>
+<span class="fc" id="L26">    this.n = array.length;</span>
+
+<span class="fc" id="L28">    differenceArray = new int[n + 1];</span>
+<span class="fc" id="L29">    differenceArray[0] = array[0];</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">    for (int i = 1; i &lt; n; i++) {</span>
+<span class="fc" id="L31">      differenceArray[i] = array[i] - array[i - 1];</span>
+    }
+<span class="fc" id="L33">  }</span>
+
+  // Add `x` to the range [l, r] inclusive
+  public void add(int l, int r, int x) {
+<span class="fc" id="L37">    differenceArray[l] += x;</span>
+<span class="fc" id="L38">    differenceArray[r + 1] -= x;</span>
+<span class="fc" id="L39">  }</span>
+
+  // IMPORTANT: Make certain to call this method once all the additions
+  // have been made with add(l, r, x)
+  public void done() {
+<span class="fc bfc" id="L44" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">      if (i == 0) {</span>
+<span class="fc" id="L46">        array[i] = differenceArray[i];</span>
+      } else {
+<span class="fc" id="L48">        array[i] = differenceArray[i] + array[i - 1];</span>
+      }
+    }
+<span class="fc" id="L51">  }</span>
+
+  public static void main(String[] args) {
+    // Array to be updated
+<span class="nc" id="L55">    int[] array = {10, 4, 6, 13, 8, 15, 17, 22};</span>
+<span class="nc" id="L56">    LazyRangeAdder lazyRangeAdder = new LazyRangeAdder(array);</span>
+
+    // After below add(l, r, x), the
+    // elements should become [10, 14, 16, 23, 18, 15, 17, 22]
+<span class="nc" id="L60">    lazyRangeAdder.add(1, 4, 10);</span>
+<span class="nc" id="L61">    lazyRangeAdder.done();</span>
+<span class="nc" id="L62">    System.out.println(java.util.Arrays.toString(array));</span>
+
+    // After below add(l, r, x), the
+    // elements should become [22, 26, 28, 30, 25, 22, 24, 34]
+<span class="nc" id="L66">    lazyRangeAdder.add(3, 6, -5);</span>
+<span class="nc" id="L67">    lazyRangeAdder.add(0, 7, 12);</span>
+<span class="nc" id="L68">    lazyRangeAdder.done();</span>
+<span class="nc" id="L69">    System.out.println(java.util.Arrays.toString(array));</span>
+<span class="nc" id="L70">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

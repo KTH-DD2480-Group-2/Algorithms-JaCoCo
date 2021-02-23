@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CoverageStatistics.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.utils</a> &gt; <span class="el_source">CoverageStatistics.java</span></div><h1>CoverageStatistics.java</h1><pre class="source lang-java linenums">package com.williamfiset.algorithms.utils;
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Scanner;
+
+<span class="nc" id="L9">public class CoverageStatistics {</span>
+  public static void main(String[] args) throws IOException {
+<span class="nc" id="L11">    getStatistics(</span>
+        &quot;diy-branch-coverage-control.txt&quot;, &quot;build/reports/diy-branch-coverage-results.txt&quot;);
+<span class="nc" id="L13">  }</span>
+
+  public static void getStatistics(String allBranchFile, String visitedBranchFile)
+      throws IOException {
+<span class="fc" id="L17">    HashMap&lt;String, HashSet&lt;String&gt;&gt; allBranchSet = getBranchSet(allBranchFile);</span>
+<span class="fc" id="L18">    HashMap&lt;String, HashSet&lt;String&gt;&gt; visitedBranchSet = getBranchSet(visitedBranchFile);</span>
+
+<span class="fc" id="L20">    BufferedWriter writer =</span>
+        new BufferedWriter(new FileWriter(&quot;./build/reports/DIY-Coverage-Report.txt&quot;));
+
+<span class="fc bfc" id="L23" title="All 2 branches covered.">    for (Map.Entry&lt;String, HashSet&lt;String&gt;&gt; entry : allBranchSet.entrySet()) {</span>
+<span class="fc" id="L24">      int total = entry.getValue().size();</span>
+      int visited;
+<span class="fc bfc" id="L26" title="All 2 branches covered.">      if (visitedBranchSet.containsKey(entry.getKey()))</span>
+<span class="fc" id="L27">        visited = visitedBranchSet.get(entry.getKey()).size();</span>
+<span class="fc" id="L28">      else visited = 0;</span>
+<span class="fc" id="L29">      float coverage = (float) visited * 100 / total;</span>
+<span class="fc" id="L30">      writer.write(</span>
+<span class="fc" id="L31">          entry.getKey()</span>
+              + &quot;: Total=&quot;
+              + total
+              + &quot;, Visited=&quot;
+              + visited
+              + &quot;, Coverage=&quot;
+              + coverage
+              + &quot;%\n&quot;);
+<span class="fc" id="L39">    }</span>
+<span class="fc" id="L40">    writer.close();</span>
+<span class="fc" id="L41">  }</span>
+
+  private static HashMap&lt;String, HashSet&lt;String&gt;&gt; getBranchSet(String branchFile) {
+<span class="fc" id="L44">    HashMap&lt;String, HashSet&lt;String&gt;&gt; result = new HashMap&lt;String, HashSet&lt;String&gt;&gt;();</span>
+<span class="fc" id="L45">    String function = &quot;&quot;;</span>
+<span class="fc" id="L46">    String branch = &quot;&quot;;</span>
+    try {
+<span class="fc" id="L48">      File myObj = new File(branchFile);</span>
+<span class="fc" id="L49">      Scanner myReader = new Scanner(myObj);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">      while (myReader.hasNextLine()) {</span>
+<span class="fc" id="L51">        String data = myReader.nextLine();</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">        if (data.trim().length() &gt; 0) {</span>
+<span class="fc" id="L53">          String[] dataSplit = data.split(&quot;\\.&quot;);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">          for (int i = 0; i &lt; dataSplit.length - 1; i++) {</span>
+<span class="fc" id="L55">            function += dataSplit[i];</span>
+<span class="fc" id="L56">            function += '.';</span>
+          }
+<span class="fc" id="L58">          function = function.substring(0, function.length() - 1);</span>
+<span class="fc" id="L59">          branch = dataSplit[dataSplit.length - 1];</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">          if (result.containsKey(function)) {</span>
+<span class="fc" id="L61">            result.get(function).add(branch);</span>
+          } else {
+<span class="fc" id="L63">            result.put(function, new HashSet&lt;String&gt;());</span>
+<span class="fc" id="L64">            result.get(function).add(branch);</span>
+          }
+<span class="fc" id="L66">          function = &quot;&quot;;</span>
+        }
+<span class="fc" id="L68">      }</span>
+<span class="fc" id="L69">      myReader.close();</span>
+<span class="nc" id="L70">    } catch (FileNotFoundException e) {</span>
+<span class="nc" id="L71">      System.out.println(&quot;An error occurred.&quot;);</span>
+<span class="nc" id="L72">      e.printStackTrace();</span>
+<span class="fc" id="L73">    }</span>
+<span class="fc" id="L74">    return result;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

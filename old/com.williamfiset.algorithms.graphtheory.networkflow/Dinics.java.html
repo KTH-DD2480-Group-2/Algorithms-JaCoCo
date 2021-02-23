@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Dinics.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">Dinics.java</span></div><h1>Dinics.java</h1><pre class="source lang-java linenums">/**
+ * Implementation of Dinic's network flow algorithm. The algorithm works by first constructing a
+ * level graph using a BFS and then finding augmenting paths on the level graph using multiple DFSs.
+ *
+ * &lt;p&gt;Run script:
+ *
+ * &lt;p&gt;$ ./gradlew run -Palgorithm=graphtheory.networkflow.Dinics
+ *
+ * &lt;p&gt;Time Complexity: O(EVÂ²)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import static java.lang.Math.min;
+
+import java.util.*;
+
+public class Dinics extends NetworkFlowSolverBase {
+
+  private int[] level;
+
+  /**
+   * Creates an instance of a flow network solver. Use the {@link #addEdge} method to add edges to
+   * the graph.
+   *
+   * @param n - The number of nodes in the graph including source and sink nodes.
+   * @param s - The index of the source node, 0 &lt;= s &lt; n
+   * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+   */
+  public Dinics(int n, int s, int t) {
+<span class="fc" id="L32">    super(n, s, t);</span>
+<span class="fc" id="L33">    level = new int[n];</span>
+<span class="fc" id="L34">  }</span>
+
+  @Override
+  public void solve() {
+    // next[i] indicates the next unused edge index in the adjacency list for node i. This is part
+    // of the Shimon Even and Alon Itai optimization of pruning deads ends as part of the DFS phase.
+<span class="fc" id="L40">    int[] next = new int[n];</span>
+
+<span class="fc bfc" id="L42" title="All 2 branches covered.">    while (bfs()) {</span>
+<span class="fc" id="L43">      Arrays.fill(next, 0);</span>
+      // Find max flow by adding all augmenting path flows.
+<span class="fc bfc" id="L45" title="All 2 branches covered.">      for (long f = dfs(s, next, INF); f != 0; f = dfs(s, next, INF)) {</span>
+<span class="fc" id="L46">        maxFlow += f;</span>
+      }
+    }
+
+<span class="fc bfc" id="L50" title="All 4 branches covered.">    for (int i = 0; i &lt; n; i++) if (level[i] != -1) minCut[i] = true;</span>
+<span class="fc" id="L51">  }</span>
+
+  // Do a BFS from source to sink and compute the depth/level of each node
+  // which is the minimum number of edges from that node to the source.
+  private boolean bfs() {
+<span class="fc" id="L56">    Arrays.fill(level, -1);</span>
+<span class="fc" id="L57">    level[s] = 0;</span>
+<span class="fc" id="L58">    Deque&lt;Integer&gt; q = new ArrayDeque&lt;&gt;(n);</span>
+<span class="fc" id="L59">    q.offer(s);</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">    while (!q.isEmpty()) {</span>
+<span class="fc" id="L61">      int node = q.poll();</span>
+<span class="fc bfc" id="L62" title="All 2 branches covered.">      for (Edge edge : graph[node]) {</span>
+<span class="fc" id="L63">        long cap = edge.remainingCapacity();</span>
+<span class="fc bfc" id="L64" title="All 4 branches covered.">        if (cap &gt; 0 &amp;&amp; level[edge.to] == -1) {</span>
+<span class="fc" id="L65">          level[edge.to] = level[node] + 1;</span>
+<span class="fc" id="L66">          q.offer(edge.to);</span>
+        }
+<span class="fc" id="L68">      }</span>
+<span class="fc" id="L69">    }</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    return level[t] != -1;</span>
+  }
+
+  private long dfs(int at, int[] next, long flow) {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (at == t) return flow;</span>
+<span class="fc" id="L75">    final int numEdges = graph[at].size();</span>
+
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    for (; next[at] &lt; numEdges; next[at]++) {</span>
+<span class="fc" id="L78">      Edge edge = graph[at].get(next[at]);</span>
+<span class="fc" id="L79">      long cap = edge.remainingCapacity();</span>
+<span class="fc bfc" id="L80" title="All 4 branches covered.">      if (cap &gt; 0 &amp;&amp; level[edge.to] == level[at] + 1) {</span>
+
+<span class="fc" id="L82">        long bottleNeck = dfs(edge.to, next, min(flow, cap));</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (bottleNeck &gt; 0) {</span>
+<span class="fc" id="L84">          edge.augment(bottleNeck);</span>
+<span class="fc" id="L85">          return bottleNeck;</span>
+        }
+      }
+    }
+<span class="fc" id="L89">    return 0;</span>
+  }
+
+  /* Examples */
+
+  public static void main(String[] args) {
+<span class="nc" id="L95">    testSmallFlowGraph();</span>
+    // testGraphFromSlides();
+<span class="nc" id="L97">  }</span>
+
+  // Testing graph from:
+  // http://crypto.cs.mcgill.ca/~crepeau/COMP251/KeyNoteSlides/07demo-maxflowCS-C.pdf
+  private static void testSmallFlowGraph() {
+<span class="nc" id="L102">    int n = 6;</span>
+<span class="nc" id="L103">    int s = n - 1;</span>
+<span class="nc" id="L104">    int t = n - 2;</span>
+
+    Dinics solver;
+<span class="nc" id="L107">    solver = new Dinics(n, s, t);</span>
+
+    // Source edges
+<span class="nc" id="L110">    solver.addEdge(s, 0, 10);</span>
+<span class="nc" id="L111">    solver.addEdge(s, 1, 10);</span>
+
+    // Sink edges
+<span class="nc" id="L114">    solver.addEdge(2, t, 10);</span>
+<span class="nc" id="L115">    solver.addEdge(3, t, 10);</span>
+
+    // Middle edges
+<span class="nc" id="L118">    solver.addEdge(0, 1, 2);</span>
+<span class="nc" id="L119">    solver.addEdge(0, 2, 4);</span>
+<span class="nc" id="L120">    solver.addEdge(0, 3, 8);</span>
+<span class="nc" id="L121">    solver.addEdge(1, 3, 9);</span>
+<span class="nc" id="L122">    solver.addEdge(3, 2, 6);</span>
+
+<span class="nc" id="L124">    System.out.println(solver.getMaxFlow()); // 19</span>
+<span class="nc" id="L125">  }</span>
+
+  private static void testGraphFromSlides() {
+<span class="nc" id="L128">    int n = 11;</span>
+<span class="nc" id="L129">    int s = n - 1;</span>
+<span class="nc" id="L130">    int t = n - 2;</span>
+
+    NetworkFlowSolverBase solver;
+<span class="nc" id="L133">    solver = new Dinics(n, s, t);</span>
+
+    // Source edges
+<span class="nc" id="L136">    solver.addEdge(s, 0, 5);</span>
+<span class="nc" id="L137">    solver.addEdge(s, 1, 10);</span>
+<span class="nc" id="L138">    solver.addEdge(s, 2, 15);</span>
+
+    // Middle edges
+<span class="nc" id="L141">    solver.addEdge(0, 3, 10);</span>
+<span class="nc" id="L142">    solver.addEdge(1, 0, 15);</span>
+<span class="nc" id="L143">    solver.addEdge(1, 4, 20);</span>
+<span class="nc" id="L144">    solver.addEdge(2, 5, 25);</span>
+<span class="nc" id="L145">    solver.addEdge(3, 4, 25);</span>
+<span class="nc" id="L146">    solver.addEdge(3, 6, 10);</span>
+<span class="nc" id="L147">    solver.addEdge(3, 7, 20);</span>
+<span class="nc" id="L148">    solver.addEdge(4, 2, 5);</span>
+<span class="nc" id="L149">    solver.addEdge(4, 7, 30);</span>
+<span class="nc" id="L150">    solver.addEdge(5, 7, 20);</span>
+<span class="nc" id="L151">    solver.addEdge(5, 8, 10);</span>
+<span class="nc" id="L152">    solver.addEdge(7, 8, 15);</span>
+
+    // Sink edges
+<span class="nc" id="L155">    solver.addEdge(6, t, 5);</span>
+<span class="nc" id="L156">    solver.addEdge(7, t, 15);</span>
+<span class="nc" id="L157">    solver.addEdge(8, t, 10);</span>
+
+<span class="nc" id="L159">    System.out.printf(&quot;Maximum flow %d\n&quot;, solver.getMaxFlow()); // 30</span>
+<span class="nc" id="L160">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

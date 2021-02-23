@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModularInverse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">ModularInverse.java</span></div><h1>ModularInverse.java</h1><pre class="source lang-java linenums">/** Time Complexity ~O(log(a + b)) */
+package com.williamfiset.algorithms.math;
+
+<span class="nc" id="L4">public class ModularInverse {</span>
+
+  // This function performs the extended euclidean algorithm on two numbers a and b.
+  // The function returns the gcd(a,b) as well as the numbers x and y such
+  // that ax + by = gcd(a,b). This calculation is important in number theory
+  // and can be used for several things such as finding modular inverses and
+  // solutions to linear Diophantine equations.
+  private static long[] egcd(long a, long b) {
+<span class="nc bnc" id="L12" title="All 2 branches missed.">    if (b == 0) return new long[] {a, 1L, 0L};</span>
+<span class="nc" id="L13">    long[] v = egcd(b, a % b);</span>
+<span class="nc" id="L14">    long tmp = v[1] - v[2] * (a / b);</span>
+<span class="nc" id="L15">    v[1] = v[2];</span>
+<span class="nc" id="L16">    v[2] = tmp;</span>
+<span class="nc" id="L17">    return v;</span>
+  }
+
+  // Returns the modular inverse of 'a' mod 'm' if it exists.
+  // Make sure m &gt; 0 and 'a' &amp; 'm' are relatively prime.
+  public static Long modInv(long a, long m) {
+
+<span class="nc bnc" id="L24" title="All 2 branches missed.">    if (m &lt;= 0) throw new ArithmeticException(&quot;mod must be &gt; 0&quot;);</span>
+
+    // Avoid a being negative
+<span class="nc" id="L27">    a = ((a % m) + m) % m;</span>
+
+<span class="nc" id="L29">    long[] v = egcd(a, m);</span>
+<span class="nc" id="L30">    long gcd = v[0];</span>
+<span class="nc" id="L31">    long x = v[1];</span>
+
+<span class="nc bnc" id="L33" title="All 2 branches missed.">    if (gcd != 1) return null;</span>
+<span class="nc" id="L34">    return ((x + m) % m) % m;</span>
+  }
+
+  public static void main(String[] args) {
+
+    // Prints 3 since 2*3 mod 5 = 1
+<span class="nc" id="L40">    System.out.println(modInv(2, 5));</span>
+
+    // Prints null because there is no
+    // modular inverse such that 4*x mod 18 = 1
+<span class="nc" id="L44">    System.out.println(modInv(4, 18));</span>
+<span class="nc" id="L45">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

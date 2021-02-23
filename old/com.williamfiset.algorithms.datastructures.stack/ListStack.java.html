@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ListStack.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.stack</a> &gt; <span class="el_source">ListStack.java</span></div><h1>ListStack.java</h1><pre class="source lang-java linenums">/**
+ * A linked list implementation of a stack
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.stack;
+
+public class ListStack&lt;T&gt; implements Iterable&lt;T&gt;, Stack&lt;T&gt; {
+
+<span class="pc" id="L10">  private java.util.LinkedList&lt;T&gt; list = new java.util.LinkedList&lt;T&gt;();</span>
+
+  // Create an empty stack
+<span class="fc" id="L13">  public ListStack() {}</span>
+
+  // Create a Stack with an initial element
+<span class="nc" id="L16">  public ListStack(T firstElem) {</span>
+<span class="nc" id="L17">    push(firstElem);</span>
+<span class="nc" id="L18">  }</span>
+
+  // Return the number of elements in the stack
+  public int size() {
+<span class="fc" id="L22">    return list.size();</span>
+  }
+
+  // Check if the stack is empty
+  public boolean isEmpty() {
+<span class="fc bfc" id="L27" title="All 2 branches covered.">    return size() == 0;</span>
+  }
+
+  // Push an element on the stack
+  public void push(T elem) {
+<span class="fc" id="L32">    list.addLast(elem);</span>
+<span class="fc" id="L33">  }</span>
+
+  // Pop an element off the stack
+  // Throws an error is the stack is empty
+  public T pop() {
+<span class="fc bfc" id="L38" title="All 2 branches covered.">    if (isEmpty()) throw new java.util.EmptyStackException();</span>
+<span class="fc" id="L39">    return list.removeLast();</span>
+  }
+
+  // Peek the top of the stack without removing an element
+  // Throws an exception if the stack is empty
+  public T peek() {
+<span class="fc bfc" id="L45" title="All 2 branches covered.">    if (isEmpty()) throw new java.util.EmptyStackException();</span>
+<span class="fc" id="L46">    return list.peekLast();</span>
+  }
+
+  // Searches for the element starting from top of the stack
+  // Returns -1 if the element is not present in the stack
+  public int search(T elem) {
+<span class="nc" id="L52">    return list.lastIndexOf(elem);</span>
+  }
+
+  // Allow users to iterate through the stack using an iterator
+  @Override
+  public java.util.Iterator&lt;T&gt; iterator() {
+<span class="nc" id="L58">    return list.iterator();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

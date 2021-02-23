@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinimumWeightPerfectMatching.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.dp</a> &gt; <span class="el_source">MinimumWeightPerfectMatching.java</span></div><h1>MinimumWeightPerfectMatching.java</h1><pre class="source lang-java linenums">/**
+ * Implementation of the Minimum Weight Perfect Matching (MWPM) problem. In this problem you are
+ * given a distance matrix which gives the distance from each node to every other node, and you want
+ * to pair up all the nodes to one another minimizing the overall cost.
+ *
+ * &lt;p&gt;Time Complexity: O(n^2 * 2^n)
+ *
+ * @author William Fiset
+ */
+package com.williamfiset.algorithms.dp;
+
+import java.awt.geom.*;
+import java.util.*;
+
+public class MinimumWeightPerfectMatching {
+
+  // Inputs
+  private final int n;
+  private double[][] cost;
+
+  // Internal
+  private boolean solved;
+
+  // Outputs
+  private double minWeightCost;
+  private int[] matching;
+
+  // The cost matrix should be a symmetric (i.e cost[i][j] = cost[j][i])
+<span class="fc" id="L29">  public MinimumWeightPerfectMatching(double[][] cost) {</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">    if (cost == null) throw new IllegalArgumentException(&quot;Input cannot be null&quot;);</span>
+<span class="fc" id="L31">    n = cost.length;</span>
+<span class="pc bpc" id="L32" title="1 of 2 branches missed.">    if (n == 0) throw new IllegalArgumentException(&quot;Matrix size is zero&quot;);</span>
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">    if (n % 2 != 0)</span>
+<span class="nc" id="L34">      throw new IllegalArgumentException(&quot;Matrix has an odd size, no perfect matching exists.&quot;);</span>
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">    if (n &gt; 32)</span>
+<span class="nc" id="L36">      throw new IllegalArgumentException(</span>
+          &quot;Matrix too large! A matrix that size for the MWPM problem with a time complexity of&quot;
+              + &quot;O(n^2*2^n) requires way too much computation and memory for a modern home computer.&quot;);
+<span class="fc" id="L39">    this.cost = cost;</span>
+<span class="fc" id="L40">  }</span>
+
+  public double getMinWeightCost() {
+<span class="fc" id="L43">    solve();</span>
+<span class="fc" id="L44">    return minWeightCost;</span>
+  }
+
+  /**
+   * Get the minimum weight cost matching. The matching is returned as an array where the nodes at
+   * index 2*i and 2*i+1 form a matched pair. For example, nodes at indexes (0, 1) are a pair, (2,
+   * 3) are another pair, etc...
+   *
+   * &lt;p&gt;How to iterate over the pairs:
+   *
+   * &lt;pre&gt;{@code
+   * MinimumWeightPerfectMatching mwpm = ...
+   * int[] matching = mwpm.getMinWeightCostMatching();
+   * for (int i = 0; i &lt; matching.length / 2; i++) {
+   *   int node1 = matching[2*i];
+   *   int node2 = matching[2*i+1];
+   *   // Do something with the matched pair (node1, node2)
+   * }
+   * }&lt;/pre&gt;
+   */
+  public int[] getMinWeightCostMatching() {
+<span class="fc" id="L65">    solve();</span>
+<span class="fc" id="L66">    return matching;</span>
+  }
+
+  public void solve() {
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    if (solved) return;</span>
+
+<span class="fc" id="L72">    final int END_STATE = (1 &lt;&lt; n) - 1;</span>
+
+    // The DP state is encoded as a bitmask where the i'th bit is flipped on if the i'th node is
+    // included in the state. Encoding the state this way allows us to compactly represent selecting
+    // a subset of the nodes present in the matching. Furthermore, it allows using the '&amp;' binary
+    // operator to compare states to see if they overlap and the '|' operator to combine states.
+<span class="fc" id="L78">    Double[] dp = new Double[1 &lt;&lt; n];</span>
+
+    // Memo table to save the history of the chosen states. This table is used to reconstruct the
+    // chosen pairs of nodes after the algorithm has executed.
+<span class="fc" id="L82">    int[] history = new int[1 &lt;&lt; n];</span>
+
+    // Singleton pair states with only two nodes are the building blocks of this algorithm. Every
+    // iteration, we try to add singleton pairs to previous states to construct a larger matching.
+<span class="fc" id="L86">    final int numPairs = (n * (n + 1)) / 2;</span>
+<span class="fc" id="L87">    int[] pairStates = new int[numPairs];</span>
+<span class="fc" id="L88">    double[] pairCost = new double[numPairs];</span>
+
+<span class="fc bfc" id="L90" title="All 2 branches covered.">    for (int i = 0, k = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">      for (int j = i + 1; j &lt; n; j++, k++) {</span>
+<span class="fc" id="L92">        int state = (1 &lt;&lt; i) | (1 &lt;&lt; j);</span>
+<span class="fc" id="L93">        dp[state] = cost[i][j];</span>
+<span class="fc" id="L94">        pairStates[k] = state;</span>
+<span class="fc" id="L95">        pairCost[k] = cost[i][j];</span>
+      }
+    }
+
+<span class="fc bfc" id="L99" title="All 2 branches covered.">    for (int state = 0; state &lt; (1 &lt;&lt; n); state++) {</span>
+      // A cost of null means the previous state does not exist.
+<span class="fc bfc" id="L101" title="All 2 branches covered.">      if (dp[state] == null) continue;</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">      for (int i = 0; i &lt; numPairs; i++) {</span>
+<span class="fc" id="L103">        int pair = pairStates[i];</span>
+        // Ignore states which overlap
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if ((state &amp; pair) != 0) continue;</span>
+
+<span class="fc" id="L107">        int newState = state | pair;</span>
+<span class="fc" id="L108">        double newCost = dp[state] + pairCost[i];</span>
+<span class="fc bfc" id="L109" title="All 4 branches covered.">        if (dp[newState] == null || newCost &lt; dp[newState]) {</span>
+<span class="fc" id="L110">          dp[newState] = newCost;</span>
+          // Save the fact that we went from 'state' -&gt; 'newState'. From this we will be able to
+          // reconstruct which pairs of nodes were taken by looking at 'state' xor 'newState' which
+          // should give us the binary representation (state) of the pair used.
+<span class="fc" id="L114">          history[newState] = state;</span>
+        }
+      }
+    }
+
+    // Reconstruct the matching of pairs of nodes.
+<span class="fc" id="L120">    matching = new int[n];</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">    for (int i = 0, state = END_STATE; state != 0; state = history[state]) {</span>
+<span class="fc" id="L122">      int pairUsed = state ^ history[state];</span>
+<span class="fc" id="L123">      matching[i++] = getBitPosition(Integer.lowestOneBit(pairUsed));</span>
+<span class="fc" id="L124">      matching[i++] = getBitPosition(Integer.highestOneBit(pairUsed));</span>
+    }
+
+<span class="fc" id="L127">    minWeightCost = dp[END_STATE];</span>
+<span class="fc" id="L128">    solved = true;</span>
+<span class="fc" id="L129">  }</span>
+
+  // Gets the zero base index position of the 1 bit in 'k'
+  private int getBitPosition(int k) {
+<span class="fc" id="L133">    int count = -1;</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">    while (k &gt; 0) {</span>
+<span class="fc" id="L135">      count++;</span>
+<span class="fc" id="L136">      k &gt;&gt;= 1;</span>
+    }
+<span class="fc" id="L138">    return count;</span>
+  }
+
+  /* Example */
+
+  public static void main(String[] args) {
+<span class="nc" id="L144">    int n = 18;</span>
+<span class="nc" id="L145">    List&lt;Point2D&gt; pts = new ArrayList&lt;&gt;();</span>
+
+    // Generate points on a 2D plane which will produce a unique answer
+<span class="nc bnc" id="L148" title="All 2 branches missed.">    for (int i = 0; i &lt; n / 2; i++) {</span>
+<span class="nc" id="L149">      pts.add(new Point2D.Double(2 * i, 0));</span>
+<span class="nc" id="L150">      pts.add(new Point2D.Double(2 * i, 1));</span>
+    }
+<span class="nc" id="L152">    Collections.shuffle(pts);</span>
+
+<span class="nc" id="L154">    double[][] cost = new double[n][n];</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L156" title="All 2 branches missed.">      for (int j = 0; j &lt; n; j++) {</span>
+<span class="nc" id="L157">        cost[i][j] = pts.get(i).distance(pts.get(j));</span>
+      }
+    }
+
+<span class="nc" id="L161">    MinimumWeightPerfectMatching mwpm = new MinimumWeightPerfectMatching(cost);</span>
+<span class="nc" id="L162">    double minCost = mwpm.getMinWeightCost();</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">    if (minCost != n / 2) {</span>
+<span class="nc" id="L164">      System.out.printf(&quot;MWPM cost is wrong! Got: %.5f But wanted: %d\n&quot;, minCost, n / 2);</span>
+    } else {
+<span class="nc" id="L166">      System.out.printf(&quot;MWPM is: %.5f\n&quot;, minCost);</span>
+    }
+
+<span class="nc" id="L169">    int[] matching = mwpm.getMinWeightCostMatching();</span>
+<span class="nc bnc" id="L170" title="All 2 branches missed.">    for (int i = 0; i &lt; matching.length / 2; i++) {</span>
+<span class="nc" id="L171">      int ii = matching[2 * i];</span>
+<span class="nc" id="L172">      int jj = matching[2 * i + 1];</span>
+<span class="nc" id="L173">      System.out.printf(</span>
+          &quot;(%d, %d) &lt;-&gt; (%d, %d)\n&quot;,
+<span class="nc" id="L175">          (int) pts.get(ii).getX(),</span>
+<span class="nc" id="L176">          (int) pts.get(ii).getY(),</span>
+<span class="nc" id="L177">          (int) pts.get(jj).getX(),</span>
+<span class="nc" id="L178">          (int) pts.get(jj).getY());</span>
+    }
+<span class="nc" id="L180">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

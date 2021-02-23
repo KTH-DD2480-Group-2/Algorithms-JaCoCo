@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Combinations.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.other</a> &gt; <span class="el_source">Combinations.java</span></div><h1>Combinations.java</h1><pre class="source lang-java linenums">/**
+ * Here we present two methods (recursive and iterative) of generating all the combinations of a set
+ * by choosing only r of n elements.
+ *
+ * &lt;p&gt;Time Complexity: O( n choose r )
+ *
+ * @author William Fiset, Micah Stairs
+ */
+package com.williamfiset.algorithms.other;
+
+<span class="nc" id="L11">public class Combinations {</span>
+
+  // This method finds all the combinations of size r in a set
+  public static void combinationsChooseR(int[] set, int r) {
+
+<span class="nc bnc" id="L16" title="All 2 branches missed.">    if (r &lt; 0) return;</span>
+<span class="nc bnc" id="L17" title="All 2 branches missed.">    if (set == null) return;</span>
+
+<span class="nc" id="L19">    boolean[] used = new boolean[set.length];</span>
+<span class="nc" id="L20">    combinations(set, r, 0, used);</span>
+<span class="nc" id="L21">  }</span>
+
+  // To find all the combinations of size r we need to recurse until we have
+  // selected r elements (aka r = 0), otherwise if r != 0 then we need to select
+  // an element which is found after the position of our last selected element
+  private static void combinations(int[] set, int r, int at, boolean[] used) {
+
+<span class="nc" id="L28">    final int N = set.length;</span>
+
+    // Return early if there are more elements left to select than what is available.
+<span class="nc" id="L31">    int elementsLeftToPick = N - at;</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">    if (elementsLeftToPick &lt; r) return;</span>
+
+    // We selected 'r' elements so we found a valid subset!
+<span class="nc bnc" id="L35" title="All 2 branches missed.">    if (r == 0) {</span>
+
+<span class="nc" id="L37">      System.out.print(&quot;{ &quot;);</span>
+<span class="nc bnc" id="L38" title="All 4 branches missed.">      for (int i = 0; i &lt; N; i++) if (used[i]) System.out.print(set[i] + &quot; &quot;);</span>
+<span class="nc" id="L39">      System.out.println(&quot;}&quot;);</span>
+
+    } else {
+
+<span class="nc bnc" id="L43" title="All 2 branches missed.">      for (int i = at; i &lt; N; i++) {</span>
+
+        // Try including this element
+<span class="nc" id="L46">        used[i] = true;</span>
+
+<span class="nc" id="L48">        combinations(set, r - 1, i + 1, used);</span>
+
+        // Backtrack and try the instance where we did not include this element
+<span class="nc" id="L51">        used[i] = false;</span>
+      }
+    }
+<span class="nc" id="L54">  }</span>
+
+  // Use this method in combination with a do while loop to generate all the combinations
+  // of a set choosing r elements in a iterative fashion. This method returns
+  // false once the last combination has been generated.
+  // NOTE: Originally the selection needs to be initialized to {0,1,2,3 ... r-1}
+  public static boolean nextCombination(int[] selection, int N, int r) {
+<span class="nc bnc" id="L61" title="All 2 branches missed.">    if (r &gt; N) throw new IllegalArgumentException(&quot;r must be &lt;= N&quot;);</span>
+<span class="nc" id="L62">    int i = r - 1;</span>
+<span class="nc bnc" id="L63" title="All 4 branches missed.">    while (selection[i] == N - r + i) if (--i &lt; 0) return false;</span>
+<span class="nc" id="L64">    selection[i]++;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    for (int j = i + 1; j &lt; r; j++) selection[j] = selection[i] + j - i;</span>
+<span class="nc" id="L66">    return true;</span>
+  }
+
+  public static void main(String[] args) {
+
+    // Recursive approach
+<span class="nc" id="L72">    int R = 3;</span>
+<span class="nc" id="L73">    int[] set = {1, 2, 3, 4, 5};</span>
+<span class="nc" id="L74">    combinationsChooseR(set, R);</span>
+    // prints:
+    // { 1 2 3 }
+    // { 1 2 4 }
+    // { 1 2 5 }
+    // { 1 3 4 }
+    // { 1 3 5 }
+    // { 1 4 5 }
+    // { 2 3 4 }
+    // { 2 3 5 }
+    // { 2 4 5 }
+    // { 3 4 5 }
+
+    // Suppose we want to select all combinations of colors where R = 3
+<span class="nc" id="L88">    String[] colors = {&quot;red&quot;, &quot;purple&quot;, &quot;green&quot;, &quot;yellow&quot;, &quot;blue&quot;, &quot;pink&quot;};</span>
+<span class="nc" id="L89">    R = 3;</span>
+
+    // Initialize the selection to be {0, 1, ... , R-1}
+<span class="nc" id="L92">    int[] selection = {0, 1, 2};</span>
+    do {
+
+      // Print each combination
+<span class="nc bnc" id="L96" title="All 2 branches missed.">      for (int index : selection) System.out.print(colors[index] + &quot; &quot;);</span>
+<span class="nc" id="L97">      System.out.println();</span>
+
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    } while (nextCombination(selection, colors.length, R));</span>
+    // prints:
+    // red purple green
+    // red purple yellow
+    // red purple blue
+    // red purple pink
+    // red green yellow
+    // red green blue
+    // red green pink
+    // red yellow blue
+    // red yellow pink
+    // red blue pink
+    // purple green yellow
+    // purple green blue
+    // purple green pink
+    // purple yellow blue
+    // purple yellow pink
+    // purple blue pink
+    // green yellow blue
+    // green yellow pink
+    // green blue pink
+    // yellow blue pink
+
+<span class="nc" id="L122">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,544 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GenericSegmentTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.segmenttree</a> &gt; <span class="el_source">GenericSegmentTree.java</span></div><h1>GenericSegmentTree.java</h1><pre class="source lang-java linenums">/**
+ * A generic segment tree implementation that supports several range update and aggregation
+ * functions.
+ *
+ * &lt;p&gt;Run with: ./gradlew run -Palgorithm=datastructures.segmenttree.GenericSegmentTree
+ *
+ * &lt;p&gt;Several thanks to cp-algorithms for their great article on segment trees:
+ * https://cp-algorithms.com/data_structures/segment_tree.html
+ *
+ * &lt;p&gt;NOTE: This file is still a WIP
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.segmenttree;
+
+import java.util.function.BinaryOperator;
+
+public class GenericSegmentTree {
+
+  // The type of segment combination function to use
+<span class="fc" id="L21">  public static enum SegmentCombinationFn {</span>
+<span class="fc" id="L22">    SUM,</span>
+<span class="fc" id="L23">    MIN,</span>
+<span class="fc" id="L24">    MAX,</span>
+<span class="fc" id="L25">    GCD,</span>
+<span class="fc" id="L26">    PRODUCT</span>
+  }
+
+  // When updating the value of a specific index position, or a range of values,
+  // modify the affected values using the following function:
+<span class="fc" id="L31">  public static enum RangeUpdateFn {</span>
+    // When a range update is issued, assign all the values in the range [l, r] to be `x`
+<span class="fc" id="L33">    ASSIGN,</span>
+    // When a range update is issued, add a value of `x` to all the elements in the range [l, r]
+<span class="fc" id="L35">    ADDITION,</span>
+    // When a range update is issued, multiply all elements in the range [l, r] by a value of `x`
+<span class="fc" id="L37">    MULTIPLICATION</span>
+  }
+
+  // The number of elements in the original input values array.
+  private int n;
+
+  // The segment tree represented as a binary tree of ranges where t[0] is the
+  // root node and the left and right children of node i are i*2+1 and i*2+2.
+  private Long[] t;
+
+  // The delta values associates with each segment. Used for lazy propagation
+  // when doing range updates.
+  private Long[] lazy;
+
+  // The chosen range combination function
+  private BinaryOperator&lt;Long&gt; combinationFn;
+
+  private interface Ruf {
+    // base = the existing value
+    // tl, tr = the index value of the left/right endpoints, i.e: [tl, tr]
+    // delta = the delta value
+    // TODO(william): reorder to be base, delta, tl, tr
+    Long apply(Long base, long tl, long tr, Long delta);
+  }
+
+  // The Range Update Function (RUF) that chooses how a lazy delta value is
+  // applied to a segment.
+  private Ruf ruf;
+
+  // The Lazy Range Update Function (LRUF) associated with the RUF. How you
+  // propagate the lazy delta values is sometimes different than how you apply
+  // them to the current segment (but most of the time the RUF = LRUF).
+  private Ruf lruf;
+
+  private long safeSum(Long a, Long b) {
+<span class="fc bfc" id="L72" title="All 2 branches covered.">    if (a == null) a = 0L;</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">    if (b == null) b = 0L;</span>
+<span class="fc" id="L74">    return a + b;</span>
+  }
+
+  private Long safeMul(Long a, Long b) {
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    if (a == null) a = 1L;</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">    if (b == null) b = 1L;</span>
+<span class="fc" id="L80">    return a * b;</span>
+  }
+
+  private Long safeMin(Long a, Long b) {
+<span class="fc bfc" id="L84" title="All 2 branches covered.">    if (a == null) return b;</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    if (b == null) return a;</span>
+<span class="fc" id="L86">    return Math.min(a, b);</span>
+  }
+
+  private Long safeMax(Long a, Long b) {
+<span class="fc bfc" id="L90" title="All 2 branches covered.">    if (a == null) return b;</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">    if (b == null) return a;</span>
+<span class="fc" id="L92">    return Math.max(a, b);</span>
+  }
+
+<span class="fc" id="L95">  private BinaryOperator&lt;Long&gt; sumCombinationFn = (a, b) -&gt; safeSum(a, b);</span>
+<span class="fc" id="L96">  private BinaryOperator&lt;Long&gt; minCombinationFn = (a, b) -&gt; safeMin(a, b);</span>
+<span class="fc" id="L97">  private BinaryOperator&lt;Long&gt; maxCombinationFn = (a, b) -&gt; safeMax(a, b);</span>
+<span class="pc" id="L98">  private BinaryOperator&lt;Long&gt; productCombinationFn = (a, b) -&gt; safeMul(a, b);</span>
+<span class="fc" id="L99">  private BinaryOperator&lt;Long&gt; gcdCombinationFn =</span>
+      (a, b) -&gt; {
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        if (a == null) return b;</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (b == null) return a;</span>
+<span class="fc" id="L103">        long gcd = a;</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        while (b != 0) {</span>
+<span class="fc" id="L105">          gcd = b;</span>
+<span class="fc" id="L106">          b = a % b;</span>
+<span class="fc" id="L107">          a = gcd;</span>
+        }
+<span class="fc" id="L109">        return Math.abs(gcd);</span>
+      };
+
+  // TODO(william): Document the justification for each function below
+
+  // Range update functions
+<span class="fc" id="L115">  private Ruf minQuerySumUpdate = (b, tl, tr, d) -&gt; safeSum(b, d);</span>
+<span class="fc" id="L116">  private Ruf lminQuerySumUpdate = (b, tl, tr, d) -&gt; safeSum(b, d);</span>
+
+  // TODO(issue/208): Can negative multiplication updates be supported?
+<span class="pc" id="L119">  private Ruf minQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+<span class="pc" id="L120">  private Ruf lminQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+
+<span class="fc" id="L122">  private Ruf minQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+<span class="fc" id="L123">  private Ruf lminQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+
+<span class="fc" id="L125">  private Ruf maxQuerySumUpdate = (b, tl, tr, d) -&gt; safeSum(b, d);</span>
+<span class="fc" id="L126">  private Ruf lmaxQuerySumUpdate = (b, tl, tr, d) -&gt; safeSum(b, d);</span>
+
+  // TODO(issue/208): Can negative multiplication updates be supported?
+<span class="pc" id="L129">  private Ruf maxQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+<span class="pc" id="L130">  private Ruf lmaxQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+
+<span class="fc" id="L132">  private Ruf maxQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+<span class="fc" id="L133">  private Ruf lmaxQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+
+<span class="fc" id="L135">  private Ruf sumQuerySumUpdate = (b, tl, tr, d) -&gt; b + (tr - tl + 1) * d;</span>
+<span class="fc" id="L136">  private Ruf lsumQuerySumUpdate = (b, tl, tr, d) -&gt; safeSum(b, d);</span>
+
+<span class="fc" id="L138">  private Ruf sumQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+<span class="fc" id="L139">  private Ruf lsumQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+
+<span class="fc" id="L141">  private Ruf sumQueryAssignUpdate = (b, tl, tr, d) -&gt; (tr - tl + 1) * d;</span>
+<span class="fc" id="L142">  private Ruf lsumQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+
+  // TODO(william): confirm this cannot be supported? Can we maintain additional
+  // information to make it possible?
+<span class="pc" id="L146">  private Ruf gcdQuerySumUpdate = (b, tl, tr, d) -&gt; null;</span>
+<span class="pc" id="L147">  private Ruf lgcdQuerySumUpdate = (b, tl, tr, d) -&gt; null;</span>
+
+<span class="fc" id="L149">  private Ruf gcdQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+<span class="fc" id="L150">  private Ruf lgcdQueryMulUpdate = (b, tl, tr, d) -&gt; safeMul(b, d);</span>
+
+<span class="fc" id="L152">  private Ruf gcdQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+<span class="fc" id="L153">  private Ruf lgcdQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+
+<span class="pc" id="L155">  private Ruf productQuerySumUpdate = (b, tl, tr, d) -&gt; b + (long) (Math.pow(d, (tr - tl + 1)));</span>
+<span class="pc" id="L156">  private Ruf lproductQuerySumUpdate = (b, tl, tr, d) -&gt; safeSum(b, d);</span>
+
+<span class="pc" id="L158">  private Ruf productQueryMulUpdate = (b, tl, tr, d) -&gt; b * (long) (Math.pow(d, (tr - tl + 1)));</span>
+<span class="fc" id="L159">  private Ruf lproductQueryMulUpdate =</span>
+<span class="nc" id="L160">      (b, tl, tr, d) -&gt; safeMul(b, d); // safeMul(b, (long)(Math.pow(d, (tr - tl + 1))));</span>
+
+<span class="pc" id="L162">  private Ruf productQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+<span class="pc" id="L163">  private Ruf lproductQueryAssignUpdate = (b, tl, tr, d) -&gt; d;</span>
+
+  public GenericSegmentTree(
+      long[] values,
+      SegmentCombinationFn segmentCombinationFunction,
+<span class="fc" id="L168">      RangeUpdateFn rangeUpdateFunction) {</span>
+<span class="pc bpc" id="L169" title="1 of 2 branches missed.">    if (values == null) {</span>
+<span class="nc" id="L170">      throw new IllegalArgumentException(&quot;Segment tree values cannot be null.&quot;);</span>
+    }
+<span class="pc bpc" id="L172" title="1 of 2 branches missed.">    if (segmentCombinationFunction == null) {</span>
+<span class="nc" id="L173">      throw new IllegalArgumentException(&quot;Please specify a valid segment combination function.&quot;);</span>
+    }
+<span class="pc bpc" id="L175" title="1 of 2 branches missed.">    if (rangeUpdateFunction == null) {</span>
+<span class="nc" id="L176">      throw new IllegalArgumentException(&quot;Please specify a valid range update function.&quot;);</span>
+    }
+<span class="fc" id="L178">    n = values.length;</span>
+
+    // The size of the segment tree `t`
+    //
+    // TODO(william): Investigate to reduce this space. There are only 2n-1 segments, so we should
+    // be able to reduce the space, but may need to reorganize the tree/queries. One idea is to use
+    // the Eulerian tour structure of the tree to densely pack the segments.
+<span class="fc" id="L185">    int N = 4 * n;</span>
+
+<span class="fc" id="L187">    t = new Long[N];</span>
+<span class="fc" id="L188">    lazy = new Long[N];</span>
+
+    // Select the specified combination function
+<span class="fc bfc" id="L191" title="All 2 branches covered.">    if (segmentCombinationFunction == SegmentCombinationFn.SUM) {</span>
+<span class="fc" id="L192">      combinationFn = sumCombinationFn;</span>
+<span class="fc bfc" id="L193" title="All 2 branches covered.">      if (rangeUpdateFunction == RangeUpdateFn.ADDITION) {</span>
+<span class="fc" id="L194">        ruf = sumQuerySumUpdate;</span>
+<span class="fc" id="L195">        lruf = lsumQuerySumUpdate;</span>
+<span class="fc bfc" id="L196" title="All 2 branches covered.">      } else if (rangeUpdateFunction == RangeUpdateFn.ASSIGN) {</span>
+<span class="fc" id="L197">        ruf = sumQueryAssignUpdate;</span>
+<span class="fc" id="L198">        lruf = lsumQueryAssignUpdate;</span>
+<span class="pc bpc" id="L199" title="1 of 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.MULTIPLICATION) {</span>
+<span class="fc" id="L200">        ruf = sumQueryMulUpdate;</span>
+<span class="fc" id="L201">        lruf = lsumQueryMulUpdate;</span>
+      }
+<span class="fc bfc" id="L203" title="All 2 branches covered.">    } else if (segmentCombinationFunction == SegmentCombinationFn.MIN) {</span>
+<span class="fc" id="L204">      combinationFn = minCombinationFn;</span>
+<span class="fc bfc" id="L205" title="All 2 branches covered.">      if (rangeUpdateFunction == RangeUpdateFn.ADDITION) {</span>
+<span class="fc" id="L206">        ruf = minQuerySumUpdate;</span>
+<span class="fc" id="L207">        lruf = lminQuerySumUpdate;</span>
+<span class="pc bpc" id="L208" title="1 of 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.ASSIGN) {</span>
+<span class="fc" id="L209">        ruf = minQueryAssignUpdate;</span>
+<span class="fc" id="L210">        lruf = lminQueryAssignUpdate;</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.MULTIPLICATION) {</span>
+<span class="nc" id="L212">        ruf = minQueryMulUpdate;</span>
+<span class="nc" id="L213">        lruf = lminQueryMulUpdate;</span>
+      }
+<span class="fc bfc" id="L215" title="All 2 branches covered.">    } else if (segmentCombinationFunction == SegmentCombinationFn.MAX) {</span>
+<span class="fc" id="L216">      combinationFn = maxCombinationFn;</span>
+<span class="fc bfc" id="L217" title="All 2 branches covered.">      if (rangeUpdateFunction == RangeUpdateFn.ADDITION) {</span>
+<span class="fc" id="L218">        ruf = maxQuerySumUpdate;</span>
+<span class="fc" id="L219">        lruf = lmaxQuerySumUpdate;</span>
+<span class="pc bpc" id="L220" title="1 of 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.ASSIGN) {</span>
+<span class="fc" id="L221">        ruf = maxQueryAssignUpdate;</span>
+<span class="fc" id="L222">        lruf = lmaxQueryAssignUpdate;</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.MULTIPLICATION) {</span>
+<span class="nc" id="L224">        ruf = maxQueryMulUpdate;</span>
+<span class="nc" id="L225">        lruf = lmaxQueryMulUpdate;</span>
+      }
+<span class="pc bpc" id="L227" title="1 of 2 branches missed.">    } else if (segmentCombinationFunction == SegmentCombinationFn.GCD) {</span>
+<span class="fc" id="L228">      combinationFn = gcdCombinationFn;</span>
+<span class="pc bpc" id="L229" title="1 of 2 branches missed.">      if (rangeUpdateFunction == RangeUpdateFn.ADDITION) {</span>
+<span class="nc" id="L230">        ruf = gcdQuerySumUpdate;</span>
+<span class="nc" id="L231">        lruf = lgcdQuerySumUpdate;</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">      } else if (rangeUpdateFunction == RangeUpdateFn.ASSIGN) {</span>
+<span class="fc" id="L233">        ruf = gcdQueryAssignUpdate;</span>
+<span class="fc" id="L234">        lruf = lgcdQueryAssignUpdate;</span>
+<span class="pc bpc" id="L235" title="1 of 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.MULTIPLICATION) {</span>
+<span class="fc" id="L236">        ruf = gcdQueryMulUpdate;</span>
+<span class="fc" id="L237">        lruf = lgcdQueryMulUpdate;</span>
+      }
+<span class="nc bnc" id="L239" title="All 2 branches missed.">    } else if (segmentCombinationFunction == SegmentCombinationFn.PRODUCT) {</span>
+<span class="nc" id="L240">      combinationFn = productCombinationFn;</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">      if (rangeUpdateFunction == RangeUpdateFn.ADDITION) {</span>
+<span class="nc" id="L242">        ruf = productQuerySumUpdate;</span>
+<span class="nc" id="L243">        lruf = lproductQuerySumUpdate;</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.ASSIGN) {</span>
+<span class="nc" id="L245">        ruf = productQueryAssignUpdate;</span>
+<span class="nc" id="L246">        lruf = lproductQueryAssignUpdate;</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">      } else if (rangeUpdateFunction == RangeUpdateFn.MULTIPLICATION) {</span>
+<span class="nc" id="L248">        ruf = productQueryMulUpdate;</span>
+<span class="nc" id="L249">        lruf = lproductQueryMulUpdate;</span>
+      }
+    } else {
+<span class="nc" id="L252">      throw new UnsupportedOperationException(</span>
+          &quot;Combination function not supported: &quot; + segmentCombinationFunction);
+    }
+
+<span class="fc" id="L256">    buildSegmentTree(0, 0, n - 1, values);</span>
+<span class="fc" id="L257">  }</span>
+
+  /**
+   * Builds a segment tree by starting with the leaf nodes and combining segment values on callback.
+   *
+   * @param i the index of the segment in the segment tree
+   * @param tl the left index (inclusive) of the segment range
+   * @param tr the right index (inclusive) of the segment range
+   * @param values the initial values array
+   */
+  private void buildSegmentTree(int i, int tl, int tr, long[] values) {
+<span class="fc bfc" id="L268" title="All 2 branches covered.">    if (tl == tr) {</span>
+<span class="fc" id="L269">      t[i] = values[tl];</span>
+<span class="fc" id="L270">      return;</span>
+    }
+<span class="fc" id="L272">    int tm = (tl + tr) / 2;</span>
+<span class="fc" id="L273">    buildSegmentTree(2 * i + 1, tl, tm, values);</span>
+<span class="fc" id="L274">    buildSegmentTree(2 * i + 2, tm + 1, tr, values);</span>
+
+<span class="fc" id="L276">    t[i] = combinationFn.apply(t[2 * i + 1], t[2 * i + 2]);</span>
+<span class="fc" id="L277">  }</span>
+
+  /**
+   * Returns the query of the range [l, r] on the original `values` array (+ any updates made to it)
+   *
+   * @param l the left endpoint of the range query (inclusive)
+   * @param r the right endpoint of the range query (inclusive)
+   */
+  public Long rangeQuery1(int l, int r) {
+<span class="fc" id="L286">    return rangeQuery1(0, 0, n - 1, l, r);</span>
+  }
+
+  /**
+   * Returns the range query value of the range [l, r]
+   *
+   * @param i the index of the current segment in the tree
+   * @param tl the left endpoint (inclusive) of the current segment
+   * @param tr the right endpoint (inclusive) of the current segment
+   * @param l the target left endpoint (inclusive) for the range query
+   * @param r the target right endpoint (inclusive) for the range query
+   */
+  private Long rangeQuery1(int i, int tl, int tr, int l, int r) {
+    // Different segment tree types have different base cases
+<span class="fc bfc" id="L300" title="All 2 branches covered.">    if (l &gt; r) {</span>
+<span class="fc" id="L301">      return null;</span>
+    }
+<span class="fc" id="L303">    propagate1(i, tl, tr);</span>
+<span class="fc bfc" id="L304" title="All 4 branches covered.">    if (tl == l &amp;&amp; tr == r) {</span>
+<span class="fc" id="L305">      return t[i];</span>
+    }
+<span class="fc" id="L307">    int tm = (tl + tr) / 2;</span>
+    // Instead of checking if [tl, tm] overlaps [l, r] and [tm+1, tr] overlaps
+    // [l, r], simply recurse on both segments and let the base case return the
+    // default value for invalid intervals.
+<span class="fc" id="L311">    return combinationFn.apply(</span>
+<span class="fc" id="L312">        rangeQuery1(2 * i + 1, tl, tm, l, Math.min(tm, r)),</span>
+<span class="fc" id="L313">        rangeQuery1(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r));</span>
+  }
+
+  // Apply the delta value to the current node and push it to the child segments
+  private void propagate1(int i, int tl, int tr) {
+<span class="fc bfc" id="L318" title="All 2 branches covered.">    if (lazy[i] != null) {</span>
+      // Apply the delta to the current segment.
+<span class="fc" id="L320">      t[i] = ruf.apply(t[i], tl, tr, lazy[i]);</span>
+      // Push the delta to left/right segments for non-leaf nodes
+<span class="fc" id="L322">      propagateLazy1(i, tl, tr, lazy[i]);</span>
+<span class="fc" id="L323">      lazy[i] = null;</span>
+    }
+<span class="fc" id="L325">  }</span>
+
+  private void propagateLazy1(int i, int tl, int tr, long delta) {
+    // Ignore leaf segments
+<span class="fc bfc" id="L329" title="All 2 branches covered.">    if (tl == tr) return;</span>
+<span class="fc" id="L330">    lazy[2 * i + 1] = lruf.apply(lazy[2 * i + 1], tl, tr, delta);</span>
+<span class="fc" id="L331">    lazy[2 * i + 2] = lruf.apply(lazy[2 * i + 2], tl, tr, delta);</span>
+<span class="fc" id="L332">  }</span>
+
+  public void rangeUpdate1(int l, int r, long x) {
+<span class="fc" id="L335">    rangeUpdate1(0, 0, n - 1, l, r, x);</span>
+<span class="fc" id="L336">  }</span>
+
+  private void rangeUpdate1(int i, int tl, int tr, int l, int r, long x) {
+<span class="fc" id="L339">    propagate1(i, tl, tr);</span>
+<span class="fc bfc" id="L340" title="All 2 branches covered.">    if (l &gt; r) {</span>
+<span class="fc" id="L341">      return;</span>
+    }
+
+<span class="fc bfc" id="L344" title="All 4 branches covered.">    if (tl == l &amp;&amp; tr == r) {</span>
+<span class="fc" id="L345">      t[i] = ruf.apply(t[i], tl, tr, x);</span>
+<span class="fc" id="L346">      propagateLazy1(i, tl, tr, x);</span>
+    } else {
+<span class="fc" id="L348">      int tm = (tl + tr) / 2;</span>
+      // Instead of checking if [tl, tm] overlaps [l, r] and [tm+1, tr] overlaps
+      // [l, r], simply recurse on both segments and let the base case disregard
+      // invalid intervals.
+<span class="fc" id="L352">      rangeUpdate1(2 * i + 1, tl, tm, l, Math.min(tm, r), x);</span>
+<span class="fc" id="L353">      rangeUpdate1(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r, x);</span>
+
+<span class="fc" id="L355">      t[i] = combinationFn.apply(t[2 * i + 1], t[2 * i + 2]);</span>
+    }
+<span class="fc" id="L357">  }</span>
+
+  // // Updates the value at index `i` in the original `values` array to be `newValue`.
+  // public void pointUpdate(int i, long newValue) {
+  //   pointUpdate(0, i, 0, n - 1, newValue);
+  // }
+
+  // /**
+  //  * Update a point value to a new value and update all affected segments, O(log(n))
+  //  *
+  //  * &lt;p&gt;Do this by performing a binary search to find the interval containing the point, then
+  // update
+  //  * the leaf segment with the new value, and re-compute all affected segment values on the
+  //  * callback.
+  //  *
+  //  * @param i the index of the current segment in the tree
+  //  * @param pos the target position to update
+  //  * @param tl the left segment endpoint (inclusive)
+  //  * @param tr the right segment endpoint (inclusive)
+  //  * @param newValue the new value to update
+  //  */
+  // private void pointUpdate(int i, int pos, int tl, int tr, long newValue) {
+  //   if (tl == tr) { // `tl == pos &amp;&amp; tr == pos` might be clearer
+  //     t[i] = newValue;
+  //     return;
+  //   }
+  //   int tm = (tl + tr) / 2;
+  //   if (pos &lt;= tm) {
+  //     // The point index `pos` is contained within the left segment [tl, tm]
+  //     pointUpdate(2 * i + 1, pos, tl, tm, newValue);
+  //   } else {
+  //     // The point index `pos` is contained within the right segment [tm+1, tr]
+  //     pointUpdate(2 * i + 2, pos, tm + 1, tr, newValue);
+  //   }
+  //   // Re-compute the segment value of the current segment on the callback
+  //   // t[i] = rangeUpdateFn.apply(t[2 * i + 1], t[2 * i + 2]);
+  //   t[i] = combinationFn.apply(t[2 * i + 1], t[2 * i + 2]);
+  // }
+
+  public void printDebugInfo() {
+<span class="nc" id="L397">    printDebugInfo(0, 0, n - 1);</span>
+<span class="nc" id="L398">    System.out.println();</span>
+<span class="nc" id="L399">  }</span>
+
+  private void printDebugInfo(int i, int tl, int tr) {
+<span class="nc" id="L402">    System.out.printf(&quot;[%d, %d], t[i] = %d, lazy[i] = %d\n&quot;, tl, tr, t[i], lazy[i]);</span>
+<span class="nc bnc" id="L403" title="All 2 branches missed.">    if (tl == tr) {</span>
+<span class="nc" id="L404">      return;</span>
+    }
+<span class="nc" id="L406">    int tm = (tl + tr) / 2;</span>
+<span class="nc" id="L407">    printDebugInfo(2 * i + 1, tl, tm);</span>
+<span class="nc" id="L408">    printDebugInfo(2 * i + 2, tm + 1, tr);</span>
+<span class="nc" id="L409">  }</span>
+
+  ////////////////////////////////////////////////////
+  //              Example usage:                    //
+  ////////////////////////////////////////////////////
+
+  public static void main(String[] args) {
+    // sumQuerySumUpdateExample();
+    // minQueryAssignUpdateExample();
+    // gcdQueryMulUpdateExample();
+    // gcdQueryAssignUpdateExample();
+<span class="nc" id="L420">    productQueryMulUpdateExample();</span>
+<span class="nc" id="L421">  }</span>
+
+  private static void productQueryMulUpdateExample() {
+    //        0, 1, 2, 3
+<span class="nc" id="L425">    long[] v = {3, 2, 2, 1};</span>
+<span class="nc" id="L426">    GenericSegmentTree st =</span>
+        new GenericSegmentTree(v, SegmentCombinationFn.PRODUCT, RangeUpdateFn.MULTIPLICATION);
+
+<span class="nc" id="L429">    int l = 0;</span>
+<span class="nc" id="L430">    int r = 3;</span>
+<span class="nc" id="L431">    long q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">    if (q != 12) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L433">    System.out.printf(&quot;The product between indeces [%d, %d] is: %d\n&quot;, l, r, q);</span>
+
+    // 3, 8, 8, 1
+    // 3 * 8 * 8 * 1 = 192
+<span class="nc" id="L437">    st.rangeUpdate1(1, 2, 4);</span>
+<span class="nc" id="L438">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L439" title="All 2 branches missed.">    if (q != 192) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L440">    System.out.printf(&quot;The product between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+
+    // 3, 8, 16, 2
+    // 3 * 8 * 16 * 2 = 768
+<span class="nc" id="L444">    st.rangeUpdate1(2, 3, 2);</span>
+<span class="nc" id="L445">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L446" title="All 2 branches missed.">    if (q != 768) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L447">    System.out.printf(&quot;The product between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+
+    // 12, 24, 24, 24, 48
+    // st.rangeUpdate1(2, 3, 24);
+    // l = 0;
+    // r = 4;
+    // q = st.rangeQuery1(l, r);
+    // if (q != 12) System.out.println(&quot;Error&quot;);
+    // System.out.printf(&quot;The product between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l,
+    // r));
+<span class="nc" id="L457">  }</span>
+
+  private static void gcdQueryMulUpdateExample() {
+    //           0,  1, 2, 3,  4
+<span class="nc" id="L461">    long[] v = {12, 24, 3, 4, -1};</span>
+<span class="nc" id="L462">    GenericSegmentTree st =</span>
+        new GenericSegmentTree(v, SegmentCombinationFn.GCD, RangeUpdateFn.MULTIPLICATION);
+
+<span class="nc" id="L465">    int l = 0;</span>
+<span class="nc" id="L466">    int r = 2;</span>
+<span class="nc" id="L467">    long q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L468" title="All 2 branches missed.">    if (q != 3) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L469">    System.out.printf(&quot;The gcd between indeces [%d, %d] is: %d\n&quot;, l, r, q);</span>
+<span class="nc" id="L470">    st.rangeUpdate1(2, 2, 2);</span>
+<span class="nc" id="L471">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">    if (q != 6) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L473">    System.out.printf(&quot;The gcd between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+
+<span class="nc" id="L475">    r = 1; // [l, r] = [0, 1]</span>
+<span class="nc" id="L476">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L477" title="All 2 branches missed.">    if (q != 12) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L478">    System.out.printf(&quot;The gcd between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+<span class="nc" id="L479">  }</span>
+
+  private static void gcdQueryAssignUpdateExample() {
+    //           0,  1, 2, 3,  4
+<span class="nc" id="L483">    long[] v = {12, 24, 3, 12, 48};</span>
+<span class="nc" id="L484">    GenericSegmentTree st =</span>
+        new GenericSegmentTree(v, SegmentCombinationFn.GCD, RangeUpdateFn.ASSIGN);
+
+<span class="nc" id="L487">    int l = 0;</span>
+<span class="nc" id="L488">    int r = 2;</span>
+<span class="nc" id="L489">    long q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">    if (q != 3) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L491">    System.out.printf(&quot;The gcd between indeces [%d, %d] is: %d\n&quot;, l, r, q);</span>
+
+    // 12, 24, 48, 12, 48
+<span class="nc" id="L494">    st.rangeUpdate1(2, 2, 48);</span>
+<span class="nc" id="L495">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L496" title="All 2 branches missed.">    if (q != 12) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L497">    System.out.printf(&quot;The gcd between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+
+    // 12, 24, 24, 24, 48
+<span class="nc" id="L500">    st.rangeUpdate1(2, 3, 24);</span>
+<span class="nc" id="L501">    l = 0;</span>
+<span class="nc" id="L502">    r = 4;</span>
+<span class="nc" id="L503">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">    if (q != 12) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L505">    System.out.printf(&quot;The gcd between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+<span class="nc" id="L506">  }</span>
+
+  private static void sumQuerySumUpdateExample() {
+    //          0, 1, 2, 3,  4
+<span class="nc" id="L510">    long[] v = {2, 1, 3, 4, -1};</span>
+<span class="nc" id="L511">    GenericSegmentTree st =</span>
+        new GenericSegmentTree(v, SegmentCombinationFn.SUM, RangeUpdateFn.ADDITION);
+
+<span class="nc" id="L514">    int l = 1;</span>
+<span class="nc" id="L515">    int r = 3;</span>
+<span class="nc" id="L516">    long q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L517" title="All 2 branches missed.">    if (q != 8) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L518">    System.out.printf(&quot;The sum between indeces [%d, %d] is: %d\n&quot;, l, r, q);</span>
+<span class="nc" id="L519">    st.rangeUpdate1(1, 3, 3);</span>
+<span class="nc" id="L520">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L521" title="All 2 branches missed.">    if (q != 17) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L522">    System.out.printf(&quot;The sum between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+<span class="nc" id="L523">  }</span>
+
+  private static void minQueryAssignUpdateExample() {
+    //          0, 1, 2, 3,  4
+<span class="nc" id="L527">    long[] v = {2, 1, 3, 4, -1};</span>
+<span class="nc" id="L528">    GenericSegmentTree st =</span>
+        new GenericSegmentTree(v, SegmentCombinationFn.MIN, RangeUpdateFn.ASSIGN);
+
+<span class="nc" id="L531">    int l = 1;</span>
+<span class="nc" id="L532">    int r = 3;</span>
+<span class="nc" id="L533">    long q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L534" title="All 2 branches missed.">    if (q != 1) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L535">    System.out.printf(&quot;The min between indeces [%d, %d] is: %d\n&quot;, l, r, q);</span>
+<span class="nc" id="L536">    st.rangeUpdate1(1, 3, 3);</span>
+<span class="nc" id="L537">    l = 0;</span>
+<span class="nc" id="L538">    r = 1;</span>
+<span class="nc" id="L539">    q = st.rangeQuery1(l, r);</span>
+<span class="nc bnc" id="L540" title="All 2 branches missed.">    if (q != 2) System.out.println(&quot;Error&quot;);</span>
+<span class="nc" id="L541">    System.out.printf(&quot;The min between indeces [%d, %d] is: %d\n&quot;, l, r, st.rangeQuery1(l, r));</span>
+<span class="nc" id="L542">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

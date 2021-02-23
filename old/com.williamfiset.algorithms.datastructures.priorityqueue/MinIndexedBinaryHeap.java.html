@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinIndexedBinaryHeap.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.priorityqueue</a> &gt; <span class="el_source">MinIndexedBinaryHeap.java</span></div><h1>MinIndexedBinaryHeap.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of an indexed binary heap priority queue.
+ *
+ * &lt;p&gt;This implementation supports arbitrary keys with comparable values. To use arbitrary keys
+ * (such as strings or objects) first map all your keys to the integer domain [0, N) where N is the
+ * number of keys you have and then use the mapping with this indexed priority queue.
+ *
+ * &lt;p&gt;As convention, I denote 'ki' as the index value in the domain [0, N) associated with key k,
+ * therefore: ki = map[k]
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.priorityqueue;
+
+public class MinIndexedBinaryHeap&lt;T extends Comparable&lt;T&gt;&gt; extends MinIndexedDHeap&lt;T&gt; {
+  public MinIndexedBinaryHeap(int maxSize) {
+<span class="fc" id="L17">    super(2, maxSize);</span>
+<span class="fc" id="L18">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

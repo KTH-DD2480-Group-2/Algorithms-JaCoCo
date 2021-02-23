@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SquareRootDecomposition.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.other</a> &gt; <span class="el_source">SquareRootDecomposition.java</span></div><h1>SquareRootDecomposition.java</h1><pre class="source lang-java linenums">/**
+ * Range queries in O(sqrt(n)) and point updates in O(1). Currently this implementation supports
+ * summing over the entries in the array, but it can be modified to support many different
+ * operations.
+ *
+ * &lt;p&gt;Time Complexity: Point update in O(1) and query in O(sqrt(n))
+ *
+ * @author Thomas Finn Lidbetter
+ */
+package com.williamfiset.algorithms.other;
+
+public class SquareRootDecomposition {
+
+  long[] arr, blocks;
+  int blockSize, nBlocks;
+
+  // Creates an empty range [0,n]
+<span class="nc" id="L18">  public SquareRootDecomposition(int size) {</span>
+
+<span class="nc" id="L20">    blockSize = (int) Math.sqrt(size);</span>
+<span class="nc" id="L21">    nBlocks = (size / blockSize) + 1;</span>
+<span class="nc" id="L22">    blocks = new long[nBlocks];</span>
+<span class="nc" id="L23">    arr = new long[size];</span>
+<span class="nc" id="L24">  }</span>
+
+  public SquareRootDecomposition(int[] values) {
+<span class="nc" id="L27">    this(values.length);</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">    for (int i = 0; i &lt; values.length; i++) set(i, values[i]);</span>
+<span class="nc" id="L29">  }</span>
+
+  public int blockID(int index) {
+<span class="nc" id="L32">    return index / blockSize;</span>
+  }
+
+  // Sets [index, index] = val
+  public void set(int index, int val) {
+<span class="nc" id="L37">    blocks[blockID(index)] -= arr[index];</span>
+<span class="nc" id="L38">    blocks[blockID(index)] += val;</span>
+<span class="nc" id="L39">    arr[index] = val;</span>
+<span class="nc" id="L40">  }</span>
+
+  // Get sum query from [lo, hi] in O(sqrt(n))
+  public long query(int lo, int hi) {
+
+<span class="nc" id="L45">    long sum = 0;</span>
+<span class="nc" id="L46">    int loId = blockID(lo);</span>
+<span class="nc" id="L47">    int hiId = blockID(hi);</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">    for (int i = loId + 1; i &lt; hiId; i++) sum += blocks[i];</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">    if (loId == hiId) {</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">      for (int i = lo; i &lt;= hi; i++) sum += arr[i];</span>
+<span class="nc" id="L52">      return sum;</span>
+    }
+
+<span class="nc" id="L55">    int loMax = (((lo / blockSize) + 1) * blockSize) - 1;</span>
+<span class="nc" id="L56">    int hiMin = (hi / blockSize) * blockSize;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">    for (int i = lo; i &lt;= loMax; i++) sum += arr[i];</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    for (int i = hiMin; i &lt;= hi; i++) sum += arr[i];</span>
+
+<span class="nc" id="L60">    return sum;</span>
+  }
+
+  // Square root decomposition range query example
+  public static void main(String[] args) {
+
+<span class="nc" id="L66">    int[] values = {1, 2, 3, 4, 5, 6, 7, 8, 9};</span>
+<span class="nc" id="L67">    SquareRootDecomposition range = new SquareRootDecomposition(values);</span>
+
+    // Prints: The sum from [0,8] is: 45
+<span class="nc" id="L70">    System.out.printf(&quot;The sum from [%d,%d] is: %d\n&quot;, 0, 8, range.query(0, 8));</span>
+
+    // Prints: The sum from [2,2] is: 3
+<span class="nc" id="L73">    System.out.printf(&quot;The sum from [%d,%d] is: %d\n&quot;, 2, 2, range.query(2, 2));</span>
+
+    // Prints: The sum from [3,4] is: 9
+<span class="nc" id="L76">    System.out.printf(&quot;The sum from [%d,%d] is: %d\n&quot;, 3, 4, range.query(3, 4));</span>
+
+    // Prints: The sum from [1,6] is: 27
+<span class="nc" id="L79">    System.out.printf(&quot;The sum from [%d,%d] is: %d\n&quot;, 1, 6, range.query(1, 6));</span>
+<span class="nc" id="L80">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

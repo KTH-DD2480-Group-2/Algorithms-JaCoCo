@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Line.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">Line.java</span></div><h1>Line.java</h1><pre class="source lang-java linenums">/**
+ * A custom infinite line class that provides additional functionality beyond Java's Line2D.
+ *
+ * @author Thomas Finn Lidbetter
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+import java.awt.geom.Point2D;
+
+public class Line {
+
+  // The internal representation of a line is
+  // in general form which is: ax + by = c
+  private double a, b, c;
+
+  // A very same epsilon value used as a threshold for double equality
+  private static final double EPS = 0.0000001;
+
+  // Construct a line given a line segment
+  public Line(Point2D p1, Point2D p2) {
+<span class="nc" id="L23">    this(p1.getX(), p1.getY(), p2.getX(), p2.getY());</span>
+<span class="nc" id="L24">  }</span>
+
+  // Construct a line given a line segment as (x1, y1), (x2, y2)
+<span class="nc" id="L27">  public Line(double x1, double y1, double x2, double y2) {</span>
+<span class="nc" id="L28">    a = y1 - y2;</span>
+<span class="nc" id="L29">    b = x2 - x1;</span>
+<span class="nc" id="L30">    c = x2 * y1 - x1 * y2;</span>
+<span class="nc" id="L31">    normalise();</span>
+<span class="nc" id="L32">  }</span>
+
+  // Constructs a line from a slope and a point
+  public static Line slopePointToLine(double slope, Point2D pt) {
+<span class="nc" id="L36">    Point2D p2 = null;</span>
+<span class="nc bnc" id="L37" title="All 4 branches missed.">    if (slope == Double.POSITIVE_INFINITY || slope == Double.NEGATIVE_INFINITY) {</span>
+<span class="nc" id="L38">      p2 = new Point2D.Double(pt.getX(), pt.getY() + 1);</span>
+    } else {
+<span class="nc" id="L40">      p2 = new Point2D.Double(pt.getX() + 1, pt.getY() + slope);</span>
+    }
+<span class="nc" id="L42">    return new Line(pt, p2);</span>
+  }
+
+  // Normalize the line in general form
+  public void normalise() {
+<span class="nc bnc" id="L47" title="All 2 branches missed.">    if (abs(b) &lt; EPS) {</span>
+<span class="nc" id="L48">      c /= a;</span>
+<span class="nc" id="L49">      a = 1;</span>
+<span class="nc" id="L50">      b = 0;</span>
+    } else {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">      a = (abs(a) &lt; EPS) ? 0 : a / b;</span>
+<span class="nc" id="L53">      c /= b;</span>
+<span class="nc" id="L54">      b = 1;</span>
+    }
+<span class="nc" id="L56">  }</span>
+
+  // Given a line segment this method finds the line which goes
+  // through the middle of the segment and cuts it in half.
+  public static Line getPerpBisector(double x1, double y1, double x2, double y2) {
+
+    // Find middle point of segment
+<span class="nc" id="L63">    Point2D middle = new Point2D.Double((x1 + x2) / 2.0, (y1 + y2) / 2.0);</span>
+
+    // The slope perpendicular to (y2-y1)/(x2-x1) is the negative
+    // reciprocal or -(x2-x1)/(y2-y1) = (x1-x2)/(y2-y1)
+<span class="nc" id="L67">    double perpSlope = (x1 - x2) / (y2 - y1);</span>
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">    if (abs(y2 - y1) &lt; EPS) perpSlope = Double.POSITIVE_INFINITY;</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">    else if (abs(x1 - x2) &lt; EPS) perpSlope = 0;</span>
+
+<span class="nc" id="L72">    return slopePointToLine(perpSlope, middle);</span>
+  }
+
+  // Finds the intersection point of two infinite lines
+  // and returns null if line1 and line2 are parallel
+  public static Point2D intersection(Line l1, Line l2) {
+
+<span class="nc" id="L79">    l1.normalise();</span>
+<span class="nc" id="L80">    l2.normalise();</span>
+
+    // Lines are parallel
+<span class="nc bnc" id="L83" title="All 4 branches missed.">    if (abs(l1.a - l2.a) &lt; EPS &amp;&amp; abs(l1.b - l2.b) &lt; EPS) return null;</span>
+
+<span class="nc" id="L85">    double x = Double.NaN, y = Double.NaN;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">    if (abs(l1.b) &lt; EPS) {</span>
+<span class="nc" id="L87">      x = l1.c / l1.a;</span>
+<span class="nc" id="L88">      y = (l2.c - l2.a * x) / l2.b;</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">    } else if (abs(l2.b) &lt; EPS) {</span>
+<span class="nc" id="L90">      x = l2.c / l2.a;</span>
+<span class="nc" id="L91">      y = (l1.c - l1.a * x) / l1.b;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">    } else if (abs(l1.a) &lt; EPS) {</span>
+<span class="nc" id="L93">      y = l1.c / l1.b;</span>
+<span class="nc" id="L94">      x = (l2.c - l2.b * y) / l2.a;</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">    } else if (abs(l2.a) &lt; EPS) {</span>
+<span class="nc" id="L96">      y = l2.c / l2.b;</span>
+<span class="nc" id="L97">      x = (l1.c - l1.b * y) / l1.a;</span>
+    } else {
+<span class="nc" id="L99">      x = (l1.c - l2.c) / (l1.a - l2.a);</span>
+<span class="nc" id="L100">      y = (l1.c - l1.a * x) / l1.b;</span>
+    }
+
+<span class="nc" id="L103">    return new Point2D.Double(x, y);</span>
+  }
+
+  // Get a printable representation of a this Line
+  @Override
+  public String toString() {
+<span class="nc" id="L109">    return a + &quot;x + &quot; + b + &quot;y = &quot; + c;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

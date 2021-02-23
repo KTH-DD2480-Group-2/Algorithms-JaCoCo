@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FloydWarshallSolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">FloydWarshallSolver.java</span></div><h1>FloydWarshallSolver.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of the Floyd-Warshall algorithm to find all pairs of
+ * shortest paths between nodes in a graph. We also demonstrate how to detect negative cycles and
+ * reconstruct the shortest path.
+ *
+ * &lt;p&gt;Time Complexity: O(V^3)
+ *
+ * @author Micah Stairs, William Fiset
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+// Import Java's special constants âˆž and -âˆž which behave
+// as you expect them to when you do arithmetic. For example,
+// âˆž + âˆž = âˆž, âˆž + x = âˆž, -âˆž + x = -âˆž and âˆž + -âˆž = Nan
+import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.POSITIVE_INFINITY;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class FloydWarshallSolver {
+
+  private int n;
+  private boolean solved;
+  private double[][] dp;
+  private Integer[][] next;
+
+  private static final int REACHES_NEGATIVE_CYCLE = -1;
+
+  /**
+   * As input, this class takes an adjacency matrix with edge weights between nodes, where
+   * POSITIVE_INFINITY is used to indicate that two nodes are not connected.
+   *
+   * &lt;p&gt;NOTE: Usually the diagonal of the adjacency matrix is all zeros (i.e. matrix[i][i] = 0 for
+   * all i) since there is typically no cost to go from a node to itself, but this may depend on
+   * your graph and the problem you are trying to solve.
+   */
+<span class="fc" id="L38">  public FloydWarshallSolver(double[][] matrix) {</span>
+<span class="fc" id="L39">    n = matrix.length;</span>
+<span class="fc" id="L40">    dp = new double[n][n];</span>
+<span class="fc" id="L41">    next = new Integer[n][n];</span>
+
+    // Copy input matrix and setup 'next' matrix for path reconstruction.
+<span class="fc bfc" id="L44" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">      for (int j = 0; j &lt; n; j++) {</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">        if (matrix[i][j] != POSITIVE_INFINITY) next[i][j] = j;</span>
+<span class="fc" id="L47">        dp[i][j] = matrix[i][j];</span>
+      }
+    }
+<span class="fc" id="L50">  }</span>
+
+  /**
+   * Runs Floyd-Warshall to compute the shortest distance between every pair of nodes.
+   *
+   * @return The solved All Pairs Shortest Path (APSP) matrix.
+   */
+  public double[][] getApspMatrix() {
+<span class="fc" id="L58">    solve();</span>
+<span class="fc" id="L59">    return dp;</span>
+  }
+
+  // Executes the Floyd-Warshall algorithm.
+  public void solve() {
+<span class="fc bfc" id="L64" title="All 2 branches covered.">    if (solved) return;</span>
+
+    // Compute all pairs shortest paths.
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    for (int k = 0; k &lt; n; k++) {</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (int j = 0; j &lt; n; j++) {</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">          if (dp[i][k] + dp[k][j] &lt; dp[i][j]) {</span>
+<span class="fc" id="L71">            dp[i][j] = dp[i][k] + dp[k][j];</span>
+<span class="fc" id="L72">            next[i][j] = next[i][k];</span>
+          }
+        }
+      }
+    }
+
+    // Identify negative cycles by propagating the value 'NEGATIVE_INFINITY'
+    // to every edge that is part of or reaches into a negative cycle.
+<span class="fc bfc" id="L80" title="All 2 branches covered.">    for (int k = 0; k &lt; n; k++)</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++)</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        for (int j = 0; j &lt; n; j++)</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">          if (dp[i][k] + dp[k][j] &lt; dp[i][j]) {</span>
+<span class="fc" id="L84">            dp[i][j] = NEGATIVE_INFINITY;</span>
+<span class="fc" id="L85">            next[i][j] = REACHES_NEGATIVE_CYCLE;</span>
+          }
+
+<span class="fc" id="L88">    solved = true;</span>
+<span class="fc" id="L89">  }</span>
+
+  /**
+   * Reconstructs the shortest path (of nodes) from 'start' to 'end' inclusive.
+   *
+   * @return An array of nodes indexes of the shortest path from 'start' to 'end'. If 'start' and
+   *     'end' are not connected return an empty array. If the shortest path from 'start' to 'end'
+   *     are reachable by a negative cycle return -1.
+   */
+  public List&lt;Integer&gt; reconstructShortestPath(int start, int end) {
+<span class="fc" id="L99">    solve();</span>
+<span class="fc" id="L100">    List&lt;Integer&gt; path = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">    if (dp[start][end] == POSITIVE_INFINITY) return path;</span>
+<span class="fc" id="L102">    int at = start;</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">    for (; at != end; at = next[at][end]) {</span>
+      // Return null since there are an infinite number of shortest paths.
+<span class="fc bfc" id="L105" title="All 2 branches covered.">      if (at == REACHES_NEGATIVE_CYCLE) return null;</span>
+<span class="fc" id="L106">      path.add(at);</span>
+    }
+    // Return null since there are an infinite number of shortest paths.
+<span class="fc bfc" id="L109" title="All 2 branches covered.">    if (next[at][end] == REACHES_NEGATIVE_CYCLE) return null;</span>
+<span class="fc" id="L110">    path.add(end);</span>
+<span class="fc" id="L111">    return path;</span>
+  }
+
+  /* Example usage. */
+
+  // Creates a graph with n nodes. The adjacency matrix is constructed
+  // such that the value of going from a node to itself is 0.
+  public static double[][] createGraph(int n) {
+<span class="nc" id="L119">    double[][] matrix = new double[n][n];</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L121">      java.util.Arrays.fill(matrix[i], POSITIVE_INFINITY);</span>
+<span class="nc" id="L122">      matrix[i][i] = 0;</span>
+    }
+<span class="nc" id="L124">    return matrix;</span>
+  }
+
+  public static void main(String[] args) {
+    // Construct graph.
+<span class="nc" id="L129">    int n = 7;</span>
+<span class="nc" id="L130">    double[][] m = createGraph(n);</span>
+
+    // Add some edge values.
+<span class="nc" id="L133">    m[0][1] = 2;</span>
+<span class="nc" id="L134">    m[0][2] = 5;</span>
+<span class="nc" id="L135">    m[0][6] = 10;</span>
+<span class="nc" id="L136">    m[1][2] = 2;</span>
+<span class="nc" id="L137">    m[1][4] = 11;</span>
+<span class="nc" id="L138">    m[2][6] = 2;</span>
+<span class="nc" id="L139">    m[6][5] = 11;</span>
+<span class="nc" id="L140">    m[4][5] = 1;</span>
+<span class="nc" id="L141">    m[5][4] = -2;</span>
+
+<span class="nc" id="L143">    FloydWarshallSolver solver = new FloydWarshallSolver(m);</span>
+<span class="nc" id="L144">    double[][] dist = solver.getApspMatrix();</span>
+
+<span class="nc bnc" id="L146" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++)</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">      for (int j = 0; j &lt; n; j++)</span>
+<span class="nc" id="L148">        System.out.printf(&quot;This shortest path from node %d to node %d is %.3f\n&quot;, i, j, dist[i][j]);</span>
+
+    // Prints:
+    // This shortest path from node 0 to node 0 is 0.000
+    // This shortest path from node 0 to node 1 is 2.000
+    // This shortest path from node 0 to node 2 is 4.000
+    // This shortest path from node 0 to node 3 is Infinity
+    // This shortest path from node 0 to node 4 is -Infinity
+    // This shortest path from node 0 to node 5 is -Infinity
+    // This shortest path from node 0 to node 6 is 6.000
+    // This shortest path from node 1 to node 0 is Infinity
+    // This shortest path from node 1 to node 1 is 0.000
+    // This shortest path from node 1 to node 2 is 2.000
+    // This shortest path from node 1 to node 3 is Infinity
+    // ...
+
+<span class="nc" id="L164">    System.out.println();</span>
+
+    // Reconstructs the shortest paths from all nodes to every other nodes.
+<span class="nc bnc" id="L167" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L168" title="All 2 branches missed.">      for (int j = 0; j &lt; n; j++) {</span>
+<span class="nc" id="L169">        List&lt;Integer&gt; path = solver.reconstructShortestPath(i, j);</span>
+        String str;
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        if (path == null) {</span>
+<span class="nc" id="L172">          str = &quot;HAS AN âˆž NUMBER OF SOLUTIONS! (negative cycle case)&quot;;</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        } else if (path.size() == 0) {</span>
+<span class="nc" id="L174">          str = String.format(&quot;DOES NOT EXIST (node %d doesn't reach node %d)&quot;, i, j);</span>
+        } else {
+<span class="nc" id="L176">          str =</span>
+<span class="nc" id="L177">              String.join(</span>
+                  &quot; -&gt; &quot;,
+<span class="nc" id="L179">                  path.stream()</span>
+<span class="nc" id="L180">                      .map(Object::toString)</span>
+<span class="nc" id="L181">                      .collect(java.util.stream.Collectors.toList()));</span>
+<span class="nc" id="L182">          str = &quot;is: [&quot; + str + &quot;]&quot;;</span>
+        }
+
+<span class="nc" id="L185">        System.out.printf(&quot;The shortest path from node %d to node %d %s\n&quot;, i, j, str);</span>
+      }
+    }
+
+    // Prints:
+    // The shortest path from node 0 to node 0 is: [0]
+    // The shortest path from node 0 to node 1 is: [0 -&gt; 1]
+    // The shortest path from node 0 to node 2 is: [0 -&gt; 1 -&gt; 2]
+    // The shortest path from node 0 to node 3 DOES NOT EXIST (node 0 doesn't reach node 3)
+    // The shortest path from node 0 to node 4 HAS AN âˆž NUMBER OF SOLUTIONS! (negative cycle case)
+    // The shortest path from node 0 to node 5 HAS AN âˆž NUMBER OF SOLUTIONS! (negative cycle case)
+    // The shortest path from node 0 to node 6 is: [0 -&gt; 1 -&gt; 2 -&gt; 6]
+    // The shortest path from node 1 to node 0 DOES NOT EXIST (node 1 doesn't reach node 0)
+    // The shortest path from node 1 to node 1 is: [1]
+    // The shortest path from node 1 to node 2 is: [1 -&gt; 2]
+    // The shortest path from node 1 to node 3 DOES NOT EXIST (node 1 doesn't reach node 3)
+    // The shortest path from node 1 to node 4 HAS AN âˆž NUMBER OF SOLUTIONS! (negative cycle case)
+    // The shortest path from node 1 to node 5 HAS AN âˆž NUMBER OF SOLUTIONS! (negative cycle case)
+    // The shortest path from node 1 to node 6 is: [1 -&gt; 2 -&gt; 6]
+    // The shortest path from node 2 to node 0 DOES NOT EXIST (node 2 doesn't reach node 0)
+    // ...
+<span class="nc" id="L206">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeCenterLongestPathImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms</a> &gt; <span class="el_source">TreeCenterLongestPathImpl.java</span></div><h1>TreeCenterLongestPathImpl.java</h1><pre class="source lang-java linenums">/**
+ * Finds the center(s) of a tree by finding the longest path through the tree.
+ *
+ * &lt;p&gt;./gradlew run
+ * -Pmain=com.williamfiset.algorithms.graphtheory.treealgorithms.TreeCenterLongestPathImpl
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms;
+
+import java.util.*;
+
+<span class="nc" id="L13">public class TreeCenterLongestPathImpl {</span>
+
+  private static class DfsResult {
+    // The distance to the furthest node (from where the DFS started)
+    int distance;
+
+    // The index of the furthest node (from where the DFS started)
+    int index;
+
+<span class="fc" id="L22">    public DfsResult(int distance, int index) {</span>
+<span class="fc" id="L23">      this.distance = distance;</span>
+<span class="fc" id="L24">      this.index = index;</span>
+<span class="fc" id="L25">    }</span>
+  }
+
+  private static DfsResult dfs(
+      List&lt;List&lt;Integer&gt;&gt; graph, boolean[] visited, int[] prev, int at, int parent) {
+
+    // Already visited this node
+<span class="fc bfc" id="L32" title="All 2 branches covered.">    if (visited[at]) return new DfsResult(0, parent);</span>
+
+    // Visit this node
+<span class="fc" id="L35">    visited[at] = true;</span>
+
+    // Remember where we came from to rebuild path later on.
+<span class="fc" id="L38">    prev[at] = parent;</span>
+
+<span class="fc" id="L40">    int bestDist = 0, index = -1;</span>
+<span class="fc" id="L41">    List&lt;Integer&gt; edges = graph.get(at);</span>
+
+<span class="fc bfc" id="L43" title="All 2 branches covered.">    for (int to : edges) {</span>
+<span class="fc" id="L44">      DfsResult result = dfs(graph, visited, prev, to, at);</span>
+<span class="fc" id="L45">      int dist = result.distance + 1;</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">      if (dist &gt; bestDist) {</span>
+<span class="fc" id="L47">        bestDist = dist;</span>
+<span class="fc" id="L48">        index = result.index;</span>
+      }
+<span class="fc" id="L50">    }</span>
+
+<span class="fc" id="L52">    return new DfsResult(bestDist, index);</span>
+  }
+
+  public static List&lt;Integer&gt; findTreeCenters(List&lt;List&lt;Integer&gt;&gt; graph) {
+<span class="fc" id="L56">    List&lt;Integer&gt; centers = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">    if (graph == null) return centers;</span>
+
+<span class="fc" id="L59">    int n = graph.size();</span>
+<span class="fc" id="L60">    boolean[] visited = new boolean[n];</span>
+<span class="fc" id="L61">    int[] prev = new int[n];</span>
+
+    // Do DFS to find furthest node from the start
+<span class="fc" id="L64">    DfsResult result = dfs(graph, visited, prev, 0, -1);</span>
+<span class="fc" id="L65">    int furthestNode1 = result.index;</span>
+
+    // Singleton
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    if (furthestNode1 == -1) {</span>
+<span class="fc" id="L69">      centers.add(0);</span>
+<span class="fc" id="L70">      return centers;</span>
+    }
+
+    // Do another DFS, but this time from the furthest node.
+<span class="fc" id="L74">    Arrays.fill(visited, false);</span>
+<span class="fc" id="L75">    Arrays.fill(prev, 0);</span>
+
+<span class="fc" id="L77">    result = dfs(graph, visited, prev, furthestNode1, -1);</span>
+<span class="fc" id="L78">    int furthestNode2 = result.index;</span>
+
+<span class="fc" id="L80">    List&lt;Integer&gt; path = new LinkedList&lt;&gt;();</span>
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    for (int i = furthestNode2; i != -1; i = prev[i]) {</span>
+<span class="fc" id="L82">      path.add(i);</span>
+    }
+
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    if (path.size() % 2 == 0) {</span>
+<span class="fc" id="L86">      centers.add(path.get(path.size() / 2 - 1));</span>
+    }
+<span class="fc" id="L88">    centers.add(path.get(path.size() / 2));</span>
+<span class="fc" id="L89">    return centers;</span>
+  }
+
+  /** ********** TESTING ********* */
+
+  // Create an empty tree as a adjacency list.
+  public static List&lt;List&lt;Integer&gt;&gt; createEmptyTree(int n) {
+<span class="fc" id="L96">    List&lt;List&lt;Integer&gt;&gt; tree = new ArrayList&lt;&gt;(n);</span>
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) tree.add(new LinkedList&lt;&gt;());</span>
+<span class="fc" id="L98">    return tree;</span>
+  }
+
+  public static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; tree, int from, int to) {
+<span class="fc" id="L102">    tree.get(from).add(to);</span>
+<span class="fc" id="L103">    tree.get(to).add(from);</span>
+<span class="fc" id="L104">  }</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L108">    List&lt;List&lt;Integer&gt;&gt; graph = createEmptyTree(9);</span>
+<span class="nc" id="L109">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L110">    addUndirectedEdge(graph, 2, 1);</span>
+<span class="nc" id="L111">    addUndirectedEdge(graph, 2, 3);</span>
+<span class="nc" id="L112">    addUndirectedEdge(graph, 3, 4);</span>
+<span class="nc" id="L113">    addUndirectedEdge(graph, 5, 3);</span>
+<span class="nc" id="L114">    addUndirectedEdge(graph, 2, 6);</span>
+<span class="nc" id="L115">    addUndirectedEdge(graph, 6, 7);</span>
+<span class="nc" id="L116">    addUndirectedEdge(graph, 6, 8);</span>
+
+    // Centers are 2
+<span class="nc" id="L119">    System.out.println(findTreeCenters(graph));</span>
+
+    // Centers are 0
+<span class="nc" id="L122">    List&lt;List&lt;Integer&gt;&gt; graph2 = createEmptyTree(1);</span>
+<span class="nc" id="L123">    System.out.println(findTreeCenters(graph2));</span>
+
+    // Centers are 0,1
+<span class="nc" id="L126">    List&lt;List&lt;Integer&gt;&gt; graph3 = createEmptyTree(2);</span>
+<span class="nc" id="L127">    addUndirectedEdge(graph3, 0, 1);</span>
+<span class="nc" id="L128">    System.out.println(findTreeCenters(graph3));</span>
+
+    // Centers are 1
+<span class="nc" id="L131">    List&lt;List&lt;Integer&gt;&gt; graph4 = createEmptyTree(3);</span>
+<span class="nc" id="L132">    addUndirectedEdge(graph4, 0, 1);</span>
+<span class="nc" id="L133">    addUndirectedEdge(graph4, 1, 2);</span>
+<span class="nc" id="L134">    System.out.println(findTreeCenters(graph4));</span>
+
+    // Centers are 1,2
+<span class="nc" id="L137">    List&lt;List&lt;Integer&gt;&gt; graph5 = createEmptyTree(4);</span>
+<span class="nc" id="L138">    addUndirectedEdge(graph5, 0, 1);</span>
+<span class="nc" id="L139">    addUndirectedEdge(graph5, 1, 2);</span>
+<span class="nc" id="L140">    addUndirectedEdge(graph5, 2, 3);</span>
+<span class="nc" id="L141">    System.out.println(findTreeCenters(graph5));</span>
+
+    // Centers are 2,3
+<span class="nc" id="L144">    List&lt;List&lt;Integer&gt;&gt; graph6 = createEmptyTree(7);</span>
+<span class="nc" id="L145">    addUndirectedEdge(graph6, 0, 1);</span>
+<span class="nc" id="L146">    addUndirectedEdge(graph6, 1, 2);</span>
+<span class="nc" id="L147">    addUndirectedEdge(graph6, 2, 3);</span>
+<span class="nc" id="L148">    addUndirectedEdge(graph6, 3, 4);</span>
+<span class="nc" id="L149">    addUndirectedEdge(graph6, 4, 5);</span>
+<span class="nc" id="L150">    addUndirectedEdge(graph6, 4, 6);</span>
+<span class="nc" id="L151">    System.out.println(findTreeCenters(graph6));</span>
+<span class="nc" id="L152">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

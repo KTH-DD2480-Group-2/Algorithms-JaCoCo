@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HashTableLinearProbing.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.hashtable</a> &gt; <span class="el_source">HashTableLinearProbing.java</span></div><h1>HashTableLinearProbing.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of a hash-table using open addressing with linear probing as a collision
+ * resolution method.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.hashtable;
+
+public class HashTableLinearProbing&lt;K, V&gt; extends HashTableOpenAddressingBase&lt;K, V&gt; {
+
+  // This is the linear constant used in the linear probing, it can be
+  // any positive number. The table capacity will be adjusted so that
+  // the GCD(capacity, LINEAR_CONSTANT) = 1 so that all buckets can be probed.
+  private static final int LINEAR_CONSTANT = 17;
+
+  public HashTableLinearProbing() {
+<span class="fc" id="L17">    super();</span>
+<span class="fc" id="L18">  }</span>
+
+  public HashTableLinearProbing(int capacity) {
+<span class="fc" id="L21">    super(capacity);</span>
+<span class="fc" id="L22">  }</span>
+
+  public HashTableLinearProbing(int capacity, double loadFactor) {
+<span class="fc" id="L25">    super(capacity, loadFactor);</span>
+<span class="fc" id="L26">  }</span>
+
+  @Override
+<span class="fc" id="L29">  protected void setupProbing(K key) {}</span>
+
+  @Override
+  protected int probe(int x) {
+<span class="fc" id="L33">    return LINEAR_CONSTANT * x;</span>
+  }
+
+  // Adjust the capacity so that the linear constant and
+  // the table capacity are relatively prime.
+  @Override
+  protected void adjustCapacity() {
+<span class="fc bfc" id="L40" title="All 2 branches covered.">    while (gcd(LINEAR_CONSTANT, capacity) != 1) {</span>
+<span class="fc" id="L41">      capacity++;</span>
+    }
+<span class="fc" id="L43">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

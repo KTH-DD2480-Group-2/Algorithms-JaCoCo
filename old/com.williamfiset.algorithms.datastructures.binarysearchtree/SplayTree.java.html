@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SplayTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.binarysearchtree</a> &gt; <span class="el_source">SplayTree.java</span></div><h1>SplayTree.java</h1><pre class="source lang-java linenums">// javac -d classes -sourcepath src/main/java
+// src/main/java/com/williamfiset/algorithms/datastructures/binarysearchtree/SplayTree.java
+// java -cp classes com.williamfiset.algorithms.datastructures.binarysearchtree.SplayTreeRun
+
+package com.williamfiset.algorithms.datastructures.binarysearchtree;
+
+import com.williamfiset.algorithms.datastructures.utils.TreePrinter;
+import java.util.ArrayList;
+import java.util.Scanner;
+
+/**
+ * Standard Splay Tree Implementation, supports generic data(must implement Comparable)
+ *
+ * &lt;p&gt;The Basic Concept of SplayTree is to keep frequently used nodes close to the root of the tree
+ * It performs basic operations such as insertion,search,delete,findMin,findMax in O(log n)
+ * amortized time Having frequently-used nodes near to the root can be useful in implementing many
+ * algorithms. e.g: Implementing caches, garbage collection algorithms etc Primary disadvantage of
+ * the splay tree can be the fact that its height can go linear. This causes the worst case running
+ * times to go O(n) However, the amortized costs of this worst case situation is logarithmic, O(log
+ * n)
+ *
+ * @author Ashiqur Rahman,https://github.com/ashiqursuperfly
+ */
+public class SplayTree&lt;T extends Comparable&lt;T&gt;&gt; {
+
+  private BinaryTree&lt;T&gt; root;
+
+  public static class BinaryTree&lt;T extends Comparable&lt;T&gt;&gt; implements TreePrinter.PrintableNode {
+    private T data;
+    private BinaryTree&lt;T&gt; leftChild, rightChild;
+
+<span class="fc" id="L32">    public BinaryTree(T data) {</span>
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">      if (data == null) {</span>
+        try {
+<span class="nc" id="L35">          throw new Exception(&quot;Null data not allowed into tree&quot;);</span>
+<span class="nc" id="L36">        } catch (Exception e) {</span>
+<span class="nc" id="L37">          e.printStackTrace();</span>
+<span class="nc" id="L38">        }</span>
+<span class="fc" id="L39">      } else this.data = data;</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    public BinaryTree&lt;T&gt; getLeft() {
+<span class="fc" id="L44">      return leftChild;</span>
+    }
+
+    public void setLeft(BinaryTree&lt;T&gt; leftChild) {
+<span class="fc" id="L48">      this.leftChild = leftChild;</span>
+<span class="fc" id="L49">    }</span>
+
+    @Override
+    public BinaryTree&lt;T&gt; getRight() {
+<span class="fc" id="L53">      return rightChild;</span>
+    }
+
+    public void setRight(BinaryTree&lt;T&gt; rightChild) {
+<span class="fc" id="L57">      this.rightChild = rightChild;</span>
+<span class="fc" id="L58">    }</span>
+
+    @Override
+    public String getText() {
+<span class="nc" id="L62">      return data.toString();</span>
+    }
+
+    public T getData() {
+<span class="fc" id="L66">      return data;</span>
+    }
+
+    public void setData(T data) {
+<span class="nc bnc" id="L70" title="All 2 branches missed.">      if (data == null) {</span>
+        try {
+<span class="nc" id="L72">          throw new Exception(&quot;Null data not allowed into tree&quot;);</span>
+<span class="nc" id="L73">        } catch (Exception e) {</span>
+<span class="nc" id="L74">          e.printStackTrace();</span>
+<span class="nc" id="L75">        }</span>
+<span class="nc" id="L76">      } else this.data = data;</span>
+<span class="nc" id="L77">    }</span>
+
+    @Override
+    public String toString() {
+
+<span class="nc" id="L82">      return TreePrinter.getTreeDisplay(this);</span>
+    }
+  }
+
+  /** Public Methods * */
+<span class="fc" id="L87">  public SplayTree() {</span>
+<span class="fc" id="L88">    this.root = null;</span>
+<span class="fc" id="L89">  }</span>
+
+<span class="nc" id="L91">  public SplayTree(BinaryTree&lt;T&gt; root) {</span>
+<span class="nc" id="L92">    this.root = root;</span>
+<span class="nc" id="L93">  }</span>
+
+  public BinaryTree&lt;T&gt; getRoot() {
+<span class="fc" id="L96">    return root;</span>
+  }
+
+  /** Searches a node and splays it on top,returns the new root * */
+  public BinaryTree&lt;T&gt; search(T node) {
+<span class="fc bfc" id="L101" title="All 2 branches covered.">    if (root == null) return null;</span>
+
+<span class="fc" id="L103">    this.root = splayUtil(root, node);</span>
+
+<span class="fc bfc" id="L105" title="All 2 branches covered.">    return this.root.getData().compareTo(node) == 0 ? this.root : null;</span>
+  }
+
+  /** Inserts a node into the tree and splays it on top, returns the new root* */
+  public BinaryTree&lt;T&gt; insert(T node) {
+<span class="fc bfc" id="L110" title="All 2 branches covered.">    if (root == null) {</span>
+<span class="fc" id="L111">      root = new BinaryTree&lt;&gt;(node);</span>
+<span class="fc" id="L112">      return root;</span>
+    }
+<span class="fc" id="L114">    splay(node);</span>
+
+<span class="fc" id="L116">    ArrayList&lt;BinaryTree&lt;T&gt;&gt; l_r = split(node);</span>
+
+<span class="fc" id="L118">    BinaryTree&lt;T&gt; left = l_r.get(0);</span>
+<span class="fc" id="L119">    BinaryTree&lt;T&gt; right = l_r.get(1);</span>
+
+<span class="fc" id="L121">    root = new BinaryTree&lt;&gt;(node);</span>
+<span class="fc" id="L122">    root.setLeft(left);</span>
+<span class="fc" id="L123">    root.setRight(right);</span>
+
+<span class="fc" id="L125">    return root;</span>
+  }
+
+  /** Deletes a node,returns the new root * */
+  public BinaryTree&lt;T&gt; delete(T node) {
+<span class="pc bpc" id="L130" title="1 of 2 branches missed.">    if (root == null) return null;</span>
+
+<span class="fc" id="L132">    BinaryTree&lt;T&gt; searchResult = splay(node);</span>
+
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">    if (searchResult.getData().compareTo(node) != 0) return null;</span>
+
+<span class="fc" id="L136">    BinaryTree&lt;T&gt; leftSubtree = root.getLeft();</span>
+<span class="fc" id="L137">    BinaryTree&lt;T&gt; rightSubtree = root.getRight();</span>
+
+    // Set the 'to be deleted' key ready for garbage collection
+<span class="fc" id="L140">    root.setLeft(null);</span>
+<span class="fc" id="L141">    root.setRight(null);</span>
+
+<span class="fc" id="L143">    root = join(leftSubtree, rightSubtree);</span>
+
+<span class="fc" id="L145">    return root;</span>
+  }
+
+  /** To FindMax Of Entire Tree * */
+  public T findMax() {
+<span class="fc" id="L150">    BinaryTree&lt;T&gt; temp = root;</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">    while (temp.getRight() != null) temp = temp.getRight();</span>
+<span class="fc" id="L152">    return temp.getData();</span>
+  }
+
+  /** To FindMin Of Entire Tree * */
+  public T findMin() {
+<span class="nc" id="L157">    BinaryTree&lt;T&gt; temp = root;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">    while (temp.getLeft() != null) temp = temp.getLeft();</span>
+<span class="nc" id="L159">    return temp.getData();</span>
+  }
+
+  /** * To FindMax Of Tree with specified root * */
+  public T findMax(BinaryTree&lt;T&gt; root) {
+<span class="fc" id="L164">    BinaryTree&lt;T&gt; temp = root;</span>
+<span class="fc bfc" id="L165" title="All 2 branches covered.">    while (temp.getRight() != null) temp = temp.getRight();</span>
+<span class="fc" id="L166">    return temp.getData();</span>
+  }
+
+  /** * To FindMin Of Tree with specified root * */
+  public T findMin(BinaryTree&lt;T&gt; root) {
+<span class="nc" id="L171">    BinaryTree&lt;T&gt; temp = root;</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">    while (temp.getLeft() != null) temp = temp.getLeft();</span>
+<span class="nc" id="L173">    return temp.getData();</span>
+  }
+
+  @Override
+  public String toString() {
+
+<span class="nc" id="L179">    System.out.println(&quot;Elements:&quot; + inorder(root, new ArrayList&lt;&gt;()));</span>
+<span class="nc bnc" id="L180" title="All 2 branches missed.">    return (root != null) ? root.toString() : null;</span>
+  }
+
+  /** Private Methods * */
+  private BinaryTree&lt;T&gt; rightRotate(BinaryTree&lt;T&gt; node) {
+<span class="fc" id="L185">    BinaryTree&lt;T&gt; p = node.getLeft();</span>
+<span class="fc" id="L186">    node.setLeft(p.getRight());</span>
+<span class="fc" id="L187">    p.setRight(node);</span>
+<span class="fc" id="L188">    return p;</span>
+  }
+
+  private BinaryTree&lt;T&gt; leftRotate(BinaryTree&lt;T&gt; node) {
+<span class="fc" id="L192">    BinaryTree&lt;T&gt; p = node.getRight();</span>
+<span class="fc" id="L193">    node.setRight(p.getLeft());</span>
+<span class="fc" id="L194">    p.setLeft(node);</span>
+<span class="fc" id="L195">    return p;</span>
+  }
+
+  private BinaryTree&lt;T&gt; splayUtil(BinaryTree&lt;T&gt; root, T key) {
+<span class="fc bfc" id="L199" title="All 4 branches covered.">    if (root == null || root.getData() == key) return root;</span>
+
+<span class="fc bfc" id="L201" title="All 2 branches covered.">    if (root.getData().compareTo(key) &gt; 0) {</span>
+<span class="fc bfc" id="L202" title="All 2 branches covered.">      if (root.getLeft() == null) return root;</span>
+
+<span class="fc bfc" id="L204" title="All 2 branches covered.">      if (root.getLeft().getData().compareTo(key) &gt; 0) {</span>
+
+<span class="fc" id="L206">        root.getLeft().setLeft(splayUtil(root.getLeft().getLeft(), key));</span>
+
+<span class="fc" id="L208">        root = rightRotate(root);</span>
+<span class="fc bfc" id="L209" title="All 2 branches covered.">      } else if (root.getLeft().getData().compareTo(key) &lt; 0) {</span>
+
+<span class="fc" id="L211">        root.getLeft().setRight(splayUtil(root.getLeft().getRight(), key));</span>
+
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (root.getLeft().getRight() != null) root.setLeft(leftRotate(root.getLeft()));</span>
+      }
+<span class="fc bfc" id="L215" title="All 2 branches covered.">      return (root.getLeft() == null) ? root : rightRotate(root);</span>
+    } else {
+<span class="fc bfc" id="L217" title="All 2 branches covered.">      if (root.getRight() == null) return root;</span>
+
+<span class="fc bfc" id="L219" title="All 2 branches covered.">      if (root.getRight().getData().compareTo(key) &gt; 0) {</span>
+<span class="fc" id="L220">        root.getRight().setLeft(splayUtil(root.getRight().getLeft(), key));</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">        if (root.getRight().getLeft() != null) root.setRight(rightRotate(root.getRight()));</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">      } else if (root.getRight().getData().compareTo(key) &lt; 0) // Zag-Zag (Right Right)</span>
+      {
+<span class="fc" id="L224">        root.getRight().setRight(splayUtil(root.getRight().getRight(), key));</span>
+<span class="fc" id="L225">        root = leftRotate(root);</span>
+      }
+
+<span class="fc bfc" id="L228" title="All 2 branches covered.">      return (root.getRight() == null) ? root : leftRotate(root);</span>
+    }
+  }
+
+  private BinaryTree&lt;T&gt; splay(T node) {
+<span class="pc bpc" id="L233" title="1 of 2 branches missed.">    if (root == null) return null;</span>
+
+<span class="fc" id="L235">    this.root = splayUtil(root, node);</span>
+
+<span class="fc" id="L237">    return this.root;</span>
+  }
+
+  private ArrayList&lt;BinaryTree&lt;T&gt;&gt; split(T node) {
+    BinaryTree&lt;T&gt; right;
+    BinaryTree&lt;T&gt; left;
+
+<span class="fc bfc" id="L244" title="All 2 branches covered.">    if (node.compareTo(root.getData()) &gt; 0) {</span>
+<span class="fc" id="L245">      right = root.getRight();</span>
+<span class="fc" id="L246">      left = root;</span>
+<span class="fc" id="L247">      left.setRight(null);</span>
+    } else {
+<span class="fc" id="L249">      left = root.getLeft();</span>
+<span class="fc" id="L250">      right = root;</span>
+<span class="fc" id="L251">      right.setLeft(null);</span>
+    }
+<span class="fc" id="L253">    ArrayList&lt;BinaryTree&lt;T&gt;&gt; l_r = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L254">    l_r.add(left);</span>
+<span class="fc" id="L255">    l_r.add(right);</span>
+
+<span class="fc" id="L257">    return l_r;</span>
+  }
+
+  private BinaryTree&lt;T&gt; join(BinaryTree&lt;T&gt; L, BinaryTree&lt;T&gt; R) {
+
+<span class="fc bfc" id="L262" title="All 2 branches covered.">    if (L == null) {</span>
+<span class="fc" id="L263">      root = R;</span>
+<span class="fc" id="L264">      return R;</span>
+    }
+<span class="fc" id="L266">    root = splayUtil(L, findMax(L));</span>
+<span class="fc" id="L267">    root.setRight(R);</span>
+<span class="fc" id="L268">    return root;</span>
+  }
+
+  private ArrayList&lt;T&gt; inorder(BinaryTree&lt;T&gt; root, ArrayList&lt;T&gt; sorted) {
+
+<span class="nc bnc" id="L273" title="All 2 branches missed.">    if (root == null) {</span>
+<span class="nc" id="L274">      return sorted;</span>
+    }
+<span class="nc" id="L276">    inorder(root.getLeft(), sorted);</span>
+<span class="nc" id="L277">    sorted.add(root.getData());</span>
+<span class="nc" id="L278">    inorder(root.getRight(), sorted);</span>
+<span class="nc" id="L279">    return sorted;</span>
+  }
+}
+
+<span class="nc" id="L283">class SplayTreeRun {</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L287">    SplayTree&lt;Integer&gt; splayTree = new SplayTree&lt;&gt;();</span>
+<span class="nc" id="L288">    Scanner sc = new Scanner(System.in);</span>
+<span class="nc" id="L289">    int[] data = {2, 29, 26, -1, 10, 0, 2, 11};</span>
+<span class="nc" id="L290">    int c = 0;</span>
+<span class="nc bnc" id="L291" title="All 2 branches missed.">    for (int i : data) {</span>
+<span class="nc" id="L292">      splayTree.insert(i);</span>
+    }
+
+<span class="nc bnc" id="L295" title="All 2 branches missed.">    while (c != 7) {</span>
+<span class="nc" id="L296">      System.out.println(&quot;1. Insert 2. Delete 3. Search 4.FindMin 5.FindMax 6. PrintTree 7. Exit&quot;);</span>
+<span class="nc" id="L297">      c = sc.nextInt();</span>
+<span class="nc bnc" id="L298" title="All 8 branches missed.">      switch (c) {</span>
+        case 1:
+<span class="nc" id="L300">          System.out.println(&quot;Enter Data :&quot;);</span>
+<span class="nc" id="L301">          splayTree.insert(sc.nextInt());</span>
+<span class="nc" id="L302">          break;</span>
+        case 2:
+<span class="nc" id="L304">          System.out.println(&quot;Enter Element to be Deleted:&quot;);</span>
+<span class="nc" id="L305">          splayTree.delete(sc.nextInt());</span>
+<span class="nc" id="L306">          break;</span>
+        case 3:
+<span class="nc" id="L308">          System.out.println(&quot;Enter Element to be Searched and Splayed:&quot;);</span>
+<span class="nc" id="L309">          splayTree.search(sc.nextInt());</span>
+<span class="nc" id="L310">          break;</span>
+        case 4:
+<span class="nc" id="L312">          System.out.println(&quot;Min: &quot; + splayTree.findMin());</span>
+<span class="nc" id="L313">          break;</span>
+        case 5:
+<span class="nc" id="L315">          System.out.println(&quot;Max: &quot; + splayTree.findMax());</span>
+<span class="nc" id="L316">          break;</span>
+        case 6:
+<span class="nc" id="L318">          System.out.println(splayTree);</span>
+<span class="nc" id="L319">          break;</span>
+        case 7:
+<span class="nc" id="L321">          sc.close();</span>
+<span class="nc" id="L322">          break;</span>
+      }
+    }
+<span class="nc" id="L325">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

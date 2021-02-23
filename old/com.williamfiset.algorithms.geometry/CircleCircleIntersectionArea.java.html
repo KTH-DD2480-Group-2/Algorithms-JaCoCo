@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CircleCircleIntersectionArea.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">CircleCircleIntersectionArea.java</span></div><h1>CircleCircleIntersectionArea.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to find the area of intersection of two circles
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * &lt;p&gt;NOTE: This file could use some formal testing.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+import java.awt.geom.*;
+
+<span class="nc" id="L16">public class CircleCircleIntersectionArea {</span>
+
+  private static final double EPS = 1e-6;
+
+  // Due to double rounding precision the value passed into the acos
+  // function may be outside its domain of [-1, +1] which would return
+  // the value Double.NaN which we do not want.
+  private static double arccosSafe(double x) {
+<span class="nc bnc" id="L24" title="All 2 branches missed.">    if (x &gt;= +1.0) return 0;</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">    if (x &lt;= -1.0) return PI;</span>
+<span class="nc" id="L26">    return acos(x);</span>
+  }
+
+  public static double circleCircleIntersectionArea(Point2D c1, double r1, Point2D c2, double r2) {
+
+<span class="nc" id="L31">    double r = r1, R = r2;</span>
+<span class="nc" id="L32">    Point2D c = c1, C = c2;</span>
+
+<span class="nc bnc" id="L34" title="All 2 branches missed.">    if (r1 &gt; r2) {</span>
+<span class="nc" id="L35">      r = r2;</span>
+<span class="nc" id="L36">      R = r1;</span>
+<span class="nc" id="L37">      c = c2;</span>
+<span class="nc" id="L38">      C = c1;</span>
+    }
+
+<span class="nc" id="L41">    double dist = c1.distance(c2);</span>
+<span class="nc" id="L42">    Point2D[] intersections = circleCircleIntersection(c1, r1, c2, r2);</span>
+
+    // Smaller circle is contained within larger circle
+<span class="nc bnc" id="L45" title="All 2 branches missed.">    if (intersections == null) {</span>
+<span class="nc" id="L46">      return PI * r * r;</span>
+
+      // Circles do not intersect
+<span class="nc bnc" id="L49" title="All 2 branches missed.">    } else if (intersections.length == 0) {</span>
+<span class="nc" id="L50">      return 0;</span>
+
+      // One intersection point
+<span class="nc bnc" id="L53" title="All 2 branches missed.">    } else if (intersections.length == 1) {</span>
+
+      // Check if the smaller circle is inside larger circle
+<span class="nc bnc" id="L56" title="All 2 branches missed.">      if (dist &lt; R) {</span>
+<span class="nc" id="L57">        return PI * r * r;</span>
+      } else {
+<span class="nc" id="L59">        return 0;</span>
+      }
+
+      // Circles intersect at two distinct points
+    } else {
+
+      // http://stackoverflow.com/questions/4247889/area-of-intersection-between-two-circles
+<span class="nc" id="L66">      double d = dist;</span>
+<span class="nc" id="L67">      Double part1 = r * r * arccosSafe((d * d + r * r - R * R) / (2 * d * r));</span>
+<span class="nc" id="L68">      Double part2 = R * R * arccosSafe((d * d + R * R - r * r) / (2 * d * R));</span>
+<span class="nc" id="L69">      Double part3 = 0.5 * sqrt((-d + r + R) * (d + r - R) * (d - r + R) * (d + r + R));</span>
+
+<span class="nc" id="L71">      return part1 + part2 - part3;</span>
+    }
+  }
+
+  // Finds the intersection points of two circles. If the smaller circle is contained
+  // within the larger one this method returns null. If there is no intersection point
+  // an empty array is returned. If there is a unique intersection point that point alone
+  // is returned, otherwise two distinct points are returned where the intersection is.
+  public static Point2D[] circleCircleIntersection(Point2D c1, double r1, Point2D c2, double r2) {
+
+    // r is the smaller radius and R is bigger radius
+    double r, R;
+
+    // c is the center of the small circle
+    // C is the center of the big circle
+    Point2D c, C;
+
+    // Determine which is the bigger/smaller circle
+<span class="nc bnc" id="L89" title="All 2 branches missed.">    if (r1 &lt; r2) {</span>
+<span class="nc" id="L90">      r = r1;</span>
+<span class="nc" id="L91">      R = r2;</span>
+<span class="nc" id="L92">      c = c1;</span>
+<span class="nc" id="L93">      C = c2;</span>
+    } else {
+<span class="nc" id="L95">      r = r2;</span>
+<span class="nc" id="L96">      R = r1;</span>
+<span class="nc" id="L97">      c = c2;</span>
+<span class="nc" id="L98">      C = c1;</span>
+    }
+
+<span class="nc" id="L101">    double dist = c1.distance(c2);</span>
+
+    // There are an infinite number of solutions
+<span class="nc bnc" id="L104" title="All 4 branches missed.">    if (dist &lt; EPS &amp;&amp; abs(r - R) &lt; EPS) return null;</span>
+
+    // No intersection (small circle contained within big circle)
+<span class="nc bnc" id="L107" title="All 2 branches missed.">    if (r + dist &lt; R) return null;</span>
+
+    // No intersection (circles are disjoint)
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    if (r + R &lt; dist) return new Point2D[] {};</span>
+
+    // Let (cx, cy) be the center of the small circle
+    // Let (Cx, Cy) be the center of the larger circle
+<span class="nc" id="L114">    double cx = c.getX();</span>
+<span class="nc" id="L115">    double Cx = C.getX();</span>
+<span class="nc" id="L116">    double cy = c.getY();</span>
+<span class="nc" id="L117">    double Cy = C.getY();</span>
+
+    // Compute the vector from the big circle to the little circle
+<span class="nc" id="L120">    double vx = cx - Cx;</span>
+<span class="nc" id="L121">    double vy = cy - Cy;</span>
+
+    // Scale the vector by R and offset the vector so that the head of the vector
+    // is positioned on the circumference of the big circle ready to be rotated
+<span class="nc" id="L125">    double x = (vx / dist) * R + Cx;</span>
+<span class="nc" id="L126">    double y = (vy / dist) * R + Cy;</span>
+<span class="nc" id="L127">    Point2D point = new Point2D.Double(x, y);</span>
+
+    // Unique intersection point on circumference of both circles
+<span class="nc bnc" id="L130" title="All 4 branches missed.">    if (abs(r + R - dist) &lt; EPS || abs(R - (r + dist)) &lt; EPS) return new Point2D[] {point};</span>
+
+    // Find the angle via cos law
+<span class="nc" id="L133">    double angle = arccosSafe((r * r - dist * dist - R * R) / (-2.0 * dist * R));</span>
+
+    // Two unique intersection points
+<span class="nc" id="L136">    Point2D pt1 = rotatePoint(C, point, angle);</span>
+<span class="nc" id="L137">    Point2D pt2 = rotatePoint(C, point, -angle);</span>
+
+<span class="nc" id="L139">    return new Point2D[] {pt1, pt2};</span>
+  }
+
+  // Rotate point 'pt' a certain number of radians clockwise
+  // relative to some fixed point 'fp'. Note that the angle
+  // should be specified in radians, not degrees.
+  private static Point2D rotatePoint(Point2D fp, Point2D pt, double angle) {
+
+<span class="nc" id="L147">    double fpx = fp.getX();</span>
+<span class="nc" id="L148">    double fpy = fp.getY();</span>
+<span class="nc" id="L149">    double ptx = pt.getX();</span>
+<span class="nc" id="L150">    double pty = pt.getY();</span>
+
+    // Compute the vector &lt;x, y&gt; from the fixed point
+    // to the point of rotation.
+<span class="nc" id="L154">    double x = ptx - fpx;</span>
+<span class="nc" id="L155">    double y = pty - fpy;</span>
+
+    // Apply the clockwise rotation matrix to the vector &lt;x, y&gt;
+    // |  cos(theta) sin(theta) ||x|   |  xcos(theta) + ysin(theta) |
+    // | -sin(theta) cos(theta) ||y| = | -xsin(theta) + ycos(theta) |
+<span class="nc" id="L160">    double xRotated = x * cos(angle) + y * sin(angle);</span>
+<span class="nc" id="L161">    double yRotated = y * cos(angle) - x * sin(angle);</span>
+
+    // The rotation matrix rotated the vector about the origin, so we
+    // need to offset it by the point (fpx, fpy) to get the right answer
+<span class="nc" id="L165">    return new Point2D.Double(fpx + xRotated, fpy + yRotated);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

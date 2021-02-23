@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConvexHullMonotoneChainsAlgorithm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">ConvexHullMonotoneChainsAlgorithm.java</span></div><h1>ConvexHullMonotoneChainsAlgorithm.java</h1><pre class="source lang-java linenums">/**
+ * &quot;[Andrew, 1979] discovered an alternative to the Graham scan that uses a linear lexicographic
+ * sort of the point set by the x and y-coordinates. This is an advantage if this ordering is
+ * already known for a set, which is sometimes the case. But even if sorting is required, this is a
+ * faster sort than the angular Graham-scan sort with its more complicated comparison function. The
+ * &quot;Monotone Chain&quot; algorithm computes the upper and lower hulls of a monotone chain of points,
+ * which is why we refer to it as the &quot;Monotone Chain&quot; algorithm. Like the Graham scan, it runs in
+ * O(nlog-n) time due to the sort time. After that, it only takes O(n) time to compute the hull.&quot; -
+ * Dan Sunday
+ *
+ * &lt;p&gt;This code is a modification of the monotone chains algorithm found on wikibooks.
+ * https://en.wikibooks.org/wiki/Algorithm_Implementation/Geometry/Convex_hull/Monotone_chain
+ *
+ * &lt;p&gt;Time Complexity: O(nlogn)
+ *
+ * @author A. M. Andrew, Dan Sunday, William Fiset
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.abs;
+
+import java.awt.geom.*;
+import java.util.*;
+
+<span class="nc" id="L25">public class ConvexHullMonotoneChainsAlgorithm {</span>
+
+  // Small epsilon used for double value comparison.
+  private static final double EPS = 1e-5;
+
+  // Sorts points by first x coordinate and then y coordinate.
+  private static class PointComparator implements Comparator&lt;Point2D&gt; {
+    public int compare(Point2D p1, Point2D p2) {
+<span class="fc bfc" id="L33" title="All 2 branches covered.">      if (abs(p1.getX() - p2.getX()) &lt; EPS) {</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (abs(p1.getY() - p2.getY()) &lt; EPS) return 0;</span>
+<span class="fc bfc" id="L35" title="All 2 branches covered.">        else if (p1.getY() &gt; p2.getY()) return 1;</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">      } else if (p1.getX() &gt; p2.getX()) return 1;</span>
+<span class="fc" id="L37">      return -1;</span>
+    }
+  }
+
+  // Use the monotone chains algorithm to find the
+  // convex hull of a set of points in O(nlogn) time.
+  public static Point2D[] convexHull(Point2D[] pts) {
+
+<span class="fc" id="L45">    int n = pts.length, k = 0;</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    if (n &lt;= 1) return pts;</span>
+
+<span class="fc" id="L48">    Point2D[] hull = new Point2D[2 * n];</span>
+<span class="fc" id="L49">    Arrays.sort(pts, new PointComparator());</span>
+
+    // Build upper chain.
+<span class="fc bfc" id="L52" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L53" title="All 4 branches covered.">      while (k &gt;= 2 &amp;&amp; orientation(hull[k - 2], hull[k - 1], pts[i]) &lt;= 0) k--;</span>
+<span class="fc" id="L54">      hull[k++] = pts[i];</span>
+    }
+
+<span class="fc" id="L57">    int lastUpperChainIndex = k;</span>
+
+    // Build lower chain.
+<span class="fc bfc" id="L60" title="All 2 branches covered.">    for (int i = n - 2; i &gt;= 0; i--) {</span>
+<span class="fc bfc" id="L61" title="All 4 branches covered.">      while (k &gt; lastUpperChainIndex &amp;&amp; orientation(hull[k - 2], hull[k - 1], pts[i]) &lt;= 0) k--;</span>
+<span class="fc" id="L62">      hull[k++] = pts[i];</span>
+    }
+
+    // Conserve only unique points.
+<span class="fc" id="L66">    int index = 1;</span>
+<span class="fc" id="L67">    Point2D lastPt = hull[0];</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    for (int i = 1; i &lt; k - 1; i++) {</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">      if (!hull[i].equals(lastPt)) {</span>
+<span class="fc" id="L70">        hull[index++] = lastPt = hull[i];</span>
+      }
+    }
+
+<span class="fc" id="L74">    return Arrays.copyOfRange(hull, 0, index);</span>
+  }
+
+  // To find orientation of point 'c' relative to the line segment (a, b).
+  // Imagine yourself standing at point 'a' looking out towards point 'b'.
+  // Returns  0 if all three points are collinear.
+  // Returns -1 if 'c' is clockwise to segment (a, b), i.e right of line formed by the segment.
+  // Returns +1 if 'c' is counter clockwise to segment (a, b), i.e left of line
+  // formed by the segment.
+  private static int orientation(Point2D a, Point2D b, Point2D c) {
+<span class="fc" id="L84">    double value =</span>
+<span class="fc" id="L85">        (b.getY() - a.getY()) * (c.getX() - b.getX())</span>
+<span class="fc" id="L86">            - (b.getX() - a.getX()) * (c.getY() - b.getY());</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">    if (abs(value) &lt; EPS) return 0;</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">    return (value &gt; 0) ? -1 : +1;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GraphDiameter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">GraphDiameter.java</span></div><h1>GraphDiameter.java</h1><pre class="source lang-java linenums">/**
+ * Given a graph as a adjacency list this file shows you how to find the diameter/radius of the
+ * graph.
+ *
+ * &lt;p&gt;Time Complexity: O(V(V + E)) = O(V^2 + VE))= O(VE)
+ *
+ * &lt;p&gt;NOTE: This file could use some tests.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+
+<span class="nc" id="L15">public class GraphDiameter {</span>
+
+  static class Edge {
+    int from, to;
+
+<span class="nc" id="L20">    public Edge(int from, int to) {</span>
+<span class="nc" id="L21">      this.from = from;</span>
+<span class="nc" id="L22">      this.to = to;</span>
+<span class="nc" id="L23">    }</span>
+  }
+
+  // Separate each breadth first search layer with a DEPTH_TOKEN
+  // to easily determine the distance to other nodes
+  static final int DEPTH_TOKEN = -1;
+
+<span class="nc" id="L30">  static Integer VISITED_TOKEN = 0;</span>
+<span class="nc" id="L31">  static Map&lt;Integer, Integer&gt; visited = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L32">  static ArrayDeque&lt;Integer&gt; queue = new ArrayDeque&lt;&gt;();</span>
+
+  // Compute the eccentricity from a given node. The eccentricity
+  // is the distance to the furthest node(s).
+  private static int eccentricity(int nodeID, Map&lt;Integer, List&lt;Edge&gt;&gt; graph) {
+
+<span class="nc" id="L38">    VISITED_TOKEN++;</span>
+
+<span class="nc" id="L40">    queue.offer(nodeID);</span>
+<span class="nc" id="L41">    queue.offer(DEPTH_TOKEN);</span>
+<span class="nc" id="L42">    visited.put(nodeID, VISITED_TOKEN);</span>
+
+<span class="nc" id="L44">    int depth = 0;</span>
+
+    // Do BFS to count the
+    while (true) {
+
+<span class="nc" id="L49">      Integer id = queue.poll();</span>
+
+      // If we encounter a depth token this means that we
+      // have finished the current frontier and are about
+      // to start the new layer (some of which may already
+      // be in the queue) or have reached the end.
+<span class="nc bnc" id="L55" title="All 2 branches missed.">      if (id == DEPTH_TOKEN) {</span>
+
+        // No more nodes to process
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (queue.isEmpty()) break;</span>
+
+        // Add another DEPTH_TOKEN
+<span class="nc" id="L61">        queue.offer(DEPTH_TOKEN);</span>
+
+        // Increase the max depth for each DEPTH_TOKEN seen
+<span class="nc" id="L64">        depth++;</span>
+
+      } else {
+
+<span class="nc" id="L68">        List&lt;Edge&gt; edges = graph.get(id);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (edges != null) {</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">          for (Edge edge : edges) {</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            if (visited.get(edge.to) != VISITED_TOKEN) {</span>
+<span class="nc" id="L72">              visited.put(edge.to, VISITED_TOKEN);</span>
+<span class="nc" id="L73">              queue.offer(edge.to);</span>
+            }
+<span class="nc" id="L75">          }</span>
+        }
+      }
+<span class="nc" id="L78">    }</span>
+
+<span class="nc" id="L80">    return depth;</span>
+  }
+
+  // Compute the diameter of an arbitrary graph
+  // NOTE: The input graph should be undirected
+  public static int graphDiameter(Map&lt;Integer, List&lt;Edge&gt;&gt; graph) {
+
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    if (graph == null) return 0;</span>
+
+<span class="nc" id="L89">    int diameter = 0;</span>
+<span class="nc" id="L90">    int radius = Integer.MAX_VALUE;</span>
+
+    // The diameter of a graph is the maximum of all the eccentricity values from all nodes.
+    // The radius on the other hand is the minimum of all the eccentricity values from all nodes.
+<span class="nc bnc" id="L94" title="All 2 branches missed.">    for (Integer nodeID : graph.keySet()) {</span>
+<span class="nc" id="L95">      int eccentricity = eccentricity(nodeID, graph);</span>
+<span class="nc" id="L96">      diameter = Math.max(diameter, eccentricity);</span>
+<span class="nc" id="L97">      radius = Math.min(radius, eccentricity);</span>
+<span class="nc" id="L98">    }</span>
+
+    // return radius;
+<span class="nc" id="L101">    return diameter;</span>
+  }
+
+  // Example usage of how to compute the diameter of a graph
+  public static void main(String[] args) {
+
+<span class="nc" id="L107">    Map&lt;Integer, List&lt;Edge&gt;&gt; graph = createGraph(5);</span>
+<span class="nc" id="L108">    addUndirectedEdge(graph, 4, 2);</span>
+<span class="nc" id="L109">    addUndirectedEdge(graph, 2, 0);</span>
+<span class="nc" id="L110">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L111">    addUndirectedEdge(graph, 1, 2);</span>
+<span class="nc" id="L112">    addUndirectedEdge(graph, 1, 3);</span>
+
+<span class="nc" id="L114">    int diameter = graphDiameter(graph);</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">    if (diameter != 3) System.out.println(&quot;Wrong diameter!&quot;);</span>
+
+    // No edges
+<span class="nc" id="L118">    graph = createGraph(5);</span>
+<span class="nc" id="L119">    diameter = graphDiameter(graph);</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">    if (diameter != 0) System.out.println(&quot;Wrong diameter!&quot;);</span>
+
+<span class="nc" id="L122">    graph = createGraph(8);</span>
+<span class="nc" id="L123">    addUndirectedEdge(graph, 0, 5);</span>
+<span class="nc" id="L124">    addUndirectedEdge(graph, 1, 5);</span>
+<span class="nc" id="L125">    addUndirectedEdge(graph, 2, 5);</span>
+<span class="nc" id="L126">    addUndirectedEdge(graph, 3, 5);</span>
+<span class="nc" id="L127">    addUndirectedEdge(graph, 4, 5);</span>
+<span class="nc" id="L128">    addUndirectedEdge(graph, 6, 5);</span>
+<span class="nc" id="L129">    addUndirectedEdge(graph, 7, 5);</span>
+<span class="nc" id="L130">    diameter = graphDiameter(graph);</span>
+<span class="nc bnc" id="L131" title="All 2 branches missed.">    if (diameter != 2) System.out.println(&quot;Wrong diameter!&quot;);</span>
+
+<span class="nc" id="L133">    graph = createGraph(9);</span>
+<span class="nc" id="L134">    addUndirectedEdge(graph, 0, 5);</span>
+<span class="nc" id="L135">    addUndirectedEdge(graph, 1, 5);</span>
+<span class="nc" id="L136">    addUndirectedEdge(graph, 2, 5);</span>
+<span class="nc" id="L137">    addUndirectedEdge(graph, 3, 5);</span>
+<span class="nc" id="L138">    addUndirectedEdge(graph, 4, 5);</span>
+<span class="nc" id="L139">    addUndirectedEdge(graph, 6, 5);</span>
+<span class="nc" id="L140">    addUndirectedEdge(graph, 7, 5);</span>
+<span class="nc" id="L141">    addUndirectedEdge(graph, 3, 8);</span>
+<span class="nc" id="L142">    diameter = graphDiameter(graph);</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">    if (diameter != 3) System.out.println(&quot;Wrong diameter!&quot;);</span>
+<span class="nc" id="L144">  }</span>
+
+  private static Map&lt;Integer, List&lt;Edge&gt;&gt; createGraph(int numNodes) {
+<span class="nc" id="L147">    Map&lt;Integer, List&lt;Edge&gt;&gt; graph = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">    for (int i = 0; i &lt; numNodes; i++) graph.put(i, new ArrayList&lt;Edge&gt;());</span>
+<span class="nc" id="L149">    return graph;</span>
+  }
+
+  private static void addUndirectedEdge(Map&lt;Integer, List&lt;Edge&gt;&gt; graph, int from, int to) {
+<span class="nc" id="L153">    graph.get(from).add(new Edge(from, to));</span>
+<span class="nc" id="L154">    graph.get(to).add(new Edge(to, from));</span>
+<span class="nc" id="L155">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

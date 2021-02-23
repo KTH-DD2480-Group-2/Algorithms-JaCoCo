@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RootingTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms</a> &gt; <span class="el_source">RootingTree.java</span></div><h1>RootingTree.java</h1><pre class="source lang-java linenums">/**
+ * Often when working with trees we are given them as a graph with undirected edges, however
+ * sometimes a better representation is a rooted tree.
+ *
+ * &lt;p&gt;Time Complexity: O(V+E)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms;
+
+import java.util.*;
+
+<span class="nc" id="L13">public class RootingTree {</span>
+
+  public static class TreeNode {
+    private int id;
+    private TreeNode parent;
+    private List&lt;TreeNode&gt; children;
+
+    // Useful constructor for root node.
+    public TreeNode(int id) {
+<span class="fc" id="L22">      this(id, /*parent=*/ null);</span>
+<span class="fc" id="L23">    }</span>
+
+<span class="fc" id="L25">    public TreeNode(int id, TreeNode parent) {</span>
+<span class="fc" id="L26">      this.id = id;</span>
+<span class="fc" id="L27">      this.parent = parent;</span>
+<span class="fc" id="L28">      children = new LinkedList&lt;&gt;();</span>
+<span class="fc" id="L29">    }</span>
+
+    public void addChildren(TreeNode... nodes) {
+<span class="fc bfc" id="L32" title="All 2 branches covered.">      for (TreeNode node : nodes) {</span>
+<span class="fc" id="L33">        children.add(node);</span>
+      }
+<span class="fc" id="L35">    }</span>
+
+    public int id() {
+<span class="fc" id="L38">      return id;</span>
+    }
+
+    public TreeNode parent() {
+<span class="fc" id="L42">      return parent;</span>
+    }
+
+    public List&lt;TreeNode&gt; children() {
+<span class="fc" id="L46">      return children;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L51">      return String.valueOf(id);</span>
+    }
+
+    // Only checks id equality not subtree equality.
+    @Override
+    public boolean equals(Object obj) {
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">      if (obj instanceof TreeNode) {</span>
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        return id() == ((TreeNode) obj).id();</span>
+      }
+<span class="nc" id="L60">      return false;</span>
+    }
+  }
+
+  public static TreeNode rootTree(List&lt;List&lt;Integer&gt;&gt; graph, int rootId) {
+<span class="fc" id="L65">    TreeNode root = new TreeNode(rootId);</span>
+<span class="fc" id="L66">    return buildTree(graph, root);</span>
+  }
+
+  // Do dfs to construct rooted tree.
+  private static TreeNode buildTree(List&lt;List&lt;Integer&gt;&gt; graph, TreeNode node) {
+<span class="fc bfc" id="L71" title="All 2 branches covered.">    for (int childId : graph.get(node.id())) {</span>
+      // Ignore adding an edge pointing back to parent.
+<span class="fc bfc" id="L73" title="All 4 branches covered.">      if (node.parent() != null &amp;&amp; childId == node.parent().id()) {</span>
+<span class="fc" id="L74">        continue;</span>
+      }
+
+<span class="fc" id="L77">      TreeNode child = new TreeNode(childId, node);</span>
+<span class="fc" id="L78">      node.addChildren(child);</span>
+
+<span class="fc" id="L80">      buildTree(graph, child);</span>
+<span class="fc" id="L81">    }</span>
+<span class="fc" id="L82">    return node;</span>
+  }
+
+  /** ********** TESTING ********* */
+
+  // Create a graph as a adjacency list
+  private static List&lt;List&lt;Integer&gt;&gt; createGraph(int n) {
+<span class="nc" id="L89">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.add(new LinkedList&lt;&gt;());</span>
+<span class="nc" id="L91">    return graph;</span>
+  }
+
+  private static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="nc" id="L95">    graph.get(from).add(to);</span>
+<span class="nc" id="L96">    graph.get(to).add(from);</span>
+<span class="nc" id="L97">  }</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L101">    List&lt;List&lt;Integer&gt;&gt; graph = createGraph(9);</span>
+<span class="nc" id="L102">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L103">    addUndirectedEdge(graph, 2, 1);</span>
+<span class="nc" id="L104">    addUndirectedEdge(graph, 2, 3);</span>
+<span class="nc" id="L105">    addUndirectedEdge(graph, 3, 4);</span>
+<span class="nc" id="L106">    addUndirectedEdge(graph, 5, 3);</span>
+<span class="nc" id="L107">    addUndirectedEdge(graph, 2, 6);</span>
+<span class="nc" id="L108">    addUndirectedEdge(graph, 6, 7);</span>
+<span class="nc" id="L109">    addUndirectedEdge(graph, 6, 8);</span>
+
+    // Rooted at 6 the tree should look like:
+    //           6
+    //      2    7     8
+    //    1   3
+    //  0    4 5
+
+<span class="nc" id="L117">    TreeNode root = rootTree(graph, 6);</span>
+
+    // Layer 0: [6]
+<span class="nc" id="L120">    System.out.println(root);</span>
+
+    // Layer 1: [2, 7, 8]
+<span class="nc" id="L123">    System.out.println(root.children);</span>
+
+    // Layer 2: [1, 3]
+<span class="nc" id="L126">    System.out.println(root.children.get(0).children);</span>
+
+    // Layer 3: [0], [4, 5]
+<span class="nc" id="L129">    System.out.println(</span>
+<span class="nc" id="L130">        root.children.get(0).children.get(0).children</span>
+            + &quot;, &quot;
+<span class="nc" id="L132">            + root.children.get(0).children.get(1).children);</span>
+
+    // Rooted at 3 the tree should look like:
+    //               3
+    //     2         4        5
+    //  6     1
+    // 7 8    0
+
+    // Layer 0: [3]
+<span class="nc" id="L141">    root = rootTree(graph, 3);</span>
+<span class="nc" id="L142">    System.out.println();</span>
+<span class="nc" id="L143">    System.out.println(root);</span>
+
+    // Layer 1: [2, 4, 5]
+<span class="nc" id="L146">    System.out.println(root.children);</span>
+
+    // Layer 2: [1, 6]
+<span class="nc" id="L149">    System.out.println(root.children.get(0).children);</span>
+
+    // Layer 3: [0], [7, 8]
+<span class="nc" id="L152">    System.out.println(</span>
+<span class="nc" id="L153">        root.children.get(0).children.get(0).children</span>
+            + &quot;, &quot;
+<span class="nc" id="L155">            + root.children.get(0).children.get(1).children);</span>
+<span class="nc" id="L156">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

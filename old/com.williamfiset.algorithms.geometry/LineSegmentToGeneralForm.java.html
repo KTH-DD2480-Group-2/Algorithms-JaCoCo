@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LineSegmentToGeneralForm.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">LineSegmentToGeneralForm.java</span></div><h1>LineSegmentToGeneralForm.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to convert a line segment (x1,y1), (x2,y2) into the general form for a
+ * line: ax + by + c = 0
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+<span class="nc" id="L11">public class LineSegmentToGeneralForm {</span>
+
+  // Given a line segment as (x1,y1), (x2,y2) this method
+  // returns the general form of a line ax + by + c = 0
+  // NOTE: this is not the same as: ax + by = c
+  public static double[] segmentToGeneralForm(double x1, double y1, double x2, double y2) {
+
+    // Starting with y = mx we can replace y with (y-y1), m with (y2-y1)/(x2-x1)
+    // and x with (x-x1), so we obtain (y-y1) = [(y2-y1)/(x2-x1)](x-x1) and simplify to:
+    // x(y1-y2) + y(x2-x1) + (x1y2-y1x2) = 0 and hence we conclude that a = (y1-y2)
+    // b = (x2-x1) and c = (x1y2-y1x2)
+
+    // a = abc[0], b = abc[1], c = abc[2]
+<span class="nc" id="L24">    double[] abc = new double[3];</span>
+
+<span class="nc" id="L26">    abc[0] = y1 - y2;</span>
+<span class="nc" id="L27">    abc[1] = x2 - x1;</span>
+<span class="nc" id="L28">    abc[2] = x1 * y2 - y1 * x2; // or y1*x2 - x1*y2; for ax + by = c</span>
+
+<span class="nc" id="L30">    return abc;</span>
+  }
+
+  // Example converting to general form
+  public static void main(String[] args) {
+
+    // The line segment (1, 1), (3, -4) gives the
+    // line _x + _y + _ = 0 in general form
+<span class="nc" id="L38">    double[] abc = segmentToGeneralForm(1, 1, 3, -4);</span>
+<span class="nc" id="L39">    System.out.printf(&quot;%.2fx + %.2fy + %.2f = 0\n&quot;, abc[0], abc[1], abc[2]);</span>
+<span class="nc" id="L40">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

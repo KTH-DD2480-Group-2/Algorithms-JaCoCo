@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeSum.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms.examples</a> &gt; <span class="el_source">TreeSum.java</span></div><h1>TreeSum.java</h1><pre class="source lang-java linenums">/**
+ * Tree sum example
+ *
+ * &lt;p&gt;Download the code: &lt;br&gt;
+ * $ git clone https://github.com/williamfiset/Algorithms
+ *
+ * &lt;p&gt;Run: &lt;br&gt;
+ * $ ./gradlew run -Palgorithm=graphtheory.treealgorithms.examples.TreeSum
+ *
+ * &lt;p&gt;Time Complexity: O(n)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms.examples;
+
+import java.util.*;
+
+<span class="nc" id="L18">public class TreeSum {</span>
+
+  public static class TreeNode {
+    int value;
+<span class="nc" id="L22">    List&lt;TreeNode&gt; children = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L24">    public TreeNode(int value) {</span>
+<span class="nc" id="L25">      this.value = value;</span>
+<span class="nc" id="L26">    }</span>
+
+    public int getValue() {
+<span class="nc" id="L29">      return value;</span>
+    }
+
+    public List&lt;TreeNode&gt; getChildren() {
+<span class="nc" id="L33">      return children;</span>
+    }
+
+    public void addChild(TreeNode... nodes) {
+<span class="nc bnc" id="L37" title="All 2 branches missed.">      for (TreeNode node : nodes) {</span>
+<span class="nc" id="L38">        children.add(node);</span>
+      }
+<span class="nc" id="L40">    }</span>
+  }
+
+  public static int treeSum(TreeNode node) {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">    if (node == null) return 0;</span>
+<span class="nc" id="L45">    int total = 0;</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">    for (TreeNode child : node.getChildren()) total += treeSum(child);</span>
+<span class="nc" id="L47">    total += node.getValue();</span>
+<span class="nc" id="L48">    return total;</span>
+  }
+
+  /* Examples */
+
+  public static void main(String[] args) {
+<span class="nc" id="L54">    TreeNode root = makeTree();</span>
+<span class="nc" id="L55">    System.out.printf(&quot;Tree sum: %d\n&quot;, treeSum(root));</span>
+<span class="nc" id="L56">  }</span>
+
+  private static TreeNode makeTree() {
+<span class="nc" id="L59">    TreeNode root = new TreeNode(5);</span>
+
+<span class="nc" id="L61">    TreeNode node4 = new TreeNode(4);</span>
+<span class="nc" id="L62">    TreeNode node3 = new TreeNode(3);</span>
+<span class="nc" id="L63">    root.addChild(node4, node3);</span>
+
+<span class="nc" id="L65">    TreeNode node1 = new TreeNode(1);</span>
+<span class="nc" id="L66">    TreeNode nodem6 = new TreeNode(-6);</span>
+<span class="nc" id="L67">    node4.addChild(node1, nodem6);</span>
+
+<span class="nc" id="L69">    TreeNode node0 = new TreeNode(0);</span>
+<span class="nc" id="L70">    TreeNode node7 = new TreeNode(7);</span>
+<span class="nc" id="L71">    TreeNode nodem4 = new TreeNode(-4);</span>
+<span class="nc" id="L72">    node3.addChild(node0, node7, nodem4);</span>
+
+<span class="nc" id="L74">    TreeNode node2 = new TreeNode(2);</span>
+<span class="nc" id="L75">    TreeNode node9 = new TreeNode(9);</span>
+<span class="nc" id="L76">    node1.addChild(node2, node9);</span>
+
+<span class="nc" id="L78">    TreeNode node8 = new TreeNode(8);</span>
+<span class="nc" id="L79">    node7.addChild(node8);</span>
+
+<span class="nc" id="L81">    return root;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

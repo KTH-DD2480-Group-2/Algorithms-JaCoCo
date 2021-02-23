@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CoplanarPoints.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">CoplanarPoints.java</span></div><h1>CoplanarPoints.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to determine if four 3D points lie in the same plane as each other.
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+<span class="nc" id="L12">public class CoplanarPoints {</span>
+
+  private static final double EPS = 1e-7;
+
+  // A simple 3D vector class
+  public static class Vector {
+    double x, y, z;
+
+<span class="nc" id="L20">    public Vector(double xx, double yy, double zz) {</span>
+<span class="nc" id="L21">      x = xx;</span>
+<span class="nc" id="L22">      y = yy;</span>
+<span class="nc" id="L23">      z = zz;</span>
+<span class="nc" id="L24">    }</span>
+  }
+
+  // Determine is four points (ax,ay,az), (bx,by,bz), (cx,cy,cz),
+  // (dx,dy,dz) all lie in the same plane in 3D space
+  public static boolean coplanar(
+      double ax,
+      double ay,
+      double az,
+      double bx,
+      double by,
+      double bz,
+      double cx,
+      double cy,
+      double cz,
+      double dx,
+      double dy,
+      double dz) {
+
+    // The problem of testing if four points are coplanar can be converted
+    // into a problem a checking if two vectors are orthogonal which is something
+    // the dot product is excellent at (if the dot product of two vectors is zero
+    // then they are orthogonal!)
+    //
+    // First, consider the three vectors spanning outwards from say point 'a':
+    // v1 = b-a, v2 = c-a, and v3 = d-a. If we take the cross product of any
+    // of these vectors (say v1 and v2) then we can obtain a fourth vector (v4)
+    // normal to the plane in which v1 and v2 live, so if the point 'd' lies in
+    // the same plane then the dot product of v3 and v4 should be 0
+
+<span class="nc" id="L54">    Vector v1 = new Vector(bx - ax, by - ay, bz - az);</span>
+<span class="nc" id="L55">    Vector v2 = new Vector(cx - ax, cy - ay, cz - az);</span>
+<span class="nc" id="L56">    Vector v3 = new Vector(dx - ax, dy - ay, dz - az);</span>
+
+    // Find the vector normal (perpendicular) to v1 and v2
+<span class="nc" id="L59">    Vector v4 = cross(v1, v2);</span>
+
+    // Check whether to dot product of v3 and v4 is zero
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    return abs(dot(v3, v4)) &lt; EPS;</span>
+  }
+
+  // Cross product of two vectors
+  private static Vector cross(Vector v1, Vector v2) {
+<span class="nc" id="L67">    double v3x = v1.y * v2.z - v1.z * v2.y;</span>
+<span class="nc" id="L68">    double v3y = v1.z * v2.x - v1.x * v2.z;</span>
+<span class="nc" id="L69">    double v3z = v1.x * v2.y - v1.y * v2.x;</span>
+<span class="nc" id="L70">    return new Vector(v3x, v3y, v3z);</span>
+  }
+
+  // 3D vector dot product
+  private static double dot(Vector v1, Vector v2) {
+<span class="nc" id="L75">    return (v1.x * v2.x) + (v1.y * v2.y) + (v1.z * v2.z);</span>
+  }
+
+  // Examples
+  public static void main(String[] args) {
+
+<span class="nc" id="L81">    System.out.println(</span>
+        &quot;The points (0,0,0), (1,0,1), (0,1,1), (1,1,2) are coplanar: &quot;
+<span class="nc" id="L83">            + coplanar(0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 2));</span>
+
+<span class="nc" id="L85">    System.out.println(</span>
+        &quot;The points (0,0,0), (3,3,3), (3,0,0), (0,4,0) are coplanar: &quot;
+<span class="nc" id="L87">            + coplanar(0, 0, 0, 3, 3, 3, 3, 0, 0, 0, 4, 0));</span>
+
+<span class="nc" id="L89">    System.out.println(</span>
+        &quot;The points (0,0,0), (1,1,1), (2,2,2), (3,3,3) are coplanar: &quot;
+<span class="nc" id="L91">            + coplanar(0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3));</span>
+<span class="nc" id="L92">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

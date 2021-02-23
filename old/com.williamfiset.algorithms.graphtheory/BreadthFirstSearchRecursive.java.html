@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BreadthFirstSearchRecursive.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">BreadthFirstSearchRecursive.java</span></div><h1>BreadthFirstSearchRecursive.java</h1><pre class="source lang-java linenums">/**
+ * This is an implementation of doing a breadth first search recursively with a slight cheat of
+ * passing in a queue as an argument to the function. A breadth first search
+ *
+ * &lt;p&gt;Time Complexity: O(V + E)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+<span class="nc" id="L16">public class BreadthFirstSearchRecursive {</span>
+
+  // Each breadth first search layer gets separated by a DEPTH_TOKEN.
+  // DEPTH_TOKENs help count the distance from one node to another because
+  // we can increment the depth counter each time a DEPTH_TOKEN is encountered
+<span class="nc" id="L21">  public static int DEPTH_TOKEN = -1;</span>
+
+  // Computes the eccentricity (distance to furthest node) from the starting node.
+  public static int bfs(List&lt;List&lt;Integer&gt;&gt; graph, int start, int n) {
+<span class="nc" id="L25">    boolean[] visited = new boolean[n];</span>
+<span class="nc" id="L26">    Queue&lt;Integer&gt; queue = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L27">    queue.offer(start);</span>
+<span class="nc" id="L28">    queue.offer(DEPTH_TOKEN);</span>
+<span class="nc" id="L29">    return bfs(visited, queue, graph);</span>
+  }
+
+  private static int bfs(boolean[] visited, Queue&lt;Integer&gt; queue, List&lt;List&lt;Integer&gt;&gt; graph) {
+
+<span class="nc" id="L34">    int at = queue.poll();</span>
+
+<span class="nc bnc" id="L36" title="All 2 branches missed.">    if (at == DEPTH_TOKEN) {</span>
+<span class="nc" id="L37">      queue.offer(DEPTH_TOKEN);</span>
+<span class="nc" id="L38">      return 1;</span>
+    }
+
+    // This node is already visited.
+<span class="nc bnc" id="L42" title="All 2 branches missed.">    if (visited[at]) return 0;</span>
+
+    // Visit this node.
+<span class="nc" id="L45">    visited[at] = true;</span>
+
+    // Add all neighbors to queue.
+<span class="nc" id="L48">    List&lt;Integer&gt; neighbors = graph.get(at);</span>
+<span class="nc bnc" id="L49" title="All 6 branches missed.">    if (neighbors != null) for (int next : neighbors) if (!visited[next]) queue.add(next);</span>
+
+<span class="nc" id="L51">    int depth = 0;</span>
+
+    while (true) {
+      // Stop when the queue is empty (i.e there's only one depth token remaining)
+<span class="nc bnc" id="L55" title="All 4 branches missed.">      if (queue.size() == 1 &amp;&amp; queue.peek() == DEPTH_TOKEN) break;</span>
+
+      // The depth is the sum of all DEPTH_TOKENS encountered.
+<span class="nc" id="L58">      depth += bfs(visited, queue, graph);</span>
+    }
+
+<span class="nc" id="L61">    return depth;</span>
+  }
+
+  public static void main(String[] args) {
+<span class="nc" id="L65">    int n = 14;</span>
+<span class="nc" id="L66">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+
+<span class="nc" id="L69">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L70">    addUndirectedEdge(graph, 0, 2);</span>
+<span class="nc" id="L71">    addUndirectedEdge(graph, 0, 3);</span>
+<span class="nc" id="L72">    addUndirectedEdge(graph, 2, 9);</span>
+<span class="nc" id="L73">    addUndirectedEdge(graph, 8, 2);</span>
+<span class="nc" id="L74">    addUndirectedEdge(graph, 3, 4);</span>
+<span class="nc" id="L75">    addUndirectedEdge(graph, 10, 11);</span>
+<span class="nc" id="L76">    addUndirectedEdge(graph, 12, 13);</span>
+<span class="nc" id="L77">    addUndirectedEdge(graph, 3, 5);</span>
+<span class="nc" id="L78">    addUndirectedEdge(graph, 5, 7);</span>
+<span class="nc" id="L79">    addUndirectedEdge(graph, 5, 6);</span>
+<span class="nc" id="L80">    addUndirectedEdge(graph, 0, 10);</span>
+<span class="nc" id="L81">    addUndirectedEdge(graph, 11, 12);</span>
+
+<span class="nc" id="L83">    System.out.printf(&quot;BFS depth: %d\n&quot;, bfs(graph, 12, n));</span>
+<span class="nc" id="L84">  }</span>
+
+  // Helper method to setup graph
+  private static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="nc" id="L88">    graph.get(from).add(to);</span>
+<span class="nc" id="L89">    graph.get(to).add(from);</span>
+<span class="nc" id="L90">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

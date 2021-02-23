@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>InterpolationSearch.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.search</a> &gt; <span class="el_source">InterpolationSearch.java</span></div><h1>InterpolationSearch.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of interpolation search
+ *
+ * &lt;p&gt;Time Complexity: O(log(log(n))) if data is uniform O(n) in worst case
+ */
+package com.williamfiset.algorithms.search;
+
+<span class="nc" id="L8">public class InterpolationSearch {</span>
+
+  /**
+   * A fast alternative to a binary search when the elements are uniformly distributed. This
+   * algorithm runs in a time complexity of ~O(log(log(n))).
+   *
+   * @param nums - an ordered list containing uniformly distributed values.
+   * @param val - the value we're looking for in 'nums'
+   */
+  public static int interpolationSearch(int[] nums, int val) {
+<span class="fc" id="L18">    int lo = 0, mid = 0, hi = nums.length - 1;</span>
+<span class="fc bfc" id="L19" title="All 4 branches covered.">    while (nums[lo] &lt;= val &amp;&amp; nums[hi] &gt;= val) {</span>
+<span class="fc" id="L20">      mid = lo + ((val - nums[lo]) * (hi - lo)) / (nums[hi] - nums[lo]);</span>
+<span class="pc bpc" id="L21" title="1 of 2 branches missed.">      if (nums[mid] &lt; val) {</span>
+<span class="nc" id="L22">        lo = mid + 1;</span>
+<span class="pc bpc" id="L23" title="1 of 2 branches missed.">      } else if (nums[mid] &gt; val) {</span>
+<span class="nc" id="L24">        hi = mid - 1;</span>
+<span class="fc" id="L25">      } else return mid;</span>
+    }
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">    if (nums[lo] == val) return lo;</span>
+<span class="fc" id="L28">    return -1;</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L33">    int[] values = {10, 20, 25, 35, 50, 70, 85, 100, 110, 120, 125};</span>
+
+    // Since 25 exists in the values array the interpolation search
+    // returns that it has found 25 at the index 2
+<span class="nc" id="L37">    System.out.println(interpolationSearch(values, 25));</span>
+
+    // 111 does not exist so we get -1 as an index value
+<span class="nc" id="L40">    System.out.println(interpolationSearch(values, 111));</span>
+<span class="nc" id="L41">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

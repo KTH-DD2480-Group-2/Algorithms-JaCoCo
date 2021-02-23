@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SuffixArrayMed.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.suffixarray</a> &gt; <span class="el_source">SuffixArrayMed.java</span></div><h1>SuffixArrayMed.java</h1><pre class="source lang-java linenums">/**
+ * Medium speed suffix array implementation. Time Complexity: O(nlog^2(n))
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.suffixarray;
+
+public class SuffixArrayMed extends SuffixArray {
+
+  // Wrapper class to help sort suffix ranks
+<span class="fc" id="L11">  static class SuffixRankTuple implements Comparable&lt;SuffixRankTuple&gt; {</span>
+
+    int firstHalf, secondHalf, originalIndex;
+
+    // Sort Suffix ranks first on the first half then the second half
+    @Override
+    public int compareTo(SuffixRankTuple other) {
+<span class="fc" id="L18">      int cmp = Integer.compare(firstHalf, other.firstHalf);</span>
+<span class="fc bfc" id="L19" title="All 2 branches covered.">      if (cmp == 0) return Integer.compare(secondHalf, other.secondHalf);</span>
+<span class="fc" id="L20">      return cmp;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L25">      return originalIndex + &quot; -&gt; (&quot; + firstHalf + &quot;, &quot; + secondHalf + &quot;)&quot;;</span>
+    }
+  }
+
+  public SuffixArrayMed(String text) {
+<span class="fc" id="L30">    super(toIntArray(text));</span>
+<span class="fc" id="L31">  }</span>
+
+  public SuffixArrayMed(int[] text) {
+<span class="nc" id="L34">    super(text);</span>
+<span class="nc" id="L35">  }</span>
+
+  // Construct a suffix array in O(nlog^2(n))
+  @Override
+  protected void construct() {
+<span class="fc" id="L40">    sa = new int[N];</span>
+
+    // Maintain suffix ranks in both a matrix with two rows containing the
+    // current and last rank information as well as some sortable rank objects
+<span class="fc" id="L44">    int[][] suffixRanks = new int[2][N];</span>
+<span class="fc" id="L45">    SuffixRankTuple[] ranks = new SuffixRankTuple[N];</span>
+
+    // Assign a numerical value to each character in the text
+<span class="fc bfc" id="L48" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L49">      suffixRanks[0][i] = T[i];</span>
+<span class="fc" id="L50">      ranks[i] = new SuffixRankTuple();</span>
+    }
+
+    // O(log(n))
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">    for (int pos = 1; pos &lt; N; pos *= 2) {</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L57">        SuffixRankTuple suffixRank = ranks[i];</span>
+<span class="fc" id="L58">        suffixRank.firstHalf = suffixRanks[0][i];</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        suffixRank.secondHalf = i + pos &lt; N ? suffixRanks[0][i + pos] : -1;</span>
+<span class="fc" id="L60">        suffixRank.originalIndex = i;</span>
+      }
+
+      // O(nlog(n))
+<span class="fc" id="L64">      java.util.Arrays.sort(ranks);</span>
+
+<span class="fc" id="L66">      int newRank = 0;</span>
+<span class="fc" id="L67">      suffixRanks[1][ranks[0].originalIndex] = 0;</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">      for (int i = 1; i &lt; N; i++) {</span>
+
+<span class="fc" id="L71">        SuffixRankTuple lastSuffixRank = ranks[i - 1];</span>
+<span class="fc" id="L72">        SuffixRankTuple currSuffixRank = ranks[i];</span>
+
+        // If the first half differs from the second half
+<span class="fc bfc" id="L75" title="All 4 branches covered.">        if (currSuffixRank.firstHalf != lastSuffixRank.firstHalf</span>
+<span class="fc" id="L76">            || currSuffixRank.secondHalf != lastSuffixRank.secondHalf) newRank++;</span>
+
+<span class="fc" id="L78">        suffixRanks[1][currSuffixRank.originalIndex] = newRank;</span>
+      }
+
+      // Place top row (current row) to be the last row
+<span class="fc" id="L82">      suffixRanks[0] = suffixRanks[1];</span>
+
+      // Optimization to stop early
+<span class="fc bfc" id="L85" title="All 2 branches covered.">      if (newRank == N - 1) break;</span>
+    }
+
+    // Fill suffix array
+<span class="fc bfc" id="L89" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L90">      sa[i] = ranks[i].originalIndex;</span>
+<span class="fc" id="L91">      ranks[i] = null;</span>
+    }
+
+    // Cleanup
+<span class="fc" id="L95">    suffixRanks[0] = suffixRanks[1] = null;</span>
+<span class="fc" id="L96">    suffixRanks = null;</span>
+<span class="fc" id="L97">    ranks = null;</span>
+<span class="fc" id="L98">  }</span>
+
+  public static void main(String[] args) {
+
+    // String[] strs = { &quot;AAGAAGC&quot;, &quot;AGAAGT&quot;, &quot;CGAAGC&quot; };
+    // String[] strs = { &quot;abca&quot;, &quot;bcad&quot;, &quot;daca&quot; };
+    // String[] strs = { &quot;abca&quot;, &quot;bcad&quot;, &quot;daca&quot; };
+    // String[] strs = { &quot;AABC&quot;, &quot;BCDC&quot;, &quot;BCDE&quot;, &quot;CDED&quot; };
+    // String[] strs = { &quot;abcdefg&quot;, &quot;bcdefgh&quot;, &quot;cdefghi&quot; };
+    // String[] strs = { &quot;xxx&quot;, &quot;yyy&quot;, &quot;zzz&quot; };
+    // TreeSet &lt;String&gt; lcss = SuffixArrayMed.lcs(strs, 2);
+    // System.out.println(lcss);
+
+    // SuffixArrayMed sa = new SuffixArrayMed(&quot;abracadabra&quot;);
+    // System.out.println(sa);
+    // System.out.println(java.util.Arrays.toString(sa.sa));
+    // System.out.println(java.util.Arrays.toString(sa.lcp));
+
+<span class="nc" id="L116">    SuffixArrayMed sa = new SuffixArrayMed(&quot;ABBABAABAA&quot;);</span>
+    // SuffixArrayMed sa = new SuffixArrayMed(&quot;GAGAGAGAGAGAG&quot;);
+<span class="nc" id="L118">    System.out.println(sa);</span>
+<span class="nc" id="L119">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

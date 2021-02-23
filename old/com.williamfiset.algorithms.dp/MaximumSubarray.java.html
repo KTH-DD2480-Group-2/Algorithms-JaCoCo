@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MaximumSubarray.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.dp</a> &gt; <span class="el_source">MaximumSubarray.java</span></div><h1>MaximumSubarray.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to find the maximal subarray in an integer array Time complexity: O(n)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.dp;
+
+<span class="nc" id="L8">public class MaximumSubarray {</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L11">    System.out.println(maximumSubarrayValue(new int[] {-5}));</span>
+<span class="nc" id="L12">    System.out.println(maximumSubarrayValue(new int[] {-5, -4, -10, -3, -1, -12, -6}));</span>
+<span class="nc" id="L13">    System.out.println(maximumSubarrayValue(new int[] {1, 2, 1, -7, 2, -1, 40, -89}));</span>
+<span class="nc" id="L14">  }</span>
+
+  // Return the value of the maximum subarray in 'ar'
+  public static long maximumSubarrayValue(int[] ar) {
+
+<span class="nc bnc" id="L19" title="All 4 branches missed.">    if (ar == null || ar.length == 0) return 0L;</span>
+<span class="nc" id="L20">    int n = ar.length, maxValue, sum;</span>
+
+<span class="nc" id="L22">    maxValue = sum = ar[0];</span>
+
+<span class="nc bnc" id="L24" title="All 2 branches missed.">    for (int i = 1; i &lt; n; i++) {</span>
+
+      // At each step consider continuing the current subarray
+      // or starting a new one because adding the next element
+      // doesn't acutally make the subarray sum any better.
+<span class="nc bnc" id="L29" title="All 2 branches missed.">      if (ar[i] &gt; sum + ar[i]) sum = ar[i];</span>
+<span class="nc" id="L30">      else sum = sum + ar[i];</span>
+
+<span class="nc bnc" id="L32" title="All 2 branches missed.">      if (sum &gt; maxValue) maxValue = sum;</span>
+    }
+
+<span class="nc" id="L35">    return maxValue;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AnagramSet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.bloomfilter</a> &gt; <span class="el_source">AnagramSet.java</span></div><h1>AnagramSet.java</h1><pre class="source lang-java linenums">/**
+ * NOTE: The code in this file is incomplete and still under development.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.bloomfilter;
+
+public class AnagramSet {
+
+  private final int N_HASHES;
+  private final int[] MODS;
+  private final long[] rollingHashes;
+  private final int[][] MOD_INVERSES;
+  private final BloomFilter bloomFilter;
+
+  // Alphabet table lookup
+<span class="nc" id="L17">  private static final int[] ALPHABET = new int[127];</span>
+
+  // There are only 95 printable ASCII characters, hence we only
+  // need the first 95 prime numbers to uniquely represent every string
+<span class="nc" id="L21">  private static final int[] PRIMES = {</span>
+    2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
+    101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193,
+    197, 199, 211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307,
+    311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421,
+    431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499
+  };
+
+  // More primes: 1009, 1013, 1019, 10007, 10009, 10037, 100003, 100019, 100043, 1000003, 1000033,
+  // 1000037,
+  // 10000019, 10000079, 10000103, 100000007, 100000009, 100000023, 1000000007, 1000000009,
+  // 1000000021, 1000000033
+<span class="nc" id="L33">  private static final int[] DEFAULT_MODS = {10_000_019, 10_000_079, 10_000_103};</span>
+
+  static {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">    for (int i = 32, j = 0; i &lt; ALPHABET.length; i++, j++) {</span>
+<span class="nc" id="L37">      ALPHABET[i] = PRIMES[j];</span>
+    }
+<span class="nc" id="L39">  }</span>
+
+  public AnagramSet() {
+<span class="nc" id="L42">    this(DEFAULT_MODS);</span>
+<span class="nc" id="L43">  }</span>
+
+<span class="nc" id="L45">  public AnagramSet(int[] mods) {</span>
+
+<span class="nc" id="L47">    MODS = mods.clone();</span>
+<span class="nc" id="L48">    N_HASHES = mods.length;</span>
+<span class="nc" id="L49">    MOD_INVERSES = new int[N_HASHES][PRIMES.length];</span>
+
+<span class="nc" id="L51">    rollingHashes = new long[N_HASHES];</span>
+<span class="nc" id="L52">    bloomFilter = new BloomFilter(mods);</span>
+
+    // // Assuming all mods are primes each mod value will have a modular inverse
+<span class="nc bnc" id="L55" title="All 2 branches missed.">    for (int i = 0; i &lt; N_HASHES; i++) {</span>
+<span class="nc" id="L56">      java.math.BigInteger mod = new java.math.BigInteger(String.valueOf(MODS[i]));</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">      for (int j = 0; j &lt; PRIMES.length; j++) {</span>
+<span class="nc" id="L58">        java.math.BigInteger prime = new java.math.BigInteger(String.valueOf(PRIMES[j]));</span>
+<span class="nc" id="L59">        MOD_INVERSES[i][j] = prime.modInverse(mod).intValue();</span>
+      }
+    }
+<span class="nc" id="L62">  }</span>
+
+  // Compute and return a deep copy of the current rolling hash value.
+  public long[] computeHash(String str) {
+
+<span class="nc" id="L67">    java.util.Arrays.fill(rollingHashes, 1L);</span>
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">    for (int j = 0; j &lt; str.length(); j++) add(rollingHashes, str.charAt(j));</span>
+
+<span class="nc" id="L71">    return rollingHashes.clone();</span>
+  }
+
+  // Compute and return a shallow copy of the current rolling hash value.
+  // NOTE: Make sure you clone the returned array if you want to cache it.
+  private long[] computeHashShallow(String str) {
+
+<span class="nc" id="L78">    java.util.Arrays.fill(rollingHashes, 1L);</span>
+
+<span class="nc bnc" id="L80" title="All 2 branches missed.">    for (int j = 0; j &lt; str.length(); j++) add(rollingHashes, str.charAt(j));</span>
+
+<span class="nc" id="L82">    return rollingHashes;</span>
+  }
+
+  // Adds this string to the anagram set, O(N_HASHES)
+  public void add(String str) {
+<span class="nc" id="L87">    bloomFilter.add(computeHashShallow(str));</span>
+<span class="nc" id="L88">  }</span>
+
+  // Add the character 'c' to the anagram rolling hash, O(N_HASHES)
+  public void add(long[] hashes, char c) {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">    for (int i = 0; i &lt; N_HASHES; i++) {</span>
+<span class="nc" id="L93">      hashes[i] = (hashes[i] * ALPHABET[c]) % MODS[i];</span>
+    }
+<span class="nc" id="L95">  }</span>
+
+  // Removes the character 'c' from the rolling anagram hash stored in 'hashes', O(N_HASHES)
+  public void remove(long[] hashes, char c) {
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    for (int i = 0; i &lt; N_HASHES; i++) {</span>
+<span class="nc" id="L100">      hashes[i] = (hashes[i] * MOD_INVERSES[i][c - ' ']) % MODS[i];</span>
+    }
+<span class="nc" id="L102">  }</span>
+
+  // Checks if any anagram of the string 'str' exists in the set, O(N_HASHES)
+  public boolean contains(String str) {
+<span class="nc" id="L106">    return contains(computeHashShallow(str));</span>
+  }
+
+  // Given the hashes for a string this method checks
+  // if any anagram of the string 'str' exists in the set, O(N_HASHES)
+  public boolean contains(long[] hashes) {
+<span class="nc" id="L112">    return bloomFilter.contains(hashes);</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

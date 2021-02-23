@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SlidingWindowMaximum.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.other</a> &gt; <span class="el_source">SlidingWindowMaximum.java</span></div><h1>SlidingWindowMaximum.java</h1><pre class="source lang-java linenums">/**
+ * This file contain an implementation of the maximum sliding window problem. This code has been
+ * tested against the judge data on:
+ *
+ * &lt;p&gt;https://leetcode.com/problems/sliding-window-maximum/description/
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.other;
+
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+public class SlidingWindowMaximum {
+
+  int[] values;
+  public int N, lo, hi;
+
+<span class="fc" id="L19">  Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span>
+
+<span class="fc" id="L21">  public SlidingWindowMaximum(int[] values) {</span>
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">    if (values == null) throw new IllegalArgumentException();</span>
+<span class="fc" id="L23">    this.values = values;</span>
+<span class="fc" id="L24">    N = values.length;</span>
+<span class="fc" id="L25">  }</span>
+
+  // Advances the front of the window by one unit
+  public void advance() {
+
+    // Remove all the worse values in the back of the deque
+<span class="fc bfc" id="L31" title="All 4 branches covered.">    while (!deque.isEmpty() &amp;&amp; values[deque.peekLast()] &lt; values[hi])</span>
+<span class="fc" id="L32">      deque.removeLast(); // Change the '&lt;' sign here ^^^ to '&gt;' for minimum sliding window</span>
+
+    // Add the next index to the back of the deque
+<span class="fc" id="L35">    deque.addLast(hi);</span>
+
+    // Increase the window size
+<span class="fc" id="L38">    hi++;</span>
+<span class="fc" id="L39">  }</span>
+
+  // Retracks the back of the window by one unit
+  public void shrink() {
+
+    // Decrease window size by pushing it forward
+<span class="fc" id="L45">    lo++;</span>
+
+    // Remove elements in the front of the queue whom are no longer
+    // valid in the reduced window.
+<span class="pc bpc" id="L49" title="1 of 4 branches missed.">    while (!deque.isEmpty() &amp;&amp; deque.peekFirst() &lt; lo) deque.removeFirst();</span>
+<span class="fc" id="L50">  }</span>
+
+  // Query the current maximum value in the window
+  public int getMax() {
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">    if (lo &gt;= hi) throw new IllegalStateException(&quot;Make sure lo &lt; hi&quot;);</span>
+<span class="fc" id="L55">    return values[deque.peekFirst()];</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

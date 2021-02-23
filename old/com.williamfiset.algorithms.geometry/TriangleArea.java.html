@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TriangleArea.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">TriangleArea.java</span></div><h1>TriangleArea.java</h1><pre class="source lang-java linenums">/**
+ * There is more than one way to take the area of a triangle, some are faster or more convenient in
+ * some situations.
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+import java.awt.geom.*;
+
+<span class="nc" id="L15">public class TriangleArea {</span>
+
+  // Given three sides of a triangle use Heron's formula
+  // to compute the area of the triangle.
+  public static double triangleArea(double side1, double side2, double side3) {
+
+    // Semi-perimeter
+<span class="nc" id="L22">    double s = (side1 + side2 + side3) / 2.0;</span>
+
+    // Square root makes this method slower than the others
+<span class="nc" id="L25">    return sqrt(s * (s - side1) * (s - side2) * (s - side3));</span>
+  }
+
+  // Given three points a, b, c find the area of the triangle
+  public static double triangleArea(
+      double ax, double ay, double bx, double by, double cx, double cy) {
+
+    // Let v1 = &lt;bx-ax, by-ay&gt; and v2 = &lt;cx-ax, cy-ay&gt; be vectors
+    // Take the determinant of v1 and v2 to find the area of the
+    // parallelogram of the two vectors.
+
+<span class="nc" id="L36">    double v1_x = bx - ax;</span>
+<span class="nc" id="L37">    double v1_y = by - ay;</span>
+<span class="nc" id="L38">    double v2_x = cx - ax;</span>
+<span class="nc" id="L39">    double v2_y = cy - ay;</span>
+
+    //                | v1_x v2_x |
+    // Determinant of | v1_y v2_y | is v1_x*v2_y - v2_x*v1_y
+<span class="nc" id="L43">    double determinant = v1_x * v2_y - v2_x * v1_y;</span>
+
+    // Divide by two because we computed the area of the parallelogram
+<span class="nc" id="L46">    return abs(determinant) / 2.0;</span>
+  }
+
+  // Given three points a,b,c find the area of the triangle
+  public static double triangleArea(Point2D a, Point2D b, Point2D c) {
+<span class="nc" id="L51">    return triangleArea(a.getX(), a.getY(), b.getX(), b.getY(), c.getX(), c.getY());</span>
+  }
+
+  // The traditional triangle area formula
+  public static double triangleArea(double base, double height) {
+<span class="nc" id="L56">    return base * (height / 2.0);</span>
+  }
+
+  // Example usage
+  public static void main(String[] args) {
+
+<span class="nc" id="L62">    Point2D a = new Point2D.Double(0, 1);</span>
+<span class="nc" id="L63">    Point2D b = new Point2D.Double(2, 0);</span>
+<span class="nc" id="L64">    Point2D c = new Point2D.Double(3, 4);</span>
+
+<span class="nc" id="L66">    System.out.println(triangleArea(a, b, c));</span>
+
+<span class="nc" id="L68">    double side1 = a.distance(b);</span>
+<span class="nc" id="L69">    double side2 = a.distance(c);</span>
+<span class="nc" id="L70">    double side3 = b.distance(c);</span>
+
+<span class="nc" id="L72">    System.out.println(triangleArea(side1, side2, side3));</span>
+<span class="nc" id="L73">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

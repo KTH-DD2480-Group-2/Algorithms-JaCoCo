@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreePrinter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.utils</a> &gt; <span class="el_source">TreePrinter.java</span></div><h1>TreePrinter.java</h1><pre class="source lang-java linenums">// Taken from @MightyPork at:
+// https://stackoverflow.com/questions/4965335/how-to-print-binary-tree-diagram
+package com.williamfiset.algorithms.datastructures.utils;
+
+import java.util.*;
+
+<span class="nc" id="L7">public class TreePrinter {</span>
+
+  /** Node that can be printed */
+  public interface PrintableNode {
+
+    // Get left child
+    public PrintableNode getLeft();
+
+    // Get right child
+    public PrintableNode getRight();
+
+    // Get text to be printed
+    public String getText();
+  }
+
+  // Print a binary tree.
+  public static String getTreeDisplay(PrintableNode root) {
+
+<span class="fc" id="L25">    StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L26">    List&lt;List&lt;String&gt;&gt; lines = new ArrayList&lt;List&lt;String&gt;&gt;();</span>
+<span class="fc" id="L27">    List&lt;PrintableNode&gt; level = new ArrayList&lt;PrintableNode&gt;();</span>
+<span class="fc" id="L28">    List&lt;PrintableNode&gt; next = new ArrayList&lt;PrintableNode&gt;();</span>
+
+<span class="fc" id="L30">    level.add(root);</span>
+<span class="fc" id="L31">    int nn = 1;</span>
+<span class="fc" id="L32">    int widest = 0;</span>
+
+<span class="fc bfc" id="L34" title="All 2 branches covered.">    while (nn != 0) {</span>
+<span class="fc" id="L35">      nn = 0;</span>
+<span class="fc" id="L36">      List&lt;String&gt; line = new ArrayList&lt;String&gt;();</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">      for (PrintableNode n : level) {</span>
+<span class="pc bpc" id="L38" title="1 of 2 branches missed.">        if (n == null) {</span>
+<span class="nc" id="L39">          line.add(null);</span>
+<span class="nc" id="L40">          next.add(null);</span>
+<span class="nc" id="L41">          next.add(null);</span>
+        } else {
+<span class="fc" id="L43">          String aa = n.getText();</span>
+<span class="fc" id="L44">          line.add(aa);</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">          if (aa.length() &gt; widest) widest = aa.length();</span>
+
+<span class="fc" id="L47">          next.add(n.getLeft());</span>
+<span class="fc" id="L48">          next.add(n.getRight());</span>
+
+<span class="fc bfc" id="L50" title="All 2 branches covered.">          if (n.getLeft() != null) nn++;</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">          if (n.getRight() != null) nn++;</span>
+        }
+<span class="fc" id="L53">      }</span>
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">      if (widest % 2 == 1) widest++;</span>
+
+<span class="fc" id="L57">      lines.add(line);</span>
+
+<span class="fc" id="L59">      List&lt;PrintableNode&gt; tmp = level;</span>
+<span class="fc" id="L60">      level = next;</span>
+<span class="fc" id="L61">      next = tmp;</span>
+<span class="fc" id="L62">      next.clear();</span>
+<span class="fc" id="L63">    }</span>
+
+<span class="fc" id="L65">    int perpiece = lines.get(lines.size() - 1).size() * (widest + 4);</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">    for (int i = 0; i &lt; lines.size(); i++) {</span>
+<span class="fc" id="L67">      List&lt;String&gt; line = lines.get(i);</span>
+<span class="fc" id="L68">      int hpw = (int) Math.floor(perpiece / 2f) - 1;</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">      if (i &gt; 0) {</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        for (int j = 0; j &lt; line.size(); j++) {</span>
+
+          // split node
+<span class="fc" id="L73">          char c = ' ';</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">          if (j % 2 == 1) {</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">            if (line.get(j - 1) != null) {</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">              c = (line.get(j) != null) ? '#' : '#';</span>
+            } else {
+<span class="nc bnc" id="L78" title="All 4 branches missed.">              if (j &lt; line.size() &amp;&amp; line.get(j) != null) c = '#';</span>
+            }
+          }
+<span class="fc" id="L81">          sb.append(c);</span>
+
+          // lines and spaces
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">          if (line.get(j) == null) {</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">            for (int k = 0; k &lt; perpiece - 1; k++) {</span>
+<span class="nc" id="L86">              sb.append(' ');</span>
+            }
+          } else {
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            for (int k = 0; k &lt; hpw; k++) {</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">              sb.append(j % 2 == 0 ? &quot; &quot; : &quot;#&quot;);</span>
+            }
+<span class="fc bfc" id="L92" title="All 2 branches covered.">            sb.append(j % 2 == 0 ? &quot;#&quot; : &quot;#&quot;);</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">            for (int k = 0; k &lt; hpw; k++) {</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">              sb.append(j % 2 == 0 ? &quot;#&quot; : &quot; &quot;);</span>
+            }
+          }
+        }
+<span class="fc" id="L98">        sb.append('\n');</span>
+      }
+<span class="fc bfc" id="L100" title="All 2 branches covered.">      for (int j = 0; j &lt; line.size(); j++) {</span>
+<span class="fc" id="L101">        String f = line.get(j);</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">        if (f == null) f = &quot;&quot;;</span>
+<span class="fc" id="L103">        int gap1 = (int) Math.ceil(perpiece / 2f - f.length() / 2f);</span>
+<span class="fc" id="L104">        int gap2 = (int) Math.floor(perpiece / 2f - f.length() / 2f);</span>
+
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        for (int k = 0; k &lt; gap1; k++) {</span>
+<span class="fc" id="L107">          sb.append(' ');</span>
+        }
+<span class="fc" id="L109">        sb.append(f);</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        for (int k = 0; k &lt; gap2; k++) {</span>
+<span class="fc" id="L111">          sb.append(' ');</span>
+        }
+      }
+<span class="fc" id="L114">      sb.append('\n');</span>
+
+<span class="fc" id="L116">      perpiece /= 2;</span>
+    }
+<span class="fc" id="L118">    return sb.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

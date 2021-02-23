@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeneticAlgorithm_travelingSalesman.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.ai</a> &gt; <span class="el_source">GeneticAlgorithm_travelingSalesman.java</span></div><h1>GeneticAlgorithm_travelingSalesman.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the TSP problem using a genetic algorithm. This implementation works well
+ * for graph with &lt; 30 nodes, beyond this it seems to struggle getting near the optimal solution.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.ai;
+
+import java.util.*;
+
+<span class="nc" id="L11">public class GeneticAlgorithm_travelingSalesman {</span>
+
+<span class="nc" id="L13">  static final Random RANDOM = new Random();</span>
+
+  // Genetic algorithm parameters (P = Population)
+  static final int P = 250;
+  static final int MAX_EPOCH = 100000;
+  static final double MUTATION_RATE = 0.015;
+
+  // The power variable tweaks the weight of the fitness function
+  // to emphasize better individuals. The power slowly increments
+  // over time to help get out of local minimums in later epochs.
+  static double power;
+  static final double POWER_INC = 0.0001;
+
+  static double tsp(double[][] adjacencyMatrix) {
+
+<span class="nc" id="L28">    power = 1.0;</span>
+<span class="nc" id="L29">    final int N = adjacencyMatrix.length;</span>
+
+<span class="nc" id="L31">    double max = Double.NEGATIVE_INFINITY;</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">    for (double[] row : adjacencyMatrix) {</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">      for (double elem : row) {</span>
+<span class="nc" id="L34">        max = Math.max(max, elem);</span>
+      }
+    }
+
+    // Create initial population
+<span class="nc" id="L39">    Individual[] generation = new Individual[P + 1];</span>
+<span class="nc" id="L40">    Individual[] nextGeneration = new Individual[P + 1];</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">    for (int i = 1; i &lt;= P; i++) generation[i] = new Individual(N);</span>
+
+    // Stores the ranges of individuals in the selection roulette
+<span class="nc" id="L44">    double[] lo = new double[P + 1];</span>
+<span class="nc" id="L45">    double[] hi = new double[P + 1];</span>
+
+<span class="nc" id="L47">    double[] fitness = new double[P + 1];</span>
+
+    // Record data about the fittest individual
+<span class="nc" id="L50">    int[] tour = null;</span>
+<span class="nc" id="L51">    Individual fittestIndv = null;</span>
+<span class="nc" id="L52">    double fittestIndvFitness = Double.NEGATIVE_INFINITY;</span>
+
+<span class="nc bnc" id="L54" title="All 2 branches missed.">    for (int epoch = 1; epoch &lt;= MAX_EPOCH; epoch++, power += POWER_INC) {</span>
+
+      // Compute the total fitness sum across all individuals in order
+      // to be able to normalize and assign importance percentages
+<span class="nc" id="L58">      double fitnessSum = 0;</span>
+
+<span class="nc bnc" id="L60" title="All 2 branches missed.">      for (int i = 1; i &lt;= P; i++) {</span>
+<span class="nc" id="L61">        Individual in = generation[i];</span>
+<span class="nc" id="L62">        fitness[i] = fitness(in, adjacencyMatrix, max, N);</span>
+<span class="nc" id="L63">        fitnessSum += fitness[i];</span>
+<span class="nc" id="L64">        lo[i] = hi[i] = 0;</span>
+      }
+
+      // Track epoch fittest individual
+<span class="nc" id="L68">      Individual bestEpochIndv = null;</span>
+<span class="nc" id="L69">      double bestEpochFitness = Double.NEGATIVE_INFINITY;</span>
+
+      // Setup selection roulette
+<span class="nc bnc" id="L72" title="All 2 branches missed.">      for (int i = 1; i &lt;= P; i++) {</span>
+
+<span class="nc" id="L74">        Individual in = generation[i];</span>
+<span class="nc" id="L75">        double norm = fitness[i] / fitnessSum;</span>
+
+<span class="nc" id="L77">        lo[i] = hi[i - 1] = lo[i - 1] + norm;</span>
+
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (fitness[i] &gt; bestEpochFitness) {</span>
+
+<span class="nc" id="L81">          bestEpochIndv = in;</span>
+<span class="nc" id="L82">          bestEpochFitness = fitness[i];</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">          if (fittestIndv == null) fittestIndv = in;</span>
+
+          // Compute the true tour distance
+<span class="nc" id="L86">          double bestEpochTravelCost = trueTravelCost(bestEpochIndv, adjacencyMatrix, N);</span>
+<span class="nc" id="L87">          double bestTravelCost = trueTravelCost(fittestIndv, adjacencyMatrix, N);</span>
+
+          // Update fittest individual info
+<span class="nc bnc" id="L90" title="All 2 branches missed.">          if (bestEpochTravelCost &lt;= bestTravelCost) {</span>
+<span class="nc" id="L91">            tour = in.cities.clone();</span>
+<span class="nc" id="L92">            fittestIndv = in;</span>
+<span class="nc" id="L93">            fittestIndvFitness = bestEpochTravelCost;</span>
+          }
+        }
+      }
+
+<span class="nc" id="L98">      double bestEpochTravelCost = trueTravelCost(bestEpochIndv, adjacencyMatrix, N);</span>
+<span class="nc" id="L99">      double bestTravelCost = trueTravelCost(fittestIndv, adjacencyMatrix, N);</span>
+
+<span class="nc bnc" id="L101" title="All 2 branches missed.">      if (epoch % 100 == 0)</span>
+<span class="nc" id="L102">        System.out.printf(&quot;Epoch: %d, %.0f, %.0f\n&quot;, epoch, bestEpochTravelCost, bestTravelCost);</span>
+
+      // Selection process
+<span class="nc bnc" id="L105" title="All 2 branches missed.">      for (int i = 1; i &lt;= P; i++) {</span>
+
+        // Perform individual selection and crossover
+<span class="nc" id="L108">        Individual parent1 = selectIndividual(generation, lo, hi);</span>
+<span class="nc" id="L109">        Individual parent2 = selectIndividual(generation, lo, hi);</span>
+<span class="nc" id="L110">        Individual child = crossover(parent1, parent2, N);</span>
+
+        // Apply mutations to all parts of the DNA
+        // according to a predefined mutation rate
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        for (int j = 0; j &lt; N; j++) {</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">          if (Math.random() &lt; MUTATION_RATE) {</span>
+<span class="nc" id="L116">            mutate(child);</span>
+          }
+        }
+
+<span class="nc" id="L120">        nextGeneration[i] = child;</span>
+      }
+
+<span class="nc" id="L123">      generation = nextGeneration;</span>
+    }
+
+<span class="nc" id="L126">    return trueTravelCost(fittestIndv, adjacencyMatrix, N);</span>
+    // return tour;
+
+  }
+
+  // Returns an approximate fitness of a give tour
+  static double fitness(Individual in, double[][] adjacencyMatrix, double max, int n) {
+
+    // Compute the cost of traveling to all the cities
+<span class="nc" id="L135">    double fitness = 0;</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">    for (int i = 1; i &lt; n; i++) {</span>
+<span class="nc" id="L137">      int from = in.cities[i - 1];</span>
+<span class="nc" id="L138">      int to = in.cities[i];</span>
+<span class="nc" id="L139">      fitness += max - adjacencyMatrix[from][to];</span>
+    }
+
+    // Compute cost for trip back
+<span class="nc" id="L143">    int last = in.cities[n - 1];</span>
+<span class="nc" id="L144">    int first = in.cities[0];</span>
+<span class="nc" id="L145">    fitness += max - adjacencyMatrix[last][first];</span>
+
+    // return fitness;
+<span class="nc" id="L148">    return Math.pow(fitness, power);</span>
+  }
+
+  static double trueTravelCost(Individual in, double[][] adjacencyMatrix, int n) {
+
+    // Compute the cost of traveling to all the cities
+<span class="nc" id="L154">    double fitness = 0;</span>
+<span class="nc bnc" id="L155" title="All 2 branches missed.">    for (int i = 1; i &lt; n; i++) {</span>
+<span class="nc" id="L156">      int from = in.cities[i - 1];</span>
+<span class="nc" id="L157">      int to = in.cities[i];</span>
+<span class="nc" id="L158">      fitness += adjacencyMatrix[from][to];</span>
+    }
+
+    // Compute cost for trip back
+<span class="nc" id="L162">    int last = in.cities[n - 1];</span>
+<span class="nc" id="L163">    int first = in.cities[0];</span>
+<span class="nc" id="L164">    fitness += adjacencyMatrix[last][first];</span>
+
+<span class="nc" id="L166">    return fitness;</span>
+  }
+
+  static void mutate(Individual in) {
+<span class="nc" id="L170">    in.mutate();</span>
+<span class="nc" id="L171">  }</span>
+
+  static Individual selectIndividual(Individual[] generation, double[] lo, double[] hi) {
+
+<span class="nc" id="L175">    double r = Math.random();</span>
+
+    // Binary search to find individual
+<span class="nc" id="L178">    int mid, l = 0, h = P - 1;</span>
+    while (true) {
+<span class="nc" id="L180">      mid = (l + h) &gt;&gt;&gt; 1;</span>
+<span class="nc bnc" id="L181" title="All 4 branches missed.">      if (lo[mid] &lt;= r &amp;&amp; r &lt; hi[mid]) return generation[mid + 1];</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">      if (r &lt; lo[mid]) h = mid - 1;</span>
+<span class="nc" id="L183">      else l = mid + 1;</span>
+    }
+  }
+
+  static Individual crossover(Individual p1, Individual p2, int n) {
+
+<span class="nc" id="L189">    int[] newPath = new int[n];</span>
+<span class="nc" id="L190">    int start = RANDOM.nextInt(n);</span>
+<span class="nc" id="L191">    int end = RANDOM.nextInt(n);</span>
+<span class="nc" id="L192">    int minimum = Math.min(start, end);</span>
+<span class="nc" id="L193">    int maximum = Math.max(start, end);</span>
+
+<span class="nc" id="L195">    int[] missing = new int[n - ((maximum - minimum) + 1)];</span>
+
+<span class="nc" id="L197">    int j = 0;</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L199" title="All 4 branches missed.">      if (i &gt;= minimum &amp;&amp; i &lt;= maximum) {</span>
+<span class="nc" id="L200">        newPath[i] = p1.cities[i];</span>
+      } else {
+<span class="nc" id="L202">        missing[j++] = p1.cities[i];</span>
+      }
+    }
+
+<span class="nc" id="L206">    Individual.shuffleArray(missing);</span>
+
+<span class="nc" id="L208">    j = 0;</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L210" title="All 4 branches missed.">      if (i &lt; minimum || i &gt; maximum) {</span>
+<span class="nc" id="L211">        newPath[i] = missing[j++];</span>
+      }
+    }
+<span class="nc" id="L214">    return new Individual(newPath);</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L219">    int n = 64;</span>
+
+<span class="nc" id="L221">    double[][] m = new double[n][n];</span>
+<span class="nc bnc" id="L222" title="All 2 branches missed.">    for (double[] row : m) {</span>
+<span class="nc" id="L223">      Arrays.fill(row, 10.0);</span>
+    }
+
+    // Construct an optimal path
+<span class="nc" id="L227">    List&lt;Integer&gt; path = new ArrayList&lt;&gt;(n);</span>
+<span class="nc bnc" id="L228" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) path.add(i);</span>
+<span class="nc bnc" id="L229" title="All 2 branches missed.">    for (int i = 1; i &lt; n; i++) {</span>
+<span class="nc" id="L230">      int from = path.get(i - 1);</span>
+<span class="nc" id="L231">      int to = path.get(i);</span>
+<span class="nc" id="L232">      m[from][to] = 1.0;</span>
+    }
+<span class="nc" id="L234">    int last = path.get(n - 1);</span>
+<span class="nc" id="L235">    int first = path.get(0);</span>
+<span class="nc" id="L236">    m[last][first] = 1.0;</span>
+
+<span class="nc" id="L238">    System.out.println(tsp(m));</span>
+<span class="nc" id="L239">  }</span>
+
+  // An individual in the TSP is an order in which
+  // the cities are visited.
+  static class Individual {
+
+    int[] cities;
+<span class="nc" id="L246">    static Random RANDOM = new Random();</span>
+
+    // Constructs a random individual
+<span class="nc" id="L249">    public Individual(int n) {</span>
+<span class="nc" id="L250">      cities = new int[n];</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++) cities[i] = i;</span>
+<span class="nc" id="L252">      shuffleArray(cities);</span>
+<span class="nc" id="L253">    }</span>
+
+    // Constructs a random individual
+<span class="nc" id="L256">    public Individual(int[] cities) {</span>
+<span class="nc" id="L257">      this.cities = cities;</span>
+<span class="nc" id="L258">    }</span>
+
+    // public boolean ass() {
+    //   int s = 0;
+    //   for (int x : cities) s += x;
+    //   int n = cities.length-1;
+    //   return s == (n*(n-1))/2;
+    // }
+
+    // Swap the order in which the cities are visited
+    public void mutate() {
+<span class="nc" id="L269">      int i = RANDOM.nextInt(cities.length);</span>
+<span class="nc" id="L270">      int j = RANDOM.nextInt(cities.length);</span>
+<span class="nc" id="L271">      int tmp = cities[i];</span>
+<span class="nc" id="L272">      cities[i] = cities[j];</span>
+<span class="nc" id="L273">      cities[j] = tmp;</span>
+<span class="nc" id="L274">    }</span>
+
+    // Fisherâ€“Yates shuffle
+    public static void shuffleArray(int[] array) {
+      int index;
+<span class="nc bnc" id="L279" title="All 2 branches missed.">      for (int i = array.length - 1; i &gt; 0; i--) {</span>
+<span class="nc" id="L280">        index = RANDOM.nextInt(i + 1);</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">        if (index != i) {</span>
+<span class="nc" id="L282">          array[index] ^= array[i];</span>
+<span class="nc" id="L283">          array[i] ^= array[index];</span>
+<span class="nc" id="L284">          array[index] ^= array[i];</span>
+        }
+      }
+<span class="nc" id="L287">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L291">      return java.util.Arrays.toString(cities);</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

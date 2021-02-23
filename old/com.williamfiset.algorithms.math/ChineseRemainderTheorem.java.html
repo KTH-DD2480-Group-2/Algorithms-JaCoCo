@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChineseRemainderTheorem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">ChineseRemainderTheorem.java</span></div><h1>ChineseRemainderTheorem.java</h1><pre class="source lang-java linenums">/**
+ * Use the chinese remainder theorem to solve a set of congruence equations.
+ *
+ * &lt;p&gt;The first method (eliminateCoefficient) is used to reduce an equation of the form cxâ‰¡a(mod
+ * m)cxâ‰¡a(mod m) to the form xâ‰¡a_new(mod m_new)xâ‰¡anew(mod m_new), which gets rids of the
+ * coefficient. A value of null is returned if the coefficient cannot be eliminated.
+ *
+ * &lt;p&gt;The second method (reduce) is used to reduce a set of equations so that the moduli become
+ * pairwise co-prime (which means that we can apply the Chinese Remainder Theorem). The input and
+ * output are of the form xâ‰¡a_0(mod m_0),...,xâ‰¡a_nâˆ’1(mod m_nâˆ’1)xâ‰¡a_0(mod m_0),...,xâ‰¡a_nâˆ’1(mod
+ * m_nâˆ’1). Note that the number of equations may change during this process. A value of null is
+ * returned if the set of equations cannot be reduced to co-prime moduli.
+ *
+ * &lt;p&gt;The third method (crt) is the actual Chinese Remainder Theorem. It assumes that all pairs of
+ * moduli are co-prime to one another. This solves a set of equations of the form xâ‰¡a_0(mod
+ * m_0),...,xâ‰¡v_nâˆ’1(mod m_nâˆ’1)xâ‰¡a_0(mod m_0),...,xâ‰¡v_nâˆ’1(mod m_nâˆ’1). It's output is of the form
+ * xâ‰¡a_new(mod m_new)xâ‰¡a_new(mod m_new).
+ *
+ * @author Micah Stairs
+ */
+package com.williamfiset.algorithms.math;
+
+import java.util.*;
+
+<span class="nc" id="L25">public class ChineseRemainderTheorem {</span>
+
+  // eliminateCoefficient() takes cxâ‰¡a(mod m) and gives xâ‰¡a_new(mod m_new).
+  public static long[] eliminateCoefficient(long c, long a, long m) {
+
+<span class="nc" id="L30">    long d = egcd(c, m)[0];</span>
+
+<span class="nc bnc" id="L32" title="All 2 branches missed.">    if (a % d != 0) return null;</span>
+
+<span class="nc" id="L34">    c /= d;</span>
+<span class="nc" id="L35">    a /= d;</span>
+<span class="nc" id="L36">    m /= d;</span>
+
+<span class="nc" id="L38">    long inv = egcd(c, m)[1];</span>
+<span class="nc" id="L39">    m = Math.abs(m);</span>
+<span class="nc" id="L40">    a = (((a * inv) % m) + m) % m;</span>
+
+<span class="nc" id="L42">    return new long[] {a, m};</span>
+  }
+
+  // reduce() takes a set of equations and reduces them to an equivalent
+  // set with pairwise co-prime moduli (or null if not solvable).
+  public static long[][] reduce(long[] a, long[] m) {
+
+<span class="nc" id="L49">    List&lt;Long&gt; aNew = new ArrayList&lt;Long&gt;();</span>
+<span class="nc" id="L50">    List&lt;Long&gt; mNew = new ArrayList&lt;Long&gt;();</span>
+
+    // Split up each equation into prime factors
+<span class="nc bnc" id="L53" title="All 2 branches missed.">    for (int i = 0; i &lt; a.length; i++) {</span>
+<span class="nc" id="L54">      List&lt;Long&gt; factors = primeFactorization(m[i]);</span>
+<span class="nc" id="L55">      Collections.sort(factors);</span>
+<span class="nc" id="L56">      ListIterator&lt;Long&gt; iterator = factors.listIterator();</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">      while (iterator.hasNext()) {</span>
+<span class="nc" id="L58">        long val = iterator.next();</span>
+<span class="nc" id="L59">        long total = val;</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        while (iterator.hasNext()) {</span>
+<span class="nc" id="L61">          long nextVal = iterator.next();</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">          if (nextVal == val) {</span>
+<span class="nc" id="L63">            total *= val;</span>
+          } else {
+<span class="nc" id="L65">            iterator.previous();</span>
+<span class="nc" id="L66">            break;</span>
+          }
+<span class="nc" id="L68">        }</span>
+<span class="nc" id="L69">        aNew.add(a[i] % total);</span>
+<span class="nc" id="L70">        mNew.add(total);</span>
+<span class="nc" id="L71">      }</span>
+    }
+
+    // Throw away repeated information and look for conflicts
+<span class="nc bnc" id="L75" title="All 2 branches missed.">    for (int i = 0; i &lt; aNew.size(); i++) {</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">      for (int j = i + 1; j &lt; aNew.size(); j++) {</span>
+<span class="nc bnc" id="L77" title="All 4 branches missed.">        if (mNew.get(i) % mNew.get(j) == 0 || mNew.get(j) % mNew.get(i) == 0) {</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">          if (mNew.get(i) &gt; mNew.get(j)) {</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">            if ((aNew.get(i) % mNew.get(j)) == aNew.get(j)) {</span>
+<span class="nc" id="L80">              aNew.remove(j);</span>
+<span class="nc" id="L81">              mNew.remove(j);</span>
+<span class="nc" id="L82">              j--;</span>
+<span class="nc" id="L83">              continue;</span>
+<span class="nc" id="L84">            } else return null;</span>
+          } else {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            if ((aNew.get(j) % mNew.get(i)) == aNew.get(i)) {</span>
+<span class="nc" id="L87">              aNew.remove(i);</span>
+<span class="nc" id="L88">              mNew.remove(i);</span>
+<span class="nc" id="L89">              i--;</span>
+<span class="nc" id="L90">              break;</span>
+<span class="nc" id="L91">            } else return null;</span>
+          }
+        }
+      }
+    }
+
+    // Put result into an array
+<span class="nc" id="L98">    long[][] res = new long[2][aNew.size()];</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    for (int i = 0; i &lt; aNew.size(); i++) {</span>
+<span class="nc" id="L100">      res[0][i] = aNew.get(i);</span>
+<span class="nc" id="L101">      res[1][i] = mNew.get(i);</span>
+    }
+
+<span class="nc" id="L104">    return res;</span>
+  }
+
+  public static long[] crt(long[] a, long[] m) {
+
+<span class="nc" id="L109">    long M = 1;</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    for (int i = 0; i &lt; m.length; i++) M *= m[i];</span>
+
+<span class="nc" id="L112">    long[] inv = new long[a.length];</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">    for (int i = 0; i &lt; inv.length; i++) inv[i] = egcd(M / m[i], m[i])[1];</span>
+
+<span class="nc" id="L115">    long x = 0;</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">    for (int i = 0; i &lt; m.length; i++) {</span>
+<span class="nc" id="L117">      x += (M / m[i]) * a[i] * inv[i]; // Overflow could occur here</span>
+<span class="nc" id="L118">      x = ((x % M) + M) % M;</span>
+    }
+
+<span class="nc" id="L121">    return new long[] {x, M};</span>
+  }
+
+  private static ArrayList&lt;Long&gt; primeFactorization(long n) {
+<span class="nc" id="L125">    ArrayList&lt;Long&gt; factors = new ArrayList&lt;Long&gt;();</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">    if (n &lt;= 0) throw new IllegalArgumentException();</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">    else if (n == 1) return factors;</span>
+<span class="nc" id="L128">    PriorityQueue&lt;Long&gt; divisorQueue = new PriorityQueue&lt;Long&gt;();</span>
+<span class="nc" id="L129">    divisorQueue.add(n);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">    while (!divisorQueue.isEmpty()) {</span>
+<span class="nc" id="L131">      long divisor = divisorQueue.remove();</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">      if (isPrime(divisor)) {</span>
+<span class="nc" id="L133">        factors.add(divisor);</span>
+<span class="nc" id="L134">        continue;</span>
+      }
+<span class="nc" id="L136">      long next_divisor = pollardRho(divisor);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">      if (next_divisor == divisor) {</span>
+<span class="nc" id="L138">        divisorQueue.add(divisor);</span>
+      } else {
+<span class="nc" id="L140">        divisorQueue.add(next_divisor);</span>
+<span class="nc" id="L141">        divisorQueue.add(divisor / next_divisor);</span>
+      }
+<span class="nc" id="L143">    }</span>
+<span class="nc" id="L144">    return factors;</span>
+  }
+
+  private static long pollardRho(long n) {
+<span class="nc bnc" id="L148" title="All 2 branches missed.">    if (n % 2 == 0) return 2;</span>
+    // Get a number in the range [2, 10^6]
+<span class="nc" id="L150">    long x = 2 + (long) (999999 * Math.random());</span>
+<span class="nc" id="L151">    long c = 2 + (long) (999999 * Math.random());</span>
+<span class="nc" id="L152">    long y = x;</span>
+<span class="nc" id="L153">    long d = 1;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">    while (d == 1) {</span>
+<span class="nc" id="L155">      x = (x * x + c) % n;</span>
+<span class="nc" id="L156">      y = (y * y + c) % n;</span>
+<span class="nc" id="L157">      y = (y * y + c) % n;</span>
+<span class="nc" id="L158">      d = gcf(Math.abs(x - y), n);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">      if (d == n) break;</span>
+    }
+<span class="nc" id="L161">    return d;</span>
+  }
+
+  // Extended euclidean algorithm
+  private static long[] egcd(long a, long b) {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">    if (b == 0) return new long[] {a, 1, 0};</span>
+    else {
+<span class="nc" id="L168">      long[] ret = egcd(b, a % b);</span>
+<span class="nc" id="L169">      long tmp = ret[1] - ret[2] * (a / b);</span>
+<span class="nc" id="L170">      ret[1] = ret[2];</span>
+<span class="nc" id="L171">      ret[2] = tmp;</span>
+<span class="nc" id="L172">      return ret;</span>
+    }
+  }
+
+  private static long gcf(long a, long b) {
+<span class="nc bnc" id="L177" title="All 2 branches missed.">    return b == 0 ? a : gcf(b, a % b);</span>
+  }
+
+  private static boolean isPrime(long n) {
+<span class="nc bnc" id="L181" title="All 2 branches missed.">    if (n &lt; 2) return false;</span>
+<span class="nc bnc" id="L182" title="All 4 branches missed.">    if (n == 2 || n == 3) return true;</span>
+<span class="nc bnc" id="L183" title="All 4 branches missed.">    if (n % 2 == 0 || n % 3 == 0) return false;</span>
+
+<span class="nc" id="L185">    int limit = (int) Math.sqrt(n);</span>
+
+<span class="nc bnc" id="L187" title="All 6 branches missed.">    for (int i = 5; i &lt;= limit; i += 6) if (n % i == 0 || n % (i + 2) == 0) return false;</span>
+
+<span class="nc" id="L189">    return true;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

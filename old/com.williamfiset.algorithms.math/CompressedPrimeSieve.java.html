@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CompressedPrimeSieve.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">CompressedPrimeSieve.java</span></div><h1>CompressedPrimeSieve.java</h1><pre class="source lang-java linenums">/**
+ * Generate a compressed prime sieve using bit manipulation. The idea is that each bit represents a
+ * boolean value indicating whether a number is prime or not. This saves a lot of room when creating
+ * the sieve. In this implementation I store all odd numbers in individual longs meaning that for
+ * each long I use I can represent a range of 128 numbers (even numbers are omitted because they are
+ * not prime, with the exception of 2 which is handled as a special case).
+ *
+ * &lt;p&gt;Time Complexity: ~O(nloglogn)
+ *
+ * &lt;p&gt;Compile: javac -d src/main/java
+ * src/main/java/com/williamfiset/algorithms/math/CompressedPrimeSieve.java
+ *
+ * &lt;p&gt;Run: java -cp src/main/java com/williamfiset/algorithms/math/CompressedPrimeSieve
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.math;
+
+<span class="nc" id="L19">public class CompressedPrimeSieve {</span>
+  private static final double NUM_BITS = 128.0;
+  private static final int NUM_BITS_SHIFT = 7; // 2^7 = 128
+
+  // Sets the bit representing n to 1 indicating this number is not prime
+  private static void setBit(long[] arr, int n) {
+<span class="nc bnc" id="L25" title="All 2 branches missed.">    if ((n &amp; 1) == 0) return; // n is even</span>
+<span class="nc" id="L26">    arr[n &gt;&gt; NUM_BITS_SHIFT] |= 1L &lt;&lt; ((n - 1) &gt;&gt; 1);</span>
+<span class="nc" id="L27">  }</span>
+
+  // Returns true if the bit for n is off (meaning n is a prime).
+  // Note: do use this method to access numbers outside your prime sieve range!
+  private static boolean isNotSet(long[] arr, int n) {
+<span class="nc bnc" id="L32" title="All 2 branches missed.">    if (n &lt; 2) return false; // n is not prime</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">    if (n == 2) return true; // two is prime</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">    if ((n &amp; 1) == 0) return false; // n is even</span>
+<span class="nc" id="L35">    long chunk = arr[n &gt;&gt; NUM_BITS_SHIFT];</span>
+<span class="nc" id="L36">    long mask = 1L &lt;&lt; ((n - 1) &gt;&gt; 1);</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    return (chunk &amp; mask) != mask;</span>
+  }
+
+  // Returns true/false depending on whether n is prime.
+  public static boolean isPrime(long[] sieve, int n) {
+<span class="nc" id="L42">    return isNotSet(sieve, n);</span>
+  }
+
+  // Returns an array of longs with each bit indicating whether a number
+  // is prime or not. Use the isNotSet and setBit methods to toggle to bits for each number.
+  public static long[] primeSieve(int limit) {
+<span class="nc" id="L48">    final int numChunks = (int) Math.ceil(limit / NUM_BITS);</span>
+<span class="nc" id="L49">    final int sqrtLimit = (int) Math.sqrt(limit);</span>
+    // if (limit &lt; 2) return 0; // uncomment for primeCount purposes
+    // int primeCount = (int) Math.ceil(limit / 2.0); // Counts number of primes &lt;= limit
+<span class="nc" id="L52">    long[] chunks = new long[numChunks];</span>
+<span class="nc" id="L53">    chunks[0] = 1; // 1 as not prime</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">    for (int i = 3; i &lt;= sqrtLimit; i += 2)</span>
+<span class="nc bnc" id="L55" title="All 2 branches missed.">      if (isNotSet(chunks, i))</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">        for (int j = i * i; j &lt;= limit; j += i)</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">          if (isNotSet(chunks, j)) {</span>
+<span class="nc" id="L58">            setBit(chunks, j);</span>
+            // primeCount--;
+          }
+<span class="nc" id="L61">    return chunks;</span>
+  }
+
+  /* Example usage. */
+
+  public static void main(String[] args) {
+<span class="nc" id="L67">    final int limit = 200;</span>
+<span class="nc" id="L68">    long[] sieve = CompressedPrimeSieve.primeSieve(limit);</span>
+
+<span class="nc bnc" id="L70" title="All 2 branches missed.">    for (int i = 0; i &lt;= limit; i++) {</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">      if (CompressedPrimeSieve.isPrime(sieve, i)) {</span>
+<span class="nc" id="L72">        System.out.printf(&quot;%d is prime!\n&quot;, i);</span>
+      }
+    }
+<span class="nc" id="L75">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

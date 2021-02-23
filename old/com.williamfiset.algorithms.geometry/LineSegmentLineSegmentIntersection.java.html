@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LineSegmentLineSegmentIntersection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">LineSegmentLineSegmentIntersection.java</span></div><h1>LineSegmentLineSegmentIntersection.java</h1><pre class="source lang-java linenums">/**
+ * This snippet finds the intersection of two line segments. The intersection may either be empty, a
+ * single point or the intersection is a subsegment there's an overlap.
+ *
+ * &lt;p&gt;NOTE: In the code, I assume that a line segment (x1, y1), (x2, y2) with x1 = x2 and y1 = y2 is
+ * a valid line segment. Mathematically speaking, a line segment consists of distinct points, but I
+ * am allowing segments to be points in this implementation for completeness.
+ *
+ * @author: William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.abs;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L20">public class LineSegmentLineSegmentIntersection {</span>
+
+  // Small epsilon used for double value comparison.
+  private static final double EPS = 1e-7;
+
+  // 2D Point class.
+  public static class Pt {
+    double x, y;
+
+<span class="nc" id="L29">    public Pt(double x, double y) {</span>
+<span class="nc" id="L30">      this.x = x;</span>
+<span class="nc" id="L31">      this.y = y;</span>
+<span class="nc" id="L32">    }</span>
+
+    public boolean equals(Pt pt) {
+<span class="nc bnc" id="L35" title="All 4 branches missed.">      return abs(x - pt.x) &lt; EPS &amp;&amp; abs(y - pt.y) &lt; EPS;</span>
+    }
+  }
+
+  // Finds the intersection point(s) of two line segments. Unlike regular line
+  // segments, segments which are points (x1 = x2 and y1 = y2) are allowed.
+  public static Pt[] lineSegmentLineSegmentIntersection(Pt p1, Pt p2, Pt p3, Pt p4) {
+
+    // No intersection.
+<span class="nc bnc" id="L44" title="All 2 branches missed.">    if (!segmentsIntersect(p1, p2, p3, p4)) return new Pt[] {};</span>
+
+    // Both segments are a single point.
+<span class="nc bnc" id="L47" title="All 6 branches missed.">    if (p1.equals(p2) &amp;&amp; p2.equals(p3) &amp;&amp; p3.equals(p4)) return new Pt[] {p1};</span>
+
+<span class="nc" id="L49">    List&lt;Pt&gt; endpoints = getCommonEndpoints(p1, p2, p3, p4);</span>
+<span class="nc" id="L50">    int n = endpoints.size();</span>
+
+    // One of the line segments is an intersecting single point.
+    // NOTE: checking only n == 1 is insufficient to return early
+    // because the solution might be a sub segment.
+<span class="nc bnc" id="L55" title="All 4 branches missed.">    boolean singleton = p1.equals(p2) || p3.equals(p4);</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">    if (n == 1 &amp;&amp; singleton) return new Pt[] {endpoints.get(0)};</span>
+
+    // Segments are equal.
+<span class="nc bnc" id="L59" title="All 2 branches missed.">    if (n == 2) return new Pt[] {endpoints.get(0), endpoints.get(1)};</span>
+
+<span class="nc bnc" id="L61" title="All 4 branches missed.">    boolean collinearSegments = (orientation(p1, p2, p3) == 0) &amp;&amp; (orientation(p1, p2, p4) == 0);</span>
+
+    // The intersection will be a sub-segment of the two
+    // segments since they overlap each other.
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    if (collinearSegments) {</span>
+
+      // Segment #2 is enclosed in segment #1
+<span class="nc bnc" id="L68" title="All 4 branches missed.">      if (pointOnLine(p1, p2, p3) &amp;&amp; pointOnLine(p1, p2, p4)) return new Pt[] {p3, p4};</span>
+
+      // Segment #1 is enclosed in segment #2
+<span class="nc bnc" id="L71" title="All 4 branches missed.">      if (pointOnLine(p3, p4, p1) &amp;&amp; pointOnLine(p3, p4, p2)) return new Pt[] {p1, p2};</span>
+
+      // The subsegment is part of segment #1 and part of segment #2.
+      // Find the middle points which correspond to this segment.
+<span class="nc bnc" id="L75" title="All 2 branches missed.">      Pt midPoint1 = pointOnLine(p1, p2, p3) ? p3 : p4;</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">      Pt midPoint2 = pointOnLine(p3, p4, p1) ? p1 : p2;</span>
+
+      // There is actually only one middle point!
+<span class="nc bnc" id="L79" title="All 2 branches missed.">      if (midPoint1.equals(midPoint2)) return new Pt[] {midPoint1};</span>
+
+<span class="nc" id="L81">      return new Pt[] {midPoint1, midPoint2};</span>
+    }
+
+    /* Beyond this point there is a unique intersection point. */
+
+    // Segment #1 is a vertical line.
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    if (abs(p1.x - p2.x) &lt; EPS) {</span>
+<span class="nc" id="L88">      double m = (p4.y - p3.y) / (p4.x - p3.x);</span>
+<span class="nc" id="L89">      double b = p3.y - m * p3.x;</span>
+<span class="nc" id="L90">      return new Pt[] {new Pt(p1.x, m * p1.x + b)};</span>
+    }
+
+    // Segment #2 is a vertical line.
+<span class="nc bnc" id="L94" title="All 2 branches missed.">    if (abs(p3.x - p4.x) &lt; EPS) {</span>
+<span class="nc" id="L95">      double m = (p2.y - p1.y) / (p2.x - p1.x);</span>
+<span class="nc" id="L96">      double b = p1.y - m * p1.x;</span>
+<span class="nc" id="L97">      return new Pt[] {new Pt(p3.x, m * p3.x + b)};</span>
+    }
+
+<span class="nc" id="L100">    double m1 = (p2.y - p1.y) / (p2.x - p1.x);</span>
+<span class="nc" id="L101">    double m2 = (p4.y - p3.y) / (p4.x - p3.x);</span>
+<span class="nc" id="L102">    double b1 = p1.y - m1 * p1.x;</span>
+<span class="nc" id="L103">    double b2 = p3.y - m2 * p3.x;</span>
+<span class="nc" id="L104">    double x = (b2 - b1) / (m1 - m2);</span>
+<span class="nc" id="L105">    double y = (m1 * b2 - m2 * b1) / (m1 - m2);</span>
+
+<span class="nc" id="L107">    return new Pt[] {new Pt(x, y)};</span>
+  }
+
+  // Finds the orientation of point 'c' relative to the line segment (a, b)
+  // Returns  0 if all three points are collinear.
+  // Returns -1 if 'c' is clockwise to segment (a, b), i.e right of line formed by the segment.
+  // Returns +1 if 'c' is counter clockwise to segment (a, b), i.e left of line
+  // formed by the segment.
+  private static int orientation(Pt a, Pt b, Pt c) {
+<span class="nc" id="L116">    double value = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">    if (abs(value) &lt; EPS) return 0;</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">    return (value &gt; 0) ? -1 : +1;</span>
+  }
+
+  // Tests whether point 'c' is on the line segment (a, b).
+  // Ensure first that point c is collinear to segment (a, b) and
+  // then check whether c is within the rectangle formed by (a, b)
+  private static boolean pointOnLine(Pt a, Pt b, Pt c) {
+<span class="nc bnc" id="L125" title="All 2 branches missed.">    return orientation(a, b, c) == 0</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        &amp;&amp; min(a.x, b.x) &lt;= c.x</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        &amp;&amp; c.x &lt;= max(a.x, b.x)</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">        &amp;&amp; min(a.y, b.y) &lt;= c.y</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">        &amp;&amp; c.y &lt;= max(a.y, b.y);</span>
+  }
+
+  // Determines whether two segments intersect.
+  private static boolean segmentsIntersect(Pt p1, Pt p2, Pt p3, Pt p4) {
+
+    // Get the orientation of points p3 and p4 in relation
+    // to the line segment (p1, p2)
+<span class="nc" id="L137">    int o1 = orientation(p1, p2, p3);</span>
+<span class="nc" id="L138">    int o2 = orientation(p1, p2, p4);</span>
+<span class="nc" id="L139">    int o3 = orientation(p3, p4, p1);</span>
+<span class="nc" id="L140">    int o4 = orientation(p3, p4, p2);</span>
+
+    // If the points p1, p2 are on opposite sides of the infinite
+    // line formed by (p3, p4) and conversly p3, p4 are on opposite
+    // sides of the infinite line formed by (p1, p2) then there is
+    // an intersection.
+<span class="nc bnc" id="L146" title="All 4 branches missed.">    if (o1 != o2 &amp;&amp; o3 != o4) return true;</span>
+
+    // Collinear special cases (perhaps these if checks can be simplified?)
+<span class="nc bnc" id="L149" title="All 4 branches missed.">    if (o1 == 0 &amp;&amp; pointOnLine(p1, p2, p3)) return true;</span>
+<span class="nc bnc" id="L150" title="All 4 branches missed.">    if (o2 == 0 &amp;&amp; pointOnLine(p1, p2, p4)) return true;</span>
+<span class="nc bnc" id="L151" title="All 4 branches missed.">    if (o3 == 0 &amp;&amp; pointOnLine(p3, p4, p1)) return true;</span>
+<span class="nc bnc" id="L152" title="All 4 branches missed.">    if (o4 == 0 &amp;&amp; pointOnLine(p3, p4, p2)) return true;</span>
+
+<span class="nc" id="L154">    return false;</span>
+  }
+
+  private static List&lt;Pt&gt; getCommonEndpoints(Pt p1, Pt p2, Pt p3, Pt p4) {
+
+<span class="nc" id="L159">    List&lt;Pt&gt; points = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L161" title="All 2 branches missed.">    if (p1.equals(p3)) {</span>
+<span class="nc" id="L162">      points.add(p1);</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">      if (p2.equals(p4)) points.add(p2);</span>
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">    } else if (p1.equals(p4)) {</span>
+<span class="nc" id="L166">      points.add(p1);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">      if (p2.equals(p3)) points.add(p2);</span>
+
+<span class="nc bnc" id="L169" title="All 2 branches missed.">    } else if (p2.equals(p3)) {</span>
+<span class="nc" id="L170">      points.add(p2);</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">      if (p1.equals(p4)) points.add(p1);</span>
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">    } else if (p2.equals(p4)) {</span>
+<span class="nc" id="L174">      points.add(p2);</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">      if (p1.equals(p3)) points.add(p1);</span>
+    }
+
+<span class="nc" id="L178">    return points;</span>
+  }
+
+  public static void main(String[] args) {
+
+    // Segment #1 is (p1, p2), segment #2 is (p3, p4)
+    Pt p1, p2, p3, p4;
+
+<span class="nc" id="L186">    p1 = new Pt(-2, 4);</span>
+<span class="nc" id="L187">    p2 = new Pt(3, 3);</span>
+<span class="nc" id="L188">    p3 = new Pt(0, 0);</span>
+<span class="nc" id="L189">    p4 = new Pt(2, 4);</span>
+<span class="nc" id="L190">    Pt[] points = lineSegmentLineSegmentIntersection(p1, p2, p3, p4);</span>
+<span class="nc" id="L191">    Pt point = points[0];</span>
+
+    // Prints: (1.636, 3.273)
+<span class="nc" id="L194">    System.out.printf(&quot;(%.3f, %.3f)\n&quot;, point.x, point.y);</span>
+
+<span class="nc" id="L196">    p1 = new Pt(-10, 0);</span>
+<span class="nc" id="L197">    p2 = new Pt(+10, 0);</span>
+<span class="nc" id="L198">    p3 = new Pt(-5, 0);</span>
+<span class="nc" id="L199">    p4 = new Pt(+5, 0);</span>
+<span class="nc" id="L200">    points = lineSegmentLineSegmentIntersection(p1, p2, p3, p4);</span>
+<span class="nc" id="L201">    Pt point1 = points[0], point2 = points[1];</span>
+
+    // Prints: (-5.000, 0.000) (5.000, 0.000)
+<span class="nc" id="L204">    System.out.printf(&quot;(%.3f, %.3f) (%.3f, %.3f)\n&quot;, point1.x, point1.y, point2.x, point2.y);</span>
+<span class="nc" id="L205">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

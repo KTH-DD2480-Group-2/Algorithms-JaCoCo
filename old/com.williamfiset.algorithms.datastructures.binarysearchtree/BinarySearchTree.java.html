@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BinarySearchTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.binarysearchtree</a> &gt; <span class="el_source">BinarySearchTree.java</span></div><h1>BinarySearchTree.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of a Binary Search Tree (BST) Any comparable data is allowed
+ * within this tree (numbers, strings, comparable Objects, etc...). Supported operations include
+ * adding, removing, height, and containment checks. Furthermore, multiple tree traversal Iterators
+ * are provided including: 1) Preorder traversal 2) Inorder traversal 3) Postorder traversal 4)
+ * Levelorder traversal
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.binarysearchtree;
+
+<span class="fc" id="L12">public class BinarySearchTree&lt;T extends Comparable&lt;T&gt;&gt; {</span>
+
+  // Tracks the number of nodes in this BST
+<span class="fc" id="L15">  private int nodeCount = 0;</span>
+
+  // This BST is a rooted tree so we maintain a handle on the root node
+<span class="fc" id="L18">  private Node root = null;</span>
+
+  // Internal node containing node references
+  // and the actual node data
+  private class Node {
+    T data;
+    Node left, right;
+
+<span class="fc" id="L26">    public Node(Node left, Node right, T elem) {</span>
+<span class="fc" id="L27">      this.data = elem;</span>
+<span class="fc" id="L28">      this.left = left;</span>
+<span class="fc" id="L29">      this.right = right;</span>
+<span class="fc" id="L30">    }</span>
+  }
+
+  // Check if this binary tree is empty
+  public boolean isEmpty() {
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    return size() == 0;</span>
+  }
+
+  // Get the number of nodes in this binary tree
+  public int size() {
+<span class="fc" id="L40">    return nodeCount;</span>
+  }
+
+  // Add an element to this binary tree. Returns true
+  // if we successfully perform an insertion
+  public boolean add(T elem) {
+
+    // Check if the value already exists in this
+    // binary tree, if it does ignore adding it
+<span class="fc bfc" id="L49" title="All 2 branches covered.">    if (contains(elem)) {</span>
+<span class="fc" id="L50">      return false;</span>
+
+      // Otherwise add this element to the binary tree
+    } else {
+<span class="fc" id="L54">      root = add(root, elem);</span>
+<span class="fc" id="L55">      nodeCount++;</span>
+<span class="fc" id="L56">      return true;</span>
+    }
+  }
+
+  // Private method to recursively add a value in the binary tree
+  private Node add(Node node, T elem) {
+
+    // Base case: found a leaf node
+<span class="fc bfc" id="L64" title="All 2 branches covered.">    if (node == null) {</span>
+<span class="fc" id="L65">      node = new Node(null, null, elem);</span>
+
+    } else {
+      // Pick a subtree to insert element
+<span class="fc bfc" id="L69" title="All 2 branches covered.">      if (elem.compareTo(node.data) &lt; 0) {</span>
+<span class="fc" id="L70">        node.left = add(node.left, elem);</span>
+      } else {
+<span class="fc" id="L72">        node.right = add(node.right, elem);</span>
+      }
+    }
+
+<span class="fc" id="L76">    return node;</span>
+  }
+
+  // Remove a value from this binary tree if it exists, O(n)
+  public boolean remove(T elem) {
+
+    // Make sure the node we want to remove
+    // actually exists before we remove it
+<span class="fc bfc" id="L84" title="All 2 branches covered.">    if (contains(elem)) {</span>
+<span class="fc" id="L85">      root = remove(root, elem);</span>
+<span class="fc" id="L86">      nodeCount--;</span>
+<span class="fc" id="L87">      return true;</span>
+    }
+<span class="fc" id="L89">    return false;</span>
+  }
+
+  private Node remove(Node node, T elem) {
+
+<span class="pc bpc" id="L94" title="1 of 2 branches missed.">    if (node == null) return null;</span>
+
+<span class="fc" id="L96">    int cmp = elem.compareTo(node.data);</span>
+
+    // Dig into left subtree, the value we're looking
+    // for is smaller than the current value
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    if (cmp &lt; 0) {</span>
+<span class="fc" id="L101">      node.left = remove(node.left, elem);</span>
+
+      // Dig into right subtree, the value we're looking
+      // for is greater than the current value
+<span class="fc bfc" id="L105" title="All 2 branches covered.">    } else if (cmp &gt; 0) {</span>
+<span class="fc" id="L106">      node.right = remove(node.right, elem);</span>
+
+      // Found the node we wish to remove
+    } else {
+
+      // This is the case with only a right subtree or
+      // no subtree at all. In this situation just
+      // swap the node we wish to remove with its right child.
+<span class="fc bfc" id="L114" title="All 2 branches covered.">      if (node.left == null) {</span>
+<span class="fc" id="L115">        return node.right;</span>
+
+        // This is the case with only a left subtree or
+        // no subtree at all. In this situation just
+        // swap the node we wish to remove with its left child.
+<span class="fc bfc" id="L120" title="All 2 branches covered.">      } else if (node.right == null) {</span>
+
+<span class="fc" id="L122">        return node.left;</span>
+
+        // When removing a node from a binary tree with two links the
+        // successor of the node being removed can either be the largest
+        // value in the left subtree or the smallest value in the right
+        // subtree. In this implementation I have decided to find the
+        // smallest value in the right subtree which can be found by
+        // traversing as far left as possible in the right subtree.
+      } else {
+
+        // Find the leftmost node in the right subtree
+<span class="fc" id="L133">        Node tmp = findMin(node.right);</span>
+
+        // Swap the data
+<span class="fc" id="L136">        node.data = tmp.data;</span>
+
+        // Go into the right subtree and remove the leftmost node we
+        // found and swapped data with. This prevents us from having
+        // two nodes in our tree with the same value.
+<span class="fc" id="L141">        node.right = remove(node.right, tmp.data);</span>
+
+        // If instead we wanted to find the largest node in the left
+        // subtree as opposed to smallest node in the right subtree
+        // here is what we would do:
+        // Node tmp = findMax(node.left);
+        // node.data = tmp.data;
+        // node.left = remove(node.left, tmp.data);
+
+      }
+    }
+
+<span class="fc" id="L153">    return node;</span>
+  }
+
+  // Helper method to find the leftmost node (which has the smallest value)
+  private Node findMin(Node node) {
+<span class="fc bfc" id="L158" title="All 2 branches covered.">    while (node.left != null) node = node.left;</span>
+<span class="fc" id="L159">    return node;</span>
+  }
+
+  // Helper method to find the rightmost node (which has the largest value)
+  private Node findMax(Node node) {
+<span class="nc bnc" id="L164" title="All 2 branches missed.">    while (node.right != null) node = node.right;</span>
+<span class="nc" id="L165">    return node;</span>
+  }
+
+  // returns true is the element exists in the tree
+  public boolean contains(T elem) {
+<span class="fc" id="L170">    return contains(root, elem);</span>
+  }
+
+  // private recursive method to find an element in the tree
+  private boolean contains(Node node, T elem) {
+
+    // Base case: reached bottom, value not found
+<span class="fc bfc" id="L177" title="All 2 branches covered.">    if (node == null) return false;</span>
+
+<span class="fc" id="L179">    int cmp = elem.compareTo(node.data);</span>
+
+    // Dig into the left subtree because the value we're
+    // looking for is smaller than the current value
+<span class="fc bfc" id="L183" title="All 2 branches covered.">    if (cmp &lt; 0) return contains(node.left, elem);</span>
+
+    // Dig into the right subtree because the value we're
+    // looking for is greater than the current value
+<span class="fc bfc" id="L187" title="All 2 branches covered.">    else if (cmp &gt; 0) return contains(node.right, elem);</span>
+
+    // We found the value we were looking for
+<span class="fc" id="L190">    else return true;</span>
+  }
+
+  // Computes the height of the tree, O(n)
+  public int height() {
+<span class="fc" id="L195">    return height(root);</span>
+  }
+
+  // Recursive helper method to compute the height of the tree
+  private int height(Node node) {
+<span class="fc bfc" id="L200" title="All 2 branches covered.">    if (node == null) return 0;</span>
+<span class="fc" id="L201">    return Math.max(height(node.left), height(node.right)) + 1;</span>
+  }
+
+  // This method returns an iterator for a given TreeTraversalOrder.
+  // The ways in which you can traverse the tree are in four different ways:
+  // preorder, inorder, postorder and levelorder.
+  public java.util.Iterator&lt;T&gt; traverse(TreeTraversalOrder order) {
+<span class="pc bpc" id="L208" title="1 of 5 branches missed.">    switch (order) {</span>
+      case PRE_ORDER:
+<span class="fc" id="L210">        return preOrderTraversal();</span>
+      case IN_ORDER:
+<span class="fc" id="L212">        return inOrderTraversal();</span>
+      case POST_ORDER:
+<span class="fc" id="L214">        return postOrderTraversal();</span>
+      case LEVEL_ORDER:
+<span class="fc" id="L216">        return levelOrderTraversal();</span>
+      default:
+<span class="nc" id="L218">        return null;</span>
+    }
+  }
+
+  // Returns as iterator to traverse the tree in pre order
+  private java.util.Iterator&lt;T&gt; preOrderTraversal() {
+
+<span class="fc" id="L225">    final int expectedNodeCount = nodeCount;</span>
+<span class="fc" id="L226">    final java.util.Stack&lt;Node&gt; stack = new java.util.Stack&lt;&gt;();</span>
+<span class="fc" id="L227">    stack.push(root);</span>
+
+<span class="fc" id="L229">    return new java.util.Iterator&lt;T&gt;() {</span>
+      @Override
+      public boolean hasNext() {
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc bfc" id="L233" title="All 4 branches covered.">        return root != null &amp;&amp; !stack.isEmpty();</span>
+      }
+
+      @Override
+      public T next() {
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc" id="L239">        Node node = stack.pop();</span>
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        if (node.right != null) stack.push(node.right);</span>
+<span class="fc bfc" id="L241" title="All 2 branches covered.">        if (node.left != null) stack.push(node.left);</span>
+<span class="fc" id="L242">        return node.data;</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L247">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+
+  // Returns as iterator to traverse the tree in order
+  private java.util.Iterator&lt;T&gt; inOrderTraversal() {
+
+<span class="fc" id="L255">    final int expectedNodeCount = nodeCount;</span>
+<span class="fc" id="L256">    final java.util.Stack&lt;Node&gt; stack = new java.util.Stack&lt;&gt;();</span>
+<span class="fc" id="L257">    stack.push(root);</span>
+
+<span class="fc" id="L259">    return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="fc" id="L260">      Node trav = root;</span>
+
+      @Override
+      public boolean hasNext() {
+<span class="pc bpc" id="L264" title="1 of 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc bfc" id="L265" title="All 4 branches covered.">        return root != null &amp;&amp; !stack.isEmpty();</span>
+      }
+
+      @Override
+      public T next() {
+
+<span class="fc bfc" id="L271" title="All 2 branches covered.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+
+        // Dig left
+<span class="pc bpc" id="L274" title="1 of 4 branches missed.">        while (trav != null &amp;&amp; trav.left != null) {</span>
+<span class="fc" id="L275">          stack.push(trav.left);</span>
+<span class="fc" id="L276">          trav = trav.left;</span>
+        }
+
+<span class="fc" id="L279">        Node node = stack.pop();</span>
+
+        // Try moving down right once
+<span class="fc bfc" id="L282" title="All 2 branches covered.">        if (node.right != null) {</span>
+<span class="fc" id="L283">          stack.push(node.right);</span>
+<span class="fc" id="L284">          trav = node.right;</span>
+        }
+
+<span class="fc" id="L287">        return node.data;</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L292">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+
+  // Returns as iterator to traverse the tree in post order
+  private java.util.Iterator&lt;T&gt; postOrderTraversal() {
+<span class="fc" id="L299">    final int expectedNodeCount = nodeCount;</span>
+<span class="fc" id="L300">    final java.util.Stack&lt;Node&gt; stack1 = new java.util.Stack&lt;&gt;();</span>
+<span class="fc" id="L301">    final java.util.Stack&lt;Node&gt; stack2 = new java.util.Stack&lt;&gt;();</span>
+<span class="fc" id="L302">    stack1.push(root);</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">    while (!stack1.isEmpty()) {</span>
+<span class="fc" id="L304">      Node node = stack1.pop();</span>
+<span class="fc bfc" id="L305" title="All 2 branches covered.">      if (node != null) {</span>
+<span class="fc" id="L306">        stack2.push(node);</span>
+<span class="fc bfc" id="L307" title="All 2 branches covered.">        if (node.left != null) stack1.push(node.left);</span>
+<span class="fc bfc" id="L308" title="All 2 branches covered.">        if (node.right != null) stack1.push(node.right);</span>
+      }
+<span class="fc" id="L310">    }</span>
+<span class="fc" id="L311">    return new java.util.Iterator&lt;T&gt;() {</span>
+      @Override
+      public boolean hasNext() {
+<span class="pc bpc" id="L314" title="1 of 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc bfc" id="L315" title="All 4 branches covered.">        return root != null &amp;&amp; !stack2.isEmpty();</span>
+      }
+
+      @Override
+      public T next() {
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc" id="L321">        return stack2.pop().data;</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L326">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+
+  // Returns as iterator to traverse the tree in level order
+  private java.util.Iterator&lt;T&gt; levelOrderTraversal() {
+
+<span class="fc" id="L334">    final int expectedNodeCount = nodeCount;</span>
+<span class="fc" id="L335">    final java.util.Queue&lt;Node&gt; queue = new java.util.LinkedList&lt;&gt;();</span>
+<span class="fc" id="L336">    queue.offer(root);</span>
+
+<span class="fc" id="L338">    return new java.util.Iterator&lt;T&gt;() {</span>
+      @Override
+      public boolean hasNext() {
+<span class="pc bpc" id="L341" title="1 of 2 branches missed.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc bfc" id="L342" title="All 4 branches covered.">        return root != null &amp;&amp; !queue.isEmpty();</span>
+      }
+
+      @Override
+      public T next() {
+<span class="fc bfc" id="L347" title="All 2 branches covered.">        if (expectedNodeCount != nodeCount) throw new java.util.ConcurrentModificationException();</span>
+<span class="fc" id="L348">        Node node = queue.poll();</span>
+<span class="fc bfc" id="L349" title="All 2 branches covered.">        if (node.left != null) queue.offer(node.left);</span>
+<span class="fc bfc" id="L350" title="All 2 branches covered.">        if (node.right != null) queue.offer(node.right);</span>
+<span class="fc" id="L351">        return node.data;</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L356">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

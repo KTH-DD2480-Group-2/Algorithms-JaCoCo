@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UnionFind.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.unionfind</a> &gt; <span class="el_source">UnionFind.java</span></div><h1>UnionFind.java</h1><pre class="source lang-java linenums">/**
+ * UnionFind/Disjoint Set data structure implementation. This code was inspired by the union find
+ * implementation found in 'Algorithms Fourth Edition' by Robert Sedgewick and Kevin Wayne.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.unionfind;
+
+public class UnionFind {
+
+  // The number of elements in this union find
+  private int size;
+
+  // Used to track the size of each of the component
+  private int[] sz;
+
+  // id[i] points to the parent of i, if id[i] = i then i is a root node
+  private int[] id;
+
+  // Tracks the number of components in the union find
+  private int numComponents;
+
+<span class="fc" id="L23">  public UnionFind(int size) {</span>
+
+<span class="fc bfc" id="L25" title="All 2 branches covered.">    if (size &lt;= 0) throw new IllegalArgumentException(&quot;Size &lt;= 0 is not allowed&quot;);</span>
+
+<span class="fc" id="L27">    this.size = numComponents = size;</span>
+<span class="fc" id="L28">    sz = new int[size];</span>
+<span class="fc" id="L29">    id = new int[size];</span>
+
+<span class="fc bfc" id="L31" title="All 2 branches covered.">    for (int i = 0; i &lt; size; i++) {</span>
+<span class="fc" id="L32">      id[i] = i; // Link to itself (self root)</span>
+<span class="fc" id="L33">      sz[i] = 1; // Each component is originally of size one</span>
+    }
+<span class="fc" id="L35">  }</span>
+
+  // Find which component/set 'p' belongs to, takes amortized constant time.
+  public int find(int p) {
+
+    // Find the root of the component/set
+<span class="fc" id="L41">    int root = p;</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">    while (root != id[root]) root = id[root];</span>
+
+    // Compress the path leading back to the root.
+    // Doing this operation is called &quot;path compression&quot;
+    // and is what gives us amortized time complexity.
+<span class="fc bfc" id="L47" title="All 2 branches covered.">    while (p != root) {</span>
+<span class="fc" id="L48">      int next = id[p];</span>
+<span class="fc" id="L49">      id[p] = root;</span>
+<span class="fc" id="L50">      p = next;</span>
+<span class="fc" id="L51">    }</span>
+
+<span class="fc" id="L53">    return root;</span>
+  }
+
+  // This is an alternative recursive formulation for the find method
+  // public int find(int p) {
+  //   if (p == id[p]) return p;
+  //   return id[p] = find(id[p]);
+  // }
+
+  // Return whether or not the elements 'p' and
+  // 'q' are in the same components/set.
+  public boolean connected(int p, int q) {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    return find(p) == find(q);</span>
+  }
+
+  // Return the size of the components/set 'p' belongs to
+  public int componentSize(int p) {
+<span class="fc" id="L70">    return sz[find(p)];</span>
+  }
+
+  // Return the number of elements in this UnionFind/Disjoint set
+  public int size() {
+<span class="fc" id="L75">    return size;</span>
+  }
+
+  // Returns the number of remaining components/sets
+  public int components() {
+<span class="fc" id="L80">    return numComponents;</span>
+  }
+
+  // Unify the components/sets containing elements 'p' and 'q'
+  public void unify(int p, int q) {
+
+    // These elements are already in the same group!
+<span class="fc bfc" id="L87" title="All 2 branches covered.">    if (connected(p, q)) return;</span>
+
+<span class="fc" id="L89">    int root1 = find(p);</span>
+<span class="fc" id="L90">    int root2 = find(q);</span>
+
+    // Merge smaller component/set into the larger one.
+<span class="fc bfc" id="L93" title="All 2 branches covered.">    if (sz[root1] &lt; sz[root2]) {</span>
+<span class="fc" id="L94">      sz[root2] += sz[root1];</span>
+<span class="fc" id="L95">      id[root1] = root2;</span>
+    } else {
+<span class="fc" id="L97">      sz[root1] += sz[root2];</span>
+<span class="fc" id="L98">      id[root2] = root1;</span>
+    }
+
+    // Since the roots found are different we know that the
+    // number of components/sets has decreased by one
+<span class="fc" id="L103">    numComponents--;</span>
+<span class="fc" id="L104">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BreadthFirstSearchAdjacencyListIterative.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">BreadthFirstSearchAdjacencyListIterative.java</span></div><h1>BreadthFirstSearchAdjacencyListIterative.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of BFS with an adjacency list.
+ *
+ * &lt;p&gt;Time Complexity: O(V + E)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.List;
+
+public class BreadthFirstSearchAdjacencyListIterative {
+
+  public static class Edge {
+    int from, to, cost;
+
+<span class="fc" id="L21">    public Edge(int from, int to, int cost) {</span>
+<span class="fc" id="L22">      this.from = from;</span>
+<span class="fc" id="L23">      this.to = to;</span>
+<span class="fc" id="L24">      this.cost = cost;</span>
+<span class="fc" id="L25">    }</span>
+  }
+
+  private int n;
+  private Integer[] prev;
+  private List&lt;List&lt;Edge&gt;&gt; graph;
+
+<span class="fc" id="L32">  public BreadthFirstSearchAdjacencyListIterative(List&lt;List&lt;Edge&gt;&gt; graph) {</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">    if (graph == null) throw new IllegalArgumentException(&quot;Graph can not be null&quot;);</span>
+<span class="fc" id="L34">    n = graph.size();</span>
+<span class="fc" id="L35">    this.graph = graph;</span>
+<span class="fc" id="L36">  }</span>
+
+  /**
+   * Reconstructs the path (of nodes) from 'start' to 'end' inclusive. If the edges are unweighted
+   * then this method returns the shortest path from 'start' to 'end'
+   *
+   * @return An array of nodes indexes of the shortest path from 'start' to 'end'. If 'start' and
+   *     'end' are not connected then an empty array is returned.
+   */
+  public List&lt;Integer&gt; reconstructPath(int start, int end) {
+<span class="fc" id="L46">    bfs(start);</span>
+<span class="fc" id="L47">    List&lt;Integer&gt; path = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">    for (Integer at = end; at != null; at = prev[at]) path.add(at);</span>
+<span class="fc" id="L49">    Collections.reverse(path);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">    if (path.get(0) == start) return path;</span>
+<span class="fc" id="L51">    path.clear();</span>
+<span class="fc" id="L52">    return path;</span>
+  }
+
+  // Perform a breadth first search on a graph a starting node 'start'.
+  private void bfs(int start) {
+<span class="fc" id="L57">    prev = new Integer[n];</span>
+<span class="fc" id="L58">    boolean[] visited = new boolean[n];</span>
+<span class="fc" id="L59">    Deque&lt;Integer&gt; queue = new ArrayDeque&lt;&gt;(n);</span>
+
+    // Start by visiting the 'start' node and add it to the queue.
+<span class="fc" id="L62">    queue.offer(start);</span>
+<span class="fc" id="L63">    visited[start] = true;</span>
+
+    // Continue until the BFS is done.
+<span class="fc bfc" id="L66" title="All 2 branches covered.">    while (!queue.isEmpty()) {</span>
+<span class="fc" id="L67">      int node = queue.poll();</span>
+<span class="fc" id="L68">      List&lt;Edge&gt; edges = graph.get(node);</span>
+
+      // Loop through all edges attached to this node. Mark nodes as visited once they're
+      // in the queue. This will prevent having duplicate nodes in the queue and speedup the BFS.
+<span class="fc bfc" id="L72" title="All 2 branches covered.">      for (Edge edge : edges) {</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">        if (!visited[edge.to]) {</span>
+<span class="fc" id="L74">          visited[edge.to] = true;</span>
+<span class="fc" id="L75">          prev[edge.to] = node;</span>
+<span class="fc" id="L76">          queue.offer(edge.to);</span>
+        }
+<span class="fc" id="L78">      }</span>
+<span class="fc" id="L79">    }</span>
+<span class="fc" id="L80">  }</span>
+
+  // Initialize an empty adjacency list that can hold up to n nodes.
+  public static List&lt;List&lt;Edge&gt;&gt; createEmptyGraph(int n) {
+<span class="fc" id="L84">    List&lt;List&lt;Edge&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="fc" id="L86">    return graph;</span>
+  }
+
+  // Add a directed edge from node 'u' to node 'v' with cost 'cost'.
+  public static void addDirectedEdge(List&lt;List&lt;Edge&gt;&gt; graph, int u, int v, int cost) {
+<span class="fc" id="L91">    graph.get(u).add(new Edge(u, v, cost));</span>
+<span class="fc" id="L92">  }</span>
+
+  // Add an undirected edge between nodes 'u' and 'v'.
+  public static void addUndirectedEdge(List&lt;List&lt;Edge&gt;&gt; graph, int u, int v, int cost) {
+<span class="fc" id="L96">    addDirectedEdge(graph, u, v, cost);</span>
+<span class="fc" id="L97">    addDirectedEdge(graph, v, u, cost);</span>
+<span class="fc" id="L98">  }</span>
+
+  // Add an undirected unweighted edge between nodes 'u' and 'v'. The edge added
+  // will have a weight of 1 since its intended to be unweighted.
+  public static void addUnweightedUndirectedEdge(List&lt;List&lt;Edge&gt;&gt; graph, int u, int v) {
+<span class="fc" id="L103">    addUndirectedEdge(graph, u, v, 1);</span>
+<span class="fc" id="L104">  }</span>
+
+  /* BFS example. */
+
+  public static void main(String[] args) {
+    // BFS example #1 from slides.
+<span class="nc" id="L110">    final int n = 13;</span>
+<span class="nc" id="L111">    List&lt;List&lt;Edge&gt;&gt; graph = createEmptyGraph(n);</span>
+
+<span class="nc" id="L113">    addUnweightedUndirectedEdge(graph, 0, 7);</span>
+<span class="nc" id="L114">    addUnweightedUndirectedEdge(graph, 0, 9);</span>
+<span class="nc" id="L115">    addUnweightedUndirectedEdge(graph, 0, 11);</span>
+<span class="nc" id="L116">    addUnweightedUndirectedEdge(graph, 7, 11);</span>
+<span class="nc" id="L117">    addUnweightedUndirectedEdge(graph, 7, 6);</span>
+<span class="nc" id="L118">    addUnweightedUndirectedEdge(graph, 7, 3);</span>
+<span class="nc" id="L119">    addUnweightedUndirectedEdge(graph, 6, 5);</span>
+<span class="nc" id="L120">    addUnweightedUndirectedEdge(graph, 3, 4);</span>
+<span class="nc" id="L121">    addUnweightedUndirectedEdge(graph, 2, 3);</span>
+<span class="nc" id="L122">    addUnweightedUndirectedEdge(graph, 2, 12);</span>
+<span class="nc" id="L123">    addUnweightedUndirectedEdge(graph, 12, 8);</span>
+<span class="nc" id="L124">    addUnweightedUndirectedEdge(graph, 8, 1);</span>
+<span class="nc" id="L125">    addUnweightedUndirectedEdge(graph, 1, 10);</span>
+<span class="nc" id="L126">    addUnweightedUndirectedEdge(graph, 10, 9);</span>
+<span class="nc" id="L127">    addUnweightedUndirectedEdge(graph, 9, 8);</span>
+
+    BreadthFirstSearchAdjacencyListIterative solver;
+<span class="nc" id="L130">    solver = new BreadthFirstSearchAdjacencyListIterative(graph);</span>
+
+<span class="nc" id="L132">    int start = 10, end = 5;</span>
+<span class="nc" id="L133">    List&lt;Integer&gt; path = solver.reconstructPath(start, end);</span>
+<span class="nc" id="L134">    System.out.printf(&quot;The shortest path from %d to %d is: [%s]\n&quot;, start, end, formatPath(path));</span>
+    // Prints:
+    // The shortest path from 10 to 5 is: [10 -&gt; 9 -&gt; 0 -&gt; 7 -&gt; 6 -&gt; 5]
+
+<span class="nc" id="L138">  }</span>
+
+  private static String formatPath(List&lt;Integer&gt; path) {
+<span class="nc" id="L141">    return String.join(</span>
+<span class="nc" id="L142">        &quot; -&gt; &quot;, path.stream().map(Object::toString).collect(java.util.stream.Collectors.toList()));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

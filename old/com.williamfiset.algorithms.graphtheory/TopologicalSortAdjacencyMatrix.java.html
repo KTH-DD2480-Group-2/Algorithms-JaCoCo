@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TopologicalSortAdjacencyMatrix.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">TopologicalSortAdjacencyMatrix.java</span></div><h1>TopologicalSortAdjacencyMatrix.java</h1><pre class="source lang-java linenums">/**
+ * This Topological sort takes an adjacency matrix of an acyclic graph and returns an array with the
+ * indexes of the nodes in a (non unique) topological order which tells you how to process the nodes
+ * in the graph. More precisely from wiki: A topological ordering is a linear ordering of its
+ * vertices such that for every directed edge uv from vertex u to vertex v, u comes before v in the
+ * ordering.
+ *
+ * &lt;p&gt;Time Complexity: O(V^2)
+ *
+ * @author Micah Stairs
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+<span class="nc" id="L14">public class TopologicalSortAdjacencyMatrix {</span>
+
+  // Performs the topological sort and returns the
+  // indexes of the nodes in topological order
+  public static int[] topologicalSort(Double[][] adj) {
+
+    // Setup
+<span class="nc" id="L21">    int n = adj.length;</span>
+<span class="nc" id="L22">    boolean[] visited = new boolean[n];</span>
+<span class="nc" id="L23">    int[] order = new int[n];</span>
+<span class="nc" id="L24">    int index = n - 1;</span>
+
+    // Visit each node
+<span class="nc bnc" id="L27" title="All 4 branches missed.">    for (int u = 0; u &lt; n; u++) if (!visited[u]) index = visit(adj, visited, order, index, u);</span>
+
+    // Return topological sort
+<span class="nc" id="L30">    return order;</span>
+  }
+
+  private static int visit(Double[][] adj, boolean[] visited, int[] order, int index, int u) {
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">    if (visited[u]) return index;</span>
+<span class="nc" id="L36">    visited[u] = true;</span>
+
+    // Visit all neighbors
+<span class="nc bnc" id="L39" title="All 2 branches missed.">    for (int v = 0; v &lt; adj.length; v++)</span>
+<span class="nc bnc" id="L40" title="All 4 branches missed.">      if (adj[u][v] != null &amp;&amp; !visited[v]) index = visit(adj, visited, order, index, v);</span>
+
+    // Place this node at the head of the list
+<span class="nc" id="L43">    order[index--] = u;</span>
+
+<span class="nc" id="L45">    return index;</span>
+  }
+
+  // A useful application of the topological sort is to find the shortest path
+  // between two nodes in a Directed Acyclic Graph (DAG). Given an adjacency matrix
+  // with double valued edge weights this method finds the shortest path from
+  // a start node to all other nodes in the graph.
+  public static double[] dagShortestPath(Double[][] adj, int start) {
+
+    // Set up array used to maintain minimum distances from start
+<span class="nc" id="L55">    int n = adj.length;</span>
+<span class="nc" id="L56">    double[] dist = new double[n];</span>
+<span class="nc" id="L57">    java.util.Arrays.fill(dist, Double.POSITIVE_INFINITY);</span>
+<span class="nc" id="L58">    dist[start] = 0.0;</span>
+
+    // Process nodes in a topologically sorted order
+<span class="nc bnc" id="L61" title="All 2 branches missed.">    for (int u : topologicalSort(adj))</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">      for (int v = 0; v &lt; n; v++) {</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        if (adj[u][v] != null) {</span>
+<span class="nc" id="L64">          double newDist = dist[u] + adj[u][v];</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">          if (newDist &lt; dist[v]) dist[v] = newDist;</span>
+        }
+      }
+
+    // Return minimum distance
+<span class="nc" id="L70">    return dist;</span>
+  }
+
+  // Example usage of topological sort
+  public static void main(String[] args) {
+
+<span class="nc" id="L76">    final int N = 7;</span>
+<span class="nc" id="L77">    Double[][] adjMatrix = new Double[N][N];</span>
+
+<span class="nc" id="L79">    adjMatrix[0][1] = 3.0;</span>
+<span class="nc" id="L80">    adjMatrix[0][2] = 2.0;</span>
+<span class="nc" id="L81">    adjMatrix[0][5] = 3.0;</span>
+
+<span class="nc" id="L83">    adjMatrix[1][3] = 1.0;</span>
+<span class="nc" id="L84">    adjMatrix[1][2] = 6.0;</span>
+
+<span class="nc" id="L86">    adjMatrix[2][3] = 1.0;</span>
+<span class="nc" id="L87">    adjMatrix[2][4] = 10.0;</span>
+
+<span class="nc" id="L89">    adjMatrix[3][4] = 5.0;</span>
+
+<span class="nc" id="L91">    adjMatrix[5][4] = 7.0;</span>
+
+<span class="nc" id="L93">    int[] ordering = topologicalSort(adjMatrix);</span>
+
+    // Prints: [6, 0, 5, 1, 2, 3, 4]
+<span class="nc" id="L96">    System.out.println(java.util.Arrays.toString(ordering));</span>
+
+    // Find the shortest path from 0 to all other nodes
+<span class="nc" id="L99">    double[] dists = dagShortestPath(adjMatrix, 0);</span>
+
+    // Find the distance from 0 to 4 which is 8.0
+<span class="nc" id="L102">    System.out.println(dists[4]);</span>
+
+    // Finds the shortest path from 0 to 6
+    // prints Infinity (6 is not reachable!)
+<span class="nc" id="L106">    System.out.println(dists[6]);</span>
+<span class="nc" id="L107">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

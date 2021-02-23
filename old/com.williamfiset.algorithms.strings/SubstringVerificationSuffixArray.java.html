@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SubstringVerificationSuffixArray.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.strings</a> &gt; <span class="el_source">SubstringVerificationSuffixArray.java</span></div><h1>SubstringVerificationSuffixArray.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to use a suffix array to determine if a pattern exists within a text.
+ * This implementation has the advantage that once the suffix array is built queries can be very
+ * fast.
+ *
+ * &lt;p&gt;Time complexity: O(nlogn) for suffix array construction and O(mlogn) time for individual
+ * queries (where m is query string length). As noted below, depending on the length of the string
+ * (if it is very large) it may be faster to use KMP or if you're doing a lot of queries on small
+ * strings then Rabin-Karp in combination with a bloom filter.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.strings;
+
+import java.util.*;
+
+// Example usage
+<span class="nc" id="L18">public class SubstringVerificationSuffixArray {</span>
+  public static void main(String[] args) {
+
+<span class="nc" id="L21">    String pattern = &quot;hello world&quot;;</span>
+<span class="nc" id="L22">    String text = &quot;hello lemon Lennon wallet world tree cabbage hello world teapot calculator&quot;;</span>
+<span class="nc" id="L23">    SuffixArray sa = new SuffixArray(text);</span>
+<span class="nc" id="L24">    System.out.println(sa.contains(pattern));</span>
+<span class="nc" id="L25">    System.out.println(sa.contains(&quot;this pattern does not exist&quot;));</span>
+<span class="nc" id="L26">  }</span>
+
+  public static class SuffixArray {
+
+    // ALPHABET_SZ is the default alphabet size, this may need to be much
+    // larger if you're using the LCS method with multiple sentinels
+<span class="nc" id="L32">    int ALPHABET_SZ = 256, N;</span>
+    int[] T, sa, sa2, rank, tmp, c;
+
+    public SuffixArray(String str) {
+<span class="nc" id="L36">      this(toIntArray(str));</span>
+<span class="nc" id="L37">    }</span>
+
+    private static int[] toIntArray(String s) {
+<span class="nc" id="L40">      int[] text = new int[s.length()];</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">      for (int i = 0; i &lt; s.length(); i++) text[i] = s.charAt(i);</span>
+<span class="nc" id="L42">      return text;</span>
+    }
+
+    // Designated constructor
+<span class="nc" id="L46">    public SuffixArray(int[] text) {</span>
+<span class="nc" id="L47">      T = text;</span>
+<span class="nc" id="L48">      N = text.length;</span>
+<span class="nc" id="L49">      sa = new int[N];</span>
+<span class="nc" id="L50">      sa2 = new int[N];</span>
+<span class="nc" id="L51">      rank = new int[N];</span>
+<span class="nc" id="L52">      c = new int[Math.max(ALPHABET_SZ, N)];</span>
+<span class="nc" id="L53">      construct();</span>
+<span class="nc" id="L54">    }</span>
+
+    private void construct() {
+      int i, p, r;
+<span class="nc bnc" id="L58" title="All 2 branches missed.">      for (i = 0; i &lt; N; ++i) c[rank[i] = T[i]]++;</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">      for (i = 1; i &lt; ALPHABET_SZ; ++i) c[i] += c[i - 1];</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">      for (i = N - 1; i &gt;= 0; --i) sa[--c[T[i]]] = i;</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">      for (p = 1; p &lt; N; p &lt;&lt;= 1) {</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        for (r = 0, i = N - p; i &lt; N; ++i) sa2[r++] = i;</span>
+<span class="nc bnc" id="L63" title="All 4 branches missed.">        for (i = 0; i &lt; N; ++i) if (sa[i] &gt;= p) sa2[r++] = sa[i] - p;</span>
+<span class="nc" id="L64">        Arrays.fill(c, 0, ALPHABET_SZ, 0);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        for (i = 0; i &lt; N; ++i) c[rank[i]]++;</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        for (i = 1; i &lt; ALPHABET_SZ; ++i) c[i] += c[i - 1];</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        for (i = N - 1; i &gt;= 0; --i) sa[--c[rank[sa2[i]]]] = sa2[i];</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">        for (sa2[sa[0]] = r = 0, i = 1; i &lt; N; ++i) {</span>
+<span class="nc bnc" id="L69" title="All 8 branches missed.">          if (!(rank[sa[i - 1]] == rank[sa[i]]</span>
+              &amp;&amp; sa[i - 1] + p &lt; N
+              &amp;&amp; sa[i] + p &lt; N
+<span class="nc" id="L72">              &amp;&amp; rank[sa[i - 1] + p] == rank[sa[i] + p])) r++;</span>
+<span class="nc" id="L73">          sa2[sa[i]] = r;</span>
+        }
+<span class="nc" id="L75">        tmp = rank;</span>
+<span class="nc" id="L76">        rank = sa2;</span>
+<span class="nc" id="L77">        sa2 = tmp;</span>
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (r == N - 1) break;</span>
+<span class="nc" id="L79">        ALPHABET_SZ = r + 1;</span>
+      }
+<span class="nc" id="L81">    }</span>
+
+    // Runs on O(mlog(n)) where m is the length of the substring
+    // and n is the length of the text. Depending on the length
+    // of the string (if it is very large) it may be faster to
+    // use KMP or if you're doing a lot of queries then Rabin-Karp
+    // in combination with a bloom filter.
+    //
+    // NOTE: This is the naive implementation. There exists an
+    // implementation which runs in O(m + log(n)) time
+    public boolean contains(String substr) {
+
+<span class="nc bnc" id="L93" title="All 2 branches missed.">      if (substr == null) return false;</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">      if (substr.equals(&quot;&quot;)) return true;</span>
+
+      String suffix_str;
+<span class="nc" id="L97">      int lo = 0, hi = N - 1;</span>
+<span class="nc" id="L98">      int substr_len = substr.length();</span>
+
+      // Do binary search
+<span class="nc bnc" id="L101" title="All 2 branches missed.">      while (lo &lt;= hi) {</span>
+
+<span class="nc" id="L103">        int mid = (lo + hi) &gt;&gt;&gt; 1;</span>
+<span class="nc" id="L104">        int suffix_index = sa[mid];</span>
+<span class="nc" id="L105">        int suffix_len = N - suffix_index;</span>
+
+        // Extract part of the suffix we need to compare
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (suffix_len &lt;= substr_len) suffix_str = new String(T, suffix_index, suffix_len);</span>
+<span class="nc" id="L109">        else suffix_str = new String(T, suffix_index, substr_len);</span>
+
+<span class="nc" id="L111">        int cmp = suffix_str.compareTo(substr);</span>
+
+        // Found a match
+<span class="nc bnc" id="L114" title="All 2 branches missed.">        if (cmp == 0) {</span>
+<span class="nc" id="L115">          return true;</span>
+<span class="nc bnc" id="L116" title="All 2 branches missed.">        } else if (cmp &lt; 0) {</span>
+<span class="nc" id="L117">          lo = mid + 1;</span>
+        } else {
+<span class="nc" id="L119">          hi = mid - 1;</span>
+        }
+<span class="nc" id="L121">      }</span>
+<span class="nc" id="L122">      return false;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
