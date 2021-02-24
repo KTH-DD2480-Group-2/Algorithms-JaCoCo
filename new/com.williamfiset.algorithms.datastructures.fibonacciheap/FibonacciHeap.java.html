@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FibonacciHeap.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.fibonacciheap</a> &gt; <span class="el_source">FibonacciHeap.java</span></div><h1>FibonacciHeap.java</h1><pre class="source lang-java linenums">/**
+ * FibonacciHeap data structure implementation.
+ *
+ * &lt;p&gt;Disclaimer: implementation based on:
+ * http://staff.ustc.edu.cn/~csli/graduate/algorithms/book6/chap21.htm Implementation credits to the
+ * respective code owners.
+ */
+package com.williamfiset.algorithms.datastructures.fibonacciheap;
+
+import static java.lang.Math.floor;
+import static java.lang.Math.log;
+import static java.lang.Math.sqrt;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Set;
+import java.util.Stack;
+
+public final class FibonacciHeap&lt;E&gt; implements Queue&lt;E&gt; {
+
+<span class="fc" id="L27">  private static final double LOG_PHI = log((1 + sqrt(5)) / 2);</span>
+
+<span class="fc" id="L29">  private final Set&lt;E&gt; elementsIndex = new HashSet&lt;E&gt;();</span>
+
+  private final Comparator&lt;? super E&gt; comparator;
+
+<span class="fc" id="L33">  private int size = 0;</span>
+
+<span class="fc" id="L35">  private int trees = 0;</span>
+
+<span class="fc" id="L37">  private int markedNodes = 0;</span>
+
+  private FibonacciHeapNode&lt;E&gt; minimumNode;
+
+  public FibonacciHeap() {
+<span class="fc" id="L42">    this(null);</span>
+<span class="fc" id="L43">  }</span>
+
+<span class="fc" id="L45">  public FibonacciHeap(/* @Nullable */ Comparator&lt;? super E&gt; comparator) {</span>
+<span class="fc" id="L46">    this.comparator = comparator;</span>
+<span class="fc" id="L47">  }</span>
+
+  private void moveToRoot(FibonacciHeapNode&lt;E&gt; node) {
+    // 8'  if min[H] = NIL
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    if (isEmpty()) {</span>
+      // then min[H] &lt;- x
+<span class="fc" id="L53">      minimumNode = node;</span>
+    } else {
+      // 7 concatenate the root list containing x with root list H
+<span class="fc" id="L56">      node.getLeft().setRight(node.getRight());</span>
+<span class="fc" id="L57">      node.getRight().setLeft(node.getLeft());</span>
+
+<span class="fc" id="L59">      node.setLeft(minimumNode);</span>
+<span class="fc" id="L60">      node.setRight(minimumNode.getRight());</span>
+<span class="fc" id="L61">      minimumNode.setRight(node);</span>
+<span class="fc" id="L62">      node.getRight().setLeft(node);</span>
+
+      // 8''  if key[x] &lt; key[min[H]]
+<span class="fc bfc" id="L65" title="All 2 branches covered.">      if (compare(node, minimumNode) &lt; 0) {</span>
+        // 9     then min[H] &lt;- x
+<span class="fc" id="L67">        minimumNode = node;</span>
+      }
+    }
+<span class="fc" id="L70">  }</span>
+
+  public boolean add(E e) {
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">    if (e == null) {</span>
+<span class="nc" id="L74">      throw new IllegalArgumentException(</span>
+          &quot;Null elements not allowed in this FibonacciHeap implementation.&quot;);
+    }
+
+    // 1-6 performed in the node initialization
+<span class="fc" id="L79">    FibonacciHeapNode&lt;E&gt; node = new FibonacciHeapNode&lt;E&gt;(e);</span>
+
+    // 7-9 performed in the #moveToRoot( FibonacciHeapNode&lt;E&gt; ) method
+<span class="fc" id="L82">    moveToRoot(node);</span>
+
+    // 10  n[H] &lt;- n[H] + 1
+<span class="fc" id="L85">    size++;</span>
+
+<span class="fc" id="L87">    elementsIndex.add(e);</span>
+
+<span class="fc" id="L89">    return true;</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean addAll(Collection&lt;? extends E&gt; c) {
+<span class="fc bfc" id="L94" title="All 2 branches covered.">    for (E element : c) {</span>
+<span class="fc" id="L95">      add(element);</span>
+<span class="fc" id="L96">    }</span>
+
+<span class="fc" id="L98">    return true;</span>
+  }
+
+  /** {@inheritDoc} */
+  public void clear() {
+<span class="fc" id="L103">    minimumNode = null;</span>
+<span class="fc" id="L104">    size = 0;</span>
+<span class="fc" id="L105">    trees = 0;</span>
+<span class="fc" id="L106">    markedNodes = 0;</span>
+<span class="fc" id="L107">    elementsIndex.clear();</span>
+<span class="fc" id="L108">  }</span>
+
+  /** {@inheritDoc} */
+  public boolean contains(Object o) {
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">    if (o == null) {</span>
+<span class="nc" id="L113">      return false;</span>
+    }
+
+<span class="fc" id="L116">    return elementsIndex.contains(o);</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean containsAll(Collection&lt;?&gt; c) {
+<span class="pc bpc" id="L121" title="1 of 2 branches missed.">    if (c == null) {</span>
+<span class="nc" id="L122">      return false;</span>
+    }
+
+<span class="fc bfc" id="L125" title="All 2 branches covered.">    for (Object o : c) {</span>
+<span class="pc bpc" id="L126" title="1 of 2 branches missed.">      if (!contains(o)) {</span>
+<span class="nc" id="L127">        return false;</span>
+      }
+<span class="fc" id="L129">    }</span>
+
+<span class="fc" id="L131">    return true;</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean isEmpty() {
+<span class="fc bfc" id="L136" title="All 2 branches covered.">    return minimumNode == null;</span>
+  }
+
+  /** {@inheritDoc} */
+  public Iterator&lt;E&gt; iterator() {
+<span class="nc" id="L141">    throw new UnsupportedOperationException();</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean remove(Object o) {
+<span class="nc" id="L146">    throw new UnsupportedOperationException();</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean removeAll(Collection&lt;?&gt; c) {
+<span class="nc" id="L151">    throw new UnsupportedOperationException();</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean retainAll(Collection&lt;?&gt; c) {
+<span class="nc" id="L156">    throw new UnsupportedOperationException();</span>
+  }
+
+  /** {@inheritDoc} */
+  public int size() {
+<span class="fc" id="L161">    return size;</span>
+  }
+
+  /** {@inheritDoc} */
+  public Object[] toArray() {
+<span class="nc" id="L166">    throw new UnsupportedOperationException();</span>
+  }
+
+  /** {@inheritDoc} */
+  public &lt;T&gt; T[] toArray(T[] a) {
+<span class="nc" id="L171">    throw new UnsupportedOperationException();</span>
+  }
+
+  /** {@inheritDoc} */
+  public E element() {
+<span class="fc bfc" id="L176" title="All 2 branches covered.">    if (isEmpty()) {</span>
+<span class="fc" id="L177">      throw new NoSuchElementException();</span>
+    }
+<span class="fc" id="L179">    return peek();</span>
+  }
+
+  /** {@inheritDoc} */
+  public boolean offer(E e) {
+<span class="fc" id="L184">    return add(e);</span>
+  }
+
+  /** {@inheritDoc} */
+  public E peek() {
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">    if (isEmpty()) {</span>
+<span class="nc" id="L190">      return null;</span>
+    }
+
+<span class="fc" id="L193">    return minimumNode.getElement();</span>
+  }
+
+  public E poll() {
+    // 2  if z &amp;ne; NIL
+<span class="fc bfc" id="L198" title="All 2 branches covered.">    if (isEmpty()) {</span>
+<span class="fc" id="L199">      return null;</span>
+    }
+
+    // 1  z &lt;- min[H]
+<span class="fc" id="L203">    FibonacciHeapNode&lt;E&gt; z = minimumNode;</span>
+<span class="fc" id="L204">    int numOfKids = z.getDegree();</span>
+
+<span class="fc" id="L206">    FibonacciHeapNode&lt;E&gt; x = z.getChild();</span>
+    FibonacciHeapNode&lt;E&gt; tempRight;
+
+<span class="fc bfc" id="L209" title="All 2 branches covered.">    while (numOfKids &gt; 0) {</span>
+      // 3  for each child x of z
+<span class="fc" id="L211">      tempRight = x.getRight();</span>
+
+      // 4  do add x to the root list of H
+<span class="fc" id="L214">      moveToRoot(x);</span>
+
+      // 5  p[x] &lt;- NIL
+<span class="fc" id="L217">      x.setParent(null);</span>
+
+<span class="fc" id="L219">      x = tempRight;</span>
+<span class="fc" id="L220">      numOfKids--;</span>
+    }
+
+    // 6  remove z from the root list of H
+<span class="fc" id="L224">    z.getLeft().setRight(z.getRight());</span>
+<span class="fc" id="L225">    z.getRight().setLeft(z.getLeft());</span>
+
+    // 7  if z = right[z]
+<span class="fc bfc" id="L228" title="All 2 branches covered.">    if (z == z.getRight()) {</span>
+      // 8  min[H] &lt;- NIL
+<span class="fc" id="L230">      minimumNode = null;</span>
+    } else {
+      // 9  min[H] &lt;- right[z]
+<span class="fc" id="L233">      minimumNode = z.getRight();</span>
+      // 10  CONSOLIDATE(H)
+<span class="fc" id="L235">      consolidate();</span>
+    }
+
+    // 11  n[H] &lt;- n[H] - 1
+<span class="fc" id="L239">    size--;</span>
+
+<span class="fc" id="L241">    E minimum = z.getElement();</span>
+<span class="fc" id="L242">    elementsIndex.remove(minimum);</span>
+    // 12  return z
+<span class="fc" id="L244">    return minimum;</span>
+  }
+
+  /** {@inheritDoc} */
+  public E remove() {
+    // FIB-HEAP-EXTRACT-MIN(H)
+
+<span class="nc bnc" id="L251" title="All 2 branches missed.">    if (isEmpty()) {</span>
+<span class="nc" id="L252">      throw new NoSuchElementException();</span>
+    }
+
+<span class="nc" id="L255">    return poll();</span>
+  }
+
+  private void consolidate() {
+<span class="pc bpc" id="L259" title="1 of 2 branches missed.">    if (isEmpty()) {</span>
+<span class="nc" id="L260">      return;</span>
+    }
+
+    // D( n[H] ) &lt;= log_phi( n[H] )
+    // -&gt; log_phi( n[H] ) = log( n[H] ) / log( phi )
+    // -&gt; D( n[H] ) = log( n[H] ) / log( phi )
+<span class="fc" id="L266">    int arraySize = ((int) floor(log(size) / LOG_PHI));</span>
+
+    // 1  for i &lt;- 0 to D(n[H])
+<span class="fc" id="L269">    List&lt;FibonacciHeapNode&lt;E&gt;&gt; nodeSequence = new ArrayList&lt;FibonacciHeapNode&lt;E&gt;&gt;(arraySize);</span>
+<span class="fc bfc" id="L270" title="All 2 branches covered.">    for (int i = 0; i &lt; arraySize; i++) {</span>
+      // 2      do A[i] &lt;- NIL
+<span class="fc" id="L272">      nodeSequence.add(i, null);</span>
+    }
+
+<span class="fc" id="L275">    int numRoots = 0;</span>
+
+    // 3  for each node x in the root list of H
+    // 4  do x &amp;larr; w
+<span class="fc" id="L279">    FibonacciHeapNode&lt;E&gt; x = minimumNode;</span>
+
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">    if (x != null) {</span>
+<span class="fc" id="L282">      numRoots++;</span>
+<span class="fc" id="L283">      x = x.getRight();</span>
+
+<span class="fc bfc" id="L285" title="All 2 branches covered.">      while (x != minimumNode) {</span>
+<span class="fc" id="L286">        numRoots++;</span>
+<span class="fc" id="L287">        x = x.getRight();</span>
+      }
+    }
+
+<span class="fc bfc" id="L291" title="All 2 branches covered.">    while (numRoots &gt; 0) {</span>
+      // 5  d &lt;- degree[x]
+<span class="fc" id="L293">      int degree = x.getDegree();</span>
+<span class="fc" id="L294">      FibonacciHeapNode&lt;E&gt; next = x.getRight();</span>
+
+      // 6  while A[d] != NIL
+<span class="fc bfc" id="L297" title="All 2 branches covered.">      while (nodeSequence.get(degree) != null) {</span>
+        // 7  do y &lt;- A[d]
+<span class="fc" id="L299">        FibonacciHeapNode&lt;E&gt; y = nodeSequence.get(degree);</span>
+
+        // 8  if key[x] &gt; key[y]
+<span class="fc bfc" id="L302" title="All 2 branches covered.">        if (compare(x, y) &gt; 0) {</span>
+          // 9  exchange x &lt;-&gt; y
+<span class="fc" id="L304">          FibonacciHeapNode&lt;E&gt; pointer = y;</span>
+<span class="fc" id="L305">          y = x;</span>
+<span class="fc" id="L306">          x = pointer;</span>
+        }
+
+        // 10  FIB-HEAP-LINK(H,y,x)
+<span class="fc" id="L310">        link(y, x);</span>
+
+        // 11  A[d] &lt;- NIL
+<span class="fc" id="L313">        nodeSequence.set(degree, null);</span>
+
+        // 12  d &lt;- d + 1
+<span class="fc" id="L316">        degree++;</span>
+<span class="fc" id="L317">      }</span>
+
+      // 13  A[d] &lt;- x
+<span class="fc" id="L320">      nodeSequence.set(degree, x);</span>
+
+<span class="fc" id="L322">      x = next;</span>
+<span class="fc" id="L323">      numRoots--;</span>
+<span class="fc" id="L324">    }</span>
+
+    // 14  min[H] &lt;- NIL
+<span class="fc" id="L327">    minimumNode = null;</span>
+
+    // 15  for i &lt;- 0 to D(n[H])
+<span class="fc bfc" id="L330" title="All 2 branches covered.">    for (FibonacciHeapNode&lt;E&gt; pointer : nodeSequence) {</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">      if (pointer == null) {</span>
+<span class="fc" id="L332">        continue;</span>
+      }
+<span class="fc bfc" id="L334" title="All 2 branches covered.">      if (minimumNode == null) {</span>
+<span class="fc" id="L335">        minimumNode = pointer;</span>
+      }
+
+      // 16 if A[i] != NIL
+      // We've got a live one, add it to root list.
+<span class="pc bpc" id="L340" title="1 of 2 branches missed.">      if (minimumNode != null) {</span>
+        //  First remove node from root list.
+<span class="fc" id="L342">        moveToRoot(pointer);</span>
+      }
+<span class="fc" id="L344">    }</span>
+<span class="fc" id="L345">  }</span>
+
+  private void link(FibonacciHeapNode&lt;E&gt; y, FibonacciHeapNode&lt;E&gt; x) {
+    // 1 remove y from the root list of H
+<span class="fc" id="L349">    y.getLeft().setRight(y.getRight());</span>
+<span class="fc" id="L350">    y.getRight().setLeft(y.getLeft());</span>
+
+<span class="fc" id="L352">    y.setParent(x);</span>
+
+<span class="fc bfc" id="L354" title="All 2 branches covered.">    if (x.getChild() == null) {</span>
+      // 2 make y a child of x, incrementing degree[x]
+<span class="fc" id="L356">      x.setChild(y);</span>
+<span class="fc" id="L357">      y.setRight(y);</span>
+<span class="fc" id="L358">      y.setLeft(y);</span>
+    } else {
+<span class="fc" id="L360">      y.setLeft(x.getChild());</span>
+<span class="fc" id="L361">      y.setRight(x.getChild().getRight());</span>
+<span class="fc" id="L362">      x.getChild().setRight(y);</span>
+<span class="fc" id="L363">      y.getRight().setLeft(y);</span>
+    }
+
+<span class="fc" id="L366">    x.incraeseDegree();</span>
+
+    // 3 mark[y] &lt;- FALSE
+<span class="fc" id="L369">    y.setMarked(false);</span>
+<span class="fc" id="L370">    markedNodes++;</span>
+<span class="fc" id="L371">  }</span>
+
+  private void cut(FibonacciHeapNode&lt;E&gt; x, FibonacciHeapNode&lt;E&gt; y) {
+    // add x to the root list of H
+<span class="nc" id="L375">    moveToRoot(x);</span>
+
+    // remove x from the child list of y, decrementing degree[y]
+<span class="nc" id="L378">    y.decraeseDegree();</span>
+    // p[x] &lt;- NIL
+<span class="nc" id="L380">    x.setParent(null);</span>
+
+    // mark[x] &lt;- FALSE
+<span class="nc" id="L383">    x.setMarked(false);</span>
+<span class="nc" id="L384">    markedNodes--;</span>
+<span class="nc" id="L385">  }</span>
+
+  private void cascadingCut(FibonacciHeapNode&lt;E&gt; y) {
+    // z &lt;- p[y]
+<span class="nc" id="L389">    FibonacciHeapNode&lt;E&gt; z = y.getParent();</span>
+
+    // if z != NIL
+<span class="nc bnc" id="L392" title="All 2 branches missed.">    if (z != null) {</span>
+      // if mark[y] = FALSE
+<span class="nc bnc" id="L394" title="All 2 branches missed.">      if (!y.isMarked()) {</span>
+        // then mark[y]  TRUE
+<span class="nc" id="L396">        y.setMarked(true);</span>
+<span class="nc" id="L397">        markedNodes++;</span>
+      } else {
+        // else CUT(H,y,z)
+<span class="nc" id="L400">        cut(y, z);</span>
+        // CASCADING-CUT(H,z)
+<span class="nc" id="L402">        cascadingCut(z);</span>
+      }
+    }
+<span class="nc" id="L405">  }</span>
+
+  public int potential() {
+<span class="nc" id="L408">    return trees + 2 * markedNodes;</span>
+  }
+
+  private int compare(FibonacciHeapNode&lt;E&gt; o1, FibonacciHeapNode&lt;E&gt; o2) {
+<span class="pc bpc" id="L412" title="1 of 2 branches missed.">    if (comparator != null) {</span>
+<span class="nc" id="L413">      return comparator.compare(o1.getElement(), o2.getElement());</span>
+    }
+    @SuppressWarnings(&quot;unchecked&quot;) // it will throw a ClassCastException at runtime
+<span class="fc" id="L416">    Comparable&lt;? super E&gt; o1Comparable = (Comparable&lt;? super E&gt;) o1.getElement();</span>
+<span class="fc" id="L417">    return o1Comparable.compareTo(o2.getElement());</span>
+  }
+
+  /**
+   * Creates a String representation of this Fibonacci heap.
+   *
+   * @return String of this.
+   */
+  public String toString() {
+<span class="nc bnc" id="L426" title="All 2 branches missed.">    if (minimumNode == null) {</span>
+<span class="nc" id="L427">      return &quot;FibonacciHeap=[]&quot;;</span>
+    }
+
+    // create a new stack and put root on it
+<span class="nc" id="L431">    Stack&lt;FibonacciHeapNode&lt;E&gt;&gt; stack = new Stack&lt;FibonacciHeapNode&lt;E&gt;&gt;();</span>
+<span class="nc" id="L432">    stack.push(minimumNode);</span>
+
+<span class="nc" id="L434">    StringBuilder buf = new StringBuilder(&quot;FibonacciHeap=[&quot;);</span>
+
+    // do a simple breadth-first traversal on the tree
+<span class="nc bnc" id="L437" title="All 2 branches missed.">    while (!stack.empty()) {</span>
+<span class="nc" id="L438">      FibonacciHeapNode&lt;E&gt; curr = stack.pop();</span>
+<span class="nc" id="L439">      buf.append(curr);</span>
+<span class="nc" id="L440">      buf.append(&quot;, &quot;);</span>
+
+<span class="nc bnc" id="L442" title="All 2 branches missed.">      if (curr.getChild() != null) {</span>
+<span class="nc" id="L443">        stack.push(curr.getChild());</span>
+      }
+
+<span class="nc" id="L446">      FibonacciHeapNode&lt;E&gt; start = curr;</span>
+<span class="nc" id="L447">      curr = curr.getRight();</span>
+
+<span class="nc bnc" id="L449" title="All 2 branches missed.">      while (curr != start) {</span>
+<span class="nc" id="L450">        buf.append(curr);</span>
+<span class="nc" id="L451">        buf.append(&quot;, &quot;);</span>
+
+<span class="nc bnc" id="L453" title="All 2 branches missed.">        if (curr.getChild() != null) {</span>
+<span class="nc" id="L454">          stack.push(curr.getChild());</span>
+        }
+
+<span class="nc" id="L457">        curr = curr.getRight();</span>
+      }
+<span class="nc" id="L459">    }</span>
+
+<span class="nc" id="L461">    buf.append(']');</span>
+
+<span class="nc" id="L463">    return buf.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

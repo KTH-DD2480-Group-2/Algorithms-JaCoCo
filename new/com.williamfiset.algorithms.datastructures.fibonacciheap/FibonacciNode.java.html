@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FibonacciNode.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.fibonacciheap</a> &gt; <span class="el_source">FibonacciNode.java</span></div><h1>FibonacciNode.java</h1><pre class="source lang-java linenums">package com.williamfiset.algorithms.datastructures.fibonacciheap;
+
+// Credits to the respective owner for the code
+
+final class FibonacciHeapNode&lt;E&gt; {
+
+  private final E element;
+
+  private FibonacciHeapNode&lt;E&gt; parent;
+
+<span class="fc" id="L11">  private FibonacciHeapNode&lt;E&gt; left = this;</span>
+
+<span class="fc" id="L13">  private FibonacciHeapNode&lt;E&gt; right = this;</span>
+
+  private FibonacciHeapNode&lt;E&gt; child;
+
+  private int degree;
+
+  private boolean marked;
+
+<span class="fc" id="L21">  public FibonacciHeapNode(E element) {</span>
+    // 1  degree[x] &amp;larr; 0
+<span class="fc" id="L23">    degree = 0;</span>
+    // 2  p[x] &lt;- NIL
+<span class="fc" id="L25">    setParent(null);</span>
+    // 3  child[x] &lt;- NIL
+<span class="fc" id="L27">    setChild(null);</span>
+    // 4  left[x] &lt;- x
+<span class="fc" id="L29">    setLeft(this);</span>
+    // 5  right[x] &lt;- x
+<span class="fc" id="L31">    setRight(this);</span>
+    // 6  mark[x] &lt;- FALSE
+<span class="fc" id="L33">    setMarked(false);</span>
+
+    // set the adapted element
+<span class="fc" id="L36">    this.element = element;</span>
+<span class="fc" id="L37">  }</span>
+
+  public FibonacciHeapNode&lt;E&gt; getParent() {
+<span class="nc" id="L40">    return parent;</span>
+  }
+
+  public void setParent(FibonacciHeapNode&lt;E&gt; parent) {
+<span class="fc" id="L44">    this.parent = parent;</span>
+<span class="fc" id="L45">  }</span>
+
+  public FibonacciHeapNode&lt;E&gt; getLeft() {
+<span class="fc" id="L48">    return left;</span>
+  }
+
+  public void setLeft(FibonacciHeapNode&lt;E&gt; left) {
+<span class="fc" id="L52">    this.left = left;</span>
+<span class="fc" id="L53">  }</span>
+
+  public FibonacciHeapNode&lt;E&gt; getRight() {
+<span class="fc" id="L56">    return right;</span>
+  }
+
+  public void setRight(FibonacciHeapNode&lt;E&gt; right) {
+<span class="fc" id="L60">    this.right = right;</span>
+<span class="fc" id="L61">  }</span>
+
+  public FibonacciHeapNode&lt;E&gt; getChild() {
+<span class="fc" id="L64">    return child;</span>
+  }
+
+  public void setChild(FibonacciHeapNode&lt;E&gt; child) {
+<span class="fc" id="L68">    this.child = child;</span>
+<span class="fc" id="L69">  }</span>
+
+  public int getDegree() {
+<span class="fc" id="L72">    return degree;</span>
+  }
+
+  public void incraeseDegree() {
+<span class="fc" id="L76">    degree++;</span>
+<span class="fc" id="L77">  }</span>
+
+  public void decraeseDegree() {
+<span class="nc" id="L80">    degree--;</span>
+<span class="nc" id="L81">  }</span>
+
+  public boolean isMarked() {
+<span class="nc" id="L84">    return marked;</span>
+  }
+
+  public void setMarked(boolean marked) {
+<span class="fc" id="L88">    this.marked = marked;</span>
+<span class="fc" id="L89">  }</span>
+
+  public E getElement() {
+<span class="fc" id="L92">    return element;</span>
+  }
+
+  @Override
+  public String toString() {
+<span class="nc" id="L97">    return element.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

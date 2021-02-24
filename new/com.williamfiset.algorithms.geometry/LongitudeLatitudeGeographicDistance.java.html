@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LongitudeLatitudeGeographicDistance.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">LongitudeLatitudeGeographicDistance.java</span></div><h1>LongitudeLatitudeGeographicDistance.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to find the distance between two geographic coordinates.
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author Micah Stairs
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+<span class="nc" id="L12">public class LongitudeLatitudeGeographicDistance {</span>
+
+  // Compute the distance between geographic coordinates in units
+  // of its radii (multiply by 6371km for Earth)
+  public static double dist(double lat1, double lon1, double lat2, double lon2) {
+<span class="nc" id="L17">    double dLat = toRadians(lat2 - lat1);</span>
+<span class="nc" id="L18">    double dLon = toRadians(lon2 - lon1);</span>
+<span class="nc" id="L19">    double a =</span>
+<span class="nc" id="L20">        sin(dLat / 2.0) * sin(dLat / 2.0)</span>
+<span class="nc" id="L21">            + cos(toRadians(lat1)) * cos(toRadians(lat2)) * sin(dLon / 2.0) * sin(dLon / 2.0);</span>
+<span class="nc" id="L22">    return 2.0 * atan2(sqrt(a), sqrt(1 - a));</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

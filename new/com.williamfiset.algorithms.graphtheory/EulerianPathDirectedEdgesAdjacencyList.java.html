@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EulerianPathDirectedEdgesAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">EulerianPathDirectedEdgesAdjacencyList.java</span></div><h1>EulerianPathDirectedEdgesAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * Implementation of finding an Eulerian Path on a graph. This implementation verifies that the
+ * input graph is fully connected and supports self loops and repeated edges between nodes.
+ *
+ * &lt;p&gt;Test against: https://open.kattis.com/problems/eulerianpath
+ * http://codeforces.com/contest/508/problem/D
+ *
+ * &lt;p&gt;Run: ./gradlew run -Palgorithm=graphtheory.EulerianPathDirectedEdgesAdjacencyList
+ *
+ * &lt;p&gt;Time Complexity: O(E)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+public class EulerianPathDirectedEdgesAdjacencyList {
+
+  private final int n;
+  private int edgeCount;
+  private int[] in, out;
+  private LinkedList&lt;Integer&gt; path;
+  private List&lt;List&lt;Integer&gt;&gt; graph;
+
+<span class="fc" id="L29">  public EulerianPathDirectedEdgesAdjacencyList(List&lt;List&lt;Integer&gt;&gt; graph) {</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">    if (graph == null) throw new IllegalArgumentException(&quot;Graph cannot be null&quot;);</span>
+<span class="fc" id="L31">    n = graph.size();</span>
+<span class="fc" id="L32">    this.graph = graph;</span>
+<span class="fc" id="L33">    path = new LinkedList&lt;&gt;();</span>
+<span class="fc" id="L34">  }</span>
+
+  // Returns a list of edgeCount + 1 node ids that give the Eulerian path or
+  // null if no path exists or the graph is disconnected.
+  public int[] getEulerianPath() {
+<span class="fc" id="L39">    setUp();</span>
+
+<span class="fc bfc" id="L41" title="All 2 branches covered.">    if (!graphHasEulerianPath()) return null;</span>
+<span class="fc" id="L42">    dfs(findStartNode());</span>
+
+    // Make sure all edges of the graph were traversed. It could be the
+    // case that the graph is disconnected in which case return null.
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    if (path.size() != edgeCount + 1) return null;</span>
+
+    // Instead of returning the 'path' as a linked list return
+    // the solution as a primitive array for convenience.
+<span class="fc" id="L50">    int[] soln = new int[edgeCount + 1];</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    for (int i = 0; !path.isEmpty(); i++) soln[i] = path.removeFirst();</span>
+
+<span class="fc" id="L53">    return soln;</span>
+  }
+
+  private void setUp() {
+    // Arrays that track the in degree and out degree of each node.
+<span class="fc" id="L58">    in = new int[n];</span>
+<span class="fc" id="L59">    out = new int[n];</span>
+
+<span class="fc" id="L61">    edgeCount = 0;</span>
+
+    // Compute in and out node degrees.
+<span class="fc bfc" id="L64" title="All 2 branches covered.">    for (int from = 0; from &lt; n; from++) {</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">      for (int to : graph.get(from)) {</span>
+<span class="fc" id="L66">        in[to]++;</span>
+<span class="fc" id="L67">        out[from]++;</span>
+<span class="fc" id="L68">        edgeCount++;</span>
+<span class="fc" id="L69">      }</span>
+    }
+<span class="fc" id="L71">  }</span>
+
+  private boolean graphHasEulerianPath() {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    if (edgeCount == 0) return false;</span>
+<span class="fc" id="L75">    int startNodes = 0, endNodes = 0;</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L77" title="All 4 branches covered.">      if (out[i] - in[i] &gt; 1 || in[i] - out[i] &gt; 1) return false;</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">      else if (out[i] - in[i] == 1) startNodes++;</span>
+<span class="fc bfc" id="L79" title="All 2 branches covered.">      else if (in[i] - out[i] == 1) endNodes++;</span>
+    }
+<span class="pc bpc" id="L81" title="2 of 8 branches missed.">    return (endNodes == 0 &amp;&amp; startNodes == 0) || (endNodes == 1 &amp;&amp; startNodes == 1);</span>
+  }
+
+  private int findStartNode() {
+<span class="fc" id="L85">    int start = 0;</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+      // Unique starting node.
+<span class="fc bfc" id="L88" title="All 2 branches covered.">      if (out[i] - in[i] == 1) return i;</span>
+      // Start at a node with an outgoing edge.
+<span class="fc bfc" id="L90" title="All 2 branches covered.">      if (out[i] &gt; 0) start = i;</span>
+    }
+<span class="fc" id="L92">    return start;</span>
+  }
+
+  // Perform DFS to find Eulerian path.
+  private void dfs(int at) {
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    while (out[at] != 0) {</span>
+<span class="fc" id="L98">      int next = graph.get(at).get(--out[at]);</span>
+<span class="fc" id="L99">      dfs(next);</span>
+<span class="fc" id="L100">    }</span>
+<span class="fc" id="L101">    path.addFirst(at);</span>
+<span class="fc" id="L102">  }</span>
+
+  /* Graph creation helper methods */
+
+  public static List&lt;List&lt;Integer&gt;&gt; initializeEmptyGraph(int n) {
+<span class="nc" id="L107">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L109">    return graph;</span>
+  }
+
+  public static void addDirectedEdge(List&lt;List&lt;Integer&gt;&gt; g, int from, int to) {
+<span class="nc" id="L113">    g.get(from).add(to);</span>
+<span class="nc" id="L114">  }</span>
+
+  /* Examples */
+
+  public static void main(String[] args) {
+<span class="nc" id="L119">    exampleFromSlides();</span>
+<span class="nc" id="L120">    smallExample();</span>
+<span class="nc" id="L121">  }</span>
+
+  private static void exampleFromSlides() {
+<span class="nc" id="L124">    int n = 7;</span>
+<span class="nc" id="L125">    List&lt;List&lt;Integer&gt;&gt; graph = initializeEmptyGraph(n);</span>
+
+<span class="nc" id="L127">    addDirectedEdge(graph, 1, 2);</span>
+<span class="nc" id="L128">    addDirectedEdge(graph, 1, 3);</span>
+<span class="nc" id="L129">    addDirectedEdge(graph, 2, 2);</span>
+<span class="nc" id="L130">    addDirectedEdge(graph, 2, 4);</span>
+<span class="nc" id="L131">    addDirectedEdge(graph, 2, 4);</span>
+<span class="nc" id="L132">    addDirectedEdge(graph, 3, 1);</span>
+<span class="nc" id="L133">    addDirectedEdge(graph, 3, 2);</span>
+<span class="nc" id="L134">    addDirectedEdge(graph, 3, 5);</span>
+<span class="nc" id="L135">    addDirectedEdge(graph, 4, 3);</span>
+<span class="nc" id="L136">    addDirectedEdge(graph, 4, 6);</span>
+<span class="nc" id="L137">    addDirectedEdge(graph, 5, 6);</span>
+<span class="nc" id="L138">    addDirectedEdge(graph, 6, 3);</span>
+
+    EulerianPathDirectedEdgesAdjacencyList solver;
+<span class="nc" id="L141">    solver = new EulerianPathDirectedEdgesAdjacencyList(graph);</span>
+
+    // Outputs path: [1, 3, 5, 6, 3, 2, 4, 3, 1, 2, 2, 4, 6]
+<span class="nc" id="L144">    System.out.println(Arrays.toString(solver.getEulerianPath()));</span>
+<span class="nc" id="L145">  }</span>
+
+  private static void smallExample() {
+<span class="nc" id="L148">    int n = 5;</span>
+<span class="nc" id="L149">    List&lt;List&lt;Integer&gt;&gt; graph = initializeEmptyGraph(n);</span>
+
+<span class="nc" id="L151">    addDirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L152">    addDirectedEdge(graph, 1, 2);</span>
+<span class="nc" id="L153">    addDirectedEdge(graph, 1, 4);</span>
+<span class="nc" id="L154">    addDirectedEdge(graph, 1, 3);</span>
+<span class="nc" id="L155">    addDirectedEdge(graph, 2, 1);</span>
+<span class="nc" id="L156">    addDirectedEdge(graph, 4, 1);</span>
+
+    EulerianPathDirectedEdgesAdjacencyList solver;
+<span class="nc" id="L159">    solver = new EulerianPathDirectedEdgesAdjacencyList(graph);</span>
+
+    // Outputs path: [0, 1, 4, 1, 2, 1, 3]
+<span class="nc" id="L162">    System.out.println(Arrays.toString(solver.getEulerianPath()));</span>
+<span class="nc" id="L163">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

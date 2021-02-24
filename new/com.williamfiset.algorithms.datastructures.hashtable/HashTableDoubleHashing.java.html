@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HashTableDoubleHashing.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.hashtable</a> &gt; <span class="el_source">HashTableDoubleHashing.java</span></div><h1>HashTableDoubleHashing.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of a hashtable using double hashing as a collision resolution technique.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.hashtable;
+
+import java.math.BigInteger;
+
+public class HashTableDoubleHashing&lt;K extends SecondaryHash, V&gt;
+    extends HashTableOpenAddressingBase&lt;K, V&gt; {
+
+  private int hash;
+
+  public HashTableDoubleHashing() {
+<span class="fc" id="L16">    super();</span>
+<span class="fc" id="L17">  }</span>
+
+  public HashTableDoubleHashing(int capacity) {
+<span class="fc" id="L20">    super(capacity);</span>
+<span class="fc" id="L21">  }</span>
+
+  // Designated constructor
+  public HashTableDoubleHashing(int capacity, double loadFactor) {
+<span class="fc" id="L25">    super(capacity, loadFactor);</span>
+<span class="fc" id="L26">  }</span>
+
+  @Override
+  protected void setupProbing(K key) {
+    // Cache second hash value.
+<span class="fc" id="L31">    hash = normalizeIndex(key.hashCode2());</span>
+
+    // Fail safe to avoid infinite loop.
+<span class="fc bfc" id="L34" title="All 2 branches covered.">    if (hash == 0) hash = 1;</span>
+<span class="fc" id="L35">  }</span>
+
+  @Override
+  protected int probe(int x) {
+<span class="fc" id="L39">    return x * hash;</span>
+  }
+
+  // Adjust the capacity until it is a prime number. The reason for
+  // doing this is to help ensure that the GCD(hash, capacity) = 1 when
+  // probing so that all the cells can be reached.
+  @Override
+  protected void adjustCapacity() {
+<span class="fc bfc" id="L47" title="All 2 branches covered.">    while (!(new BigInteger(String.valueOf(capacity)).isProbablePrime(20))) {</span>
+<span class="fc" id="L48">      capacity++;</span>
+    }
+<span class="fc" id="L50">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

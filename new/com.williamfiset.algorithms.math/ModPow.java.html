@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModPow.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">ModPow.java</span></div><h1>ModPow.java</h1><pre class="source lang-java linenums">/**
+ * NOTE: An issue was found with this file when dealing with negative numbers when exponentiating!
+ * See bug tracking progress on issue
+ *
+ * &lt;p&gt;An implementation of the modPow(a, n, mod) operation. This implementation is substantially
+ * faster than Java's BigInteger class because it only uses primitive types.
+ *
+ * &lt;p&gt;Time Complexity O(lg(n))
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.math;
+
+<span class="nc" id="L14">public class ModPow {</span>
+
+  // The values placed into the modPow function cannot be greater
+  // than MAX or less than MIN otherwise long overflow will
+  // happen when the values get squared (they will exceed 2^63-1)
+<span class="nc" id="L19">  private static final long MAX = (long) Math.sqrt(Long.MAX_VALUE);</span>
+<span class="nc" id="L20">  private static final long MIN = -MAX;</span>
+
+  // Computes the Greatest Common Divisor (GCD) of a &amp; b
+  private static long gcd(long a, long b) {
+<span class="nc bnc" id="L24" title="All 4 branches missed.">    return b == 0 ? (a &lt; 0 ? -a : a) : gcd(b, a % b);</span>
+  }
+
+  // This function performs the extended euclidean algorithm on two numbers a and b.
+  // The function returns the gcd(a,b) as well as the numbers x and y such
+  // that ax + by = gcd(a,b). This calculation is important in number theory
+  // and can be used for several things such as finding modular inverses and
+  // solutions to linear Diophantine equations.
+  private static long[] egcd(long a, long b) {
+<span class="nc bnc" id="L33" title="All 4 branches missed.">    if (b == 0) return new long[] {a &lt; 0 ? -a : a, 1L, 0L};</span>
+<span class="nc" id="L34">    long[] v = egcd(b, a % b);</span>
+<span class="nc" id="L35">    long tmp = v[1] - v[2] * (a / b);</span>
+<span class="nc" id="L36">    v[1] = v[2];</span>
+<span class="nc" id="L37">    v[2] = tmp;</span>
+<span class="nc" id="L38">    return v;</span>
+  }
+
+  // Returns the modular inverse of 'a' mod 'm'
+  // Make sure m &gt; 0 and 'a' &amp; 'm' are relatively prime.
+  private static long modInv(long a, long m) {
+
+<span class="nc" id="L45">    a = ((a % m) + m) % m;</span>
+
+<span class="nc" id="L47">    long[] v = egcd(a, m);</span>
+<span class="nc" id="L48">    long x = v[1];</span>
+
+<span class="nc" id="L50">    return ((x % m) + m) % m;</span>
+  }
+
+  // Computes a^n modulo mod very efficiently in O(lg(n)) time.
+  // This function supports negative exponent values and a negative
+  // base, however the modulus must be positive.
+  public static long modPow(long a, long n, long mod) {
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    if (mod &lt;= 0) throw new ArithmeticException(&quot;mod must be &gt; 0&quot;);</span>
+<span class="nc bnc" id="L59" title="All 4 branches missed.">    if (a &gt; MAX || mod &gt; MAX)</span>
+<span class="nc" id="L60">      throw new IllegalArgumentException(&quot;Long overflow is upon you, mod or base is too high!&quot;);</span>
+<span class="nc bnc" id="L61" title="All 4 branches missed.">    if (a &lt; MIN || mod &lt; MIN)</span>
+<span class="nc" id="L62">      throw new IllegalArgumentException(&quot;Long overflow is upon you, mod or base is too low!&quot;);</span>
+
+    // To handle negative exponents we can use the modular
+    // inverse of a to our advantage since: a^-n mod m = (a^-1)^n mod m
+<span class="nc bnc" id="L66" title="All 2 branches missed.">    if (n &lt; 0) {</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">      if (gcd(a, mod) != 1)</span>
+<span class="nc" id="L68">        throw new ArithmeticException(&quot;If n &lt; 0 then must have gcd(a, mod) = 1&quot;);</span>
+<span class="nc" id="L69">      return modPow(modInv(a, mod), -n, mod);</span>
+    }
+
+<span class="nc bnc" id="L72" title="All 2 branches missed.">    if (n == 0L) return 1L;</span>
+<span class="nc" id="L73">    long p = a, r = 1L;</span>
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">    for (long i = 0; n != 0; i++) {</span>
+<span class="nc" id="L76">      long mask = 1L &lt;&lt; i;</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">      if ((n &amp; mask) == mask) {</span>
+<span class="nc" id="L78">        r = (((r * p) % mod) + mod) % mod;</span>
+<span class="nc" id="L79">        n -= mask;</span>
+      }
+<span class="nc" id="L81">      p = ((p * p) % mod + mod) % mod;</span>
+    }
+
+<span class="nc" id="L84">    return ((r % mod) + mod) % mod;</span>
+  }
+
+  // Example usage
+  public static void main(String[] args) {
+
+    java.math.BigInteger A, N, M, r1;
+    long a, n, m, r2;
+
+<span class="nc" id="L93">    A = new java.math.BigInteger(&quot;3&quot;);</span>
+<span class="nc" id="L94">    N = new java.math.BigInteger(&quot;4&quot;);</span>
+<span class="nc" id="L95">    M = new java.math.BigInteger(&quot;1000000&quot;);</span>
+<span class="nc" id="L96">    a = A.longValue();</span>
+<span class="nc" id="L97">    n = N.longValue();</span>
+<span class="nc" id="L98">    m = M.longValue();</span>
+
+    // 3 ^ 4 mod 1000000
+<span class="nc" id="L101">    r1 = A.modPow(N, M); // 81</span>
+<span class="nc" id="L102">    r2 = modPow(a, n, m); // 81</span>
+<span class="nc" id="L103">    System.out.println(r1 + &quot; &quot; + r2);</span>
+
+<span class="nc" id="L105">    A = new java.math.BigInteger(&quot;-45&quot;);</span>
+<span class="nc" id="L106">    N = new java.math.BigInteger(&quot;12345&quot;);</span>
+<span class="nc" id="L107">    M = new java.math.BigInteger(&quot;987654321&quot;);</span>
+<span class="nc" id="L108">    a = A.longValue();</span>
+<span class="nc" id="L109">    n = N.longValue();</span>
+<span class="nc" id="L110">    m = M.longValue();</span>
+
+    // Finds -45 ^ 12345 mod 987654321
+<span class="nc" id="L113">    r1 = A.modPow(N, M); // 323182557</span>
+<span class="nc" id="L114">    r2 = modPow(a, n, m); // 323182557</span>
+<span class="nc" id="L115">    System.out.println(r1 + &quot; &quot; + r2);</span>
+
+<span class="nc" id="L117">    A = new java.math.BigInteger(&quot;6&quot;);</span>
+<span class="nc" id="L118">    N = new java.math.BigInteger(&quot;-66&quot;);</span>
+<span class="nc" id="L119">    M = new java.math.BigInteger(&quot;101&quot;);</span>
+<span class="nc" id="L120">    a = A.longValue();</span>
+<span class="nc" id="L121">    n = N.longValue();</span>
+<span class="nc" id="L122">    m = M.longValue();</span>
+
+    // Finds 6 ^ -66 mod 101
+<span class="nc" id="L125">    r1 = A.modPow(N, M); // 84</span>
+<span class="nc" id="L126">    r2 = modPow(a, n, m); // 84</span>
+<span class="nc" id="L127">    System.out.println(r1 + &quot; &quot; + r2);</span>
+
+<span class="nc" id="L129">    A = new java.math.BigInteger(&quot;-5&quot;);</span>
+<span class="nc" id="L130">    N = new java.math.BigInteger(&quot;-7&quot;);</span>
+<span class="nc" id="L131">    M = new java.math.BigInteger(&quot;1009&quot;);</span>
+<span class="nc" id="L132">    a = A.longValue();</span>
+<span class="nc" id="L133">    n = N.longValue();</span>
+<span class="nc" id="L134">    m = M.longValue();</span>
+
+    // Finds -5 ^ -7 mod 1009
+<span class="nc" id="L137">    r1 = A.modPow(N, M); // 675</span>
+<span class="nc" id="L138">    r2 = modPow(a, n, m); // 675</span>
+<span class="nc" id="L139">    System.out.println(r1 + &quot; &quot; + r2);</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">    for (int i = 0; i &lt; 1000; i++) {</span>
+<span class="nc" id="L142">      A = new java.math.BigInteger(a + &quot;&quot;);</span>
+<span class="nc" id="L143">      N = new java.math.BigInteger(n + &quot;&quot;);</span>
+<span class="nc" id="L144">      M = new java.math.BigInteger(m + &quot;&quot;);</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">      a = Math.random() &lt; 0.5 ? randLong(MAX) : -randLong(MAX);</span>
+<span class="nc" id="L146">      n = randLong();</span>
+<span class="nc" id="L147">      m = randLong(MAX);</span>
+      try {
+<span class="nc" id="L149">        r1 = A.modPow(N, M);</span>
+<span class="nc" id="L150">        r2 = modPow(a, n, m);</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">        if (r1.longValue() != r2)</span>
+<span class="nc" id="L152">          System.out.printf(&quot;Broke with: a = %d, n = %d, m = %d\n&quot;, a, n, m);</span>
+<span class="nc" id="L153">      } catch (ArithmeticException e) {</span>
+<span class="nc" id="L154">      }</span>
+    }
+<span class="nc" id="L156">  }</span>
+
+  /* TESTING RELATED METHODS */
+
+<span class="nc" id="L160">  static final java.util.Random RANDOM = new java.util.Random();</span>
+
+  // Returns long between [1, bound]
+  public static long randLong(long bound) {
+<span class="nc" id="L164">    return java.util.concurrent.ThreadLocalRandom.current().nextLong(1, bound + 1);</span>
+  }
+
+  public static long randLong() {
+<span class="nc" id="L168">    return RANDOM.nextLong();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

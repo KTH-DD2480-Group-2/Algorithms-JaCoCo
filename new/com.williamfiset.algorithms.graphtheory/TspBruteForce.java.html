@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TspBruteForce.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">TspBruteForce.java</span></div><h1>TspBruteForce.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to solve the traveling salesman problem using a brute force approach.
+ * Since the time complexity is on the order of O(n!) this method is not convenient for n &gt; 12
+ *
+ * &lt;p&gt;Time Complexity: O(n!)
+ *
+ * @author William Fiset, Micah Stairs
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+<span class="nc" id="L11">public class TspBruteForce {</span>
+
+  // Given an nxn complete graph represented as an adjacency
+  // matrix this method finds the best tour that visits all
+  // the nodes while minimizing the overall visit cost.
+  public static int[] tsp(double[][] matrix) {
+
+<span class="fc" id="L18">    int n = matrix.length;</span>
+<span class="fc" id="L19">    int[] permutation = new int[n];</span>
+<span class="fc bfc" id="L20" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) permutation[i] = i;</span>
+
+<span class="fc" id="L22">    int[] bestTour = permutation.clone();</span>
+<span class="fc" id="L23">    double bestTourCost = Double.POSITIVE_INFINITY;</span>
+
+    // Try all n! tours
+    do {
+
+<span class="fc" id="L28">      double tourCost = computeTourCost(permutation, matrix);</span>
+
+<span class="fc bfc" id="L30" title="All 2 branches covered.">      if (tourCost &lt; bestTourCost) {</span>
+<span class="fc" id="L31">        bestTourCost = tourCost;</span>
+<span class="fc" id="L32">        bestTour = permutation.clone();</span>
+      }
+
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    } while (nextPermutation(permutation));</span>
+
+<span class="fc" id="L37">    return bestTour;</span>
+  }
+
+  public static double computeTourCost(int[] tour, double[][] matrix) {
+
+<span class="fc" id="L42">    double cost = 0;</span>
+
+    // Compute the cost of going to each city
+<span class="fc bfc" id="L45" title="All 2 branches covered.">    for (int i = 1; i &lt; matrix.length; i++) {</span>
+<span class="fc" id="L46">      int from = tour[i - 1];</span>
+<span class="fc" id="L47">      int to = tour[i];</span>
+<span class="fc" id="L48">      cost += matrix[from][to];</span>
+    }
+
+    // Compute the cost to return to the starting city
+<span class="fc" id="L52">    int last = tour[matrix.length - 1];</span>
+<span class="fc" id="L53">    int first = tour[0];</span>
+<span class="fc" id="L54">    return cost + matrix[last][first];</span>
+  }
+
+  // Generates the next ordered permutation in-place (skips repeated permutations).
+  // Calling this when the array is already at the highest permutation returns false.
+  // Recommended usage is to start with the smallest permutations and use a do while
+  // loop to generate each successive permutations (see main for example).
+  public static boolean nextPermutation(int[] sequence) {
+<span class="fc" id="L62">    int first = getFirst(sequence);</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">    if (first == -1) return false;</span>
+<span class="fc" id="L64">    int toSwap = sequence.length - 1;</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    while (sequence[first] &gt;= sequence[toSwap]) --toSwap;</span>
+<span class="fc" id="L66">    swap(sequence, first++, toSwap);</span>
+<span class="fc" id="L67">    toSwap = sequence.length - 1;</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">    while (first &lt; toSwap) swap(sequence, first++, toSwap--);</span>
+<span class="fc" id="L69">    return true;</span>
+  }
+
+  private static int getFirst(int[] sequence) {
+<span class="fc bfc" id="L73" title="All 4 branches covered.">    for (int i = sequence.length - 2; i &gt;= 0; --i) if (sequence[i] &lt; sequence[i + 1]) return i;</span>
+<span class="fc" id="L74">    return -1;</span>
+  }
+
+  private static void swap(int[] sequence, int i, int j) {
+<span class="fc" id="L78">    int tmp = sequence[i];</span>
+<span class="fc" id="L79">    sequence[i] = sequence[j];</span>
+<span class="fc" id="L80">    sequence[j] = tmp;</span>
+<span class="fc" id="L81">  }</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L85">    int n = 10;</span>
+<span class="nc" id="L86">    double[][] matrix = new double[n][n];</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    for (double[] row : matrix) java.util.Arrays.fill(row, 100);</span>
+
+    // Construct an optimal tour
+<span class="nc" id="L90">    int edgeCost = 5;</span>
+<span class="nc" id="L91">    int[] optimalTour = {2, 7, 6, 1, 9, 8, 5, 3, 4, 0, 2};</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">    for (int i = 1; i &lt; optimalTour.length; i++)</span>
+<span class="nc" id="L93">      matrix[optimalTour[i - 1]][optimalTour[i]] = edgeCost;</span>
+
+<span class="nc" id="L95">    int[] bestTour = tsp(matrix);</span>
+<span class="nc" id="L96">    System.out.println(java.util.Arrays.toString(bestTour));</span>
+
+<span class="nc" id="L98">    double tourCost = computeTourCost(bestTour, matrix);</span>
+<span class="nc" id="L99">    System.out.println(&quot;Tour cost: &quot; + tourCost);</span>
+<span class="nc" id="L100">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

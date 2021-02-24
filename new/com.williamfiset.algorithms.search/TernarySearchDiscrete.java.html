@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TernarySearchDiscrete.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.search</a> &gt; <span class="el_source">TernarySearchDiscrete.java</span></div><h1>TernarySearchDiscrete.java</h1><pre class="source lang-java linenums">/**
+ * Ternary search is similar to binary search except that it works on a function which decreases and
+ * then increases. This implementation of ternary search works on discrete values and returns the
+ * input value corresponding with the minimum output value of the function you're searching on.
+ *
+ * &lt;p&gt;Time Complexity: O(log(high - low)).
+ *
+ * &lt;p&gt;NOTE: You can also work with a function which increases and then decreases, simply negate your
+ * function :)
+ *
+ * @author Thomas Finn Lidbetter
+ */
+package com.williamfiset.algorithms.search;
+
+<span class="nc" id="L15">public class TernarySearchDiscrete {</span>
+
+  // TODO(williamfiset): refactor for better support of custom functions.
+
+  // Define a very small epsilon value to compare double values.
+  static final double EPS = 0.000000001;
+
+  // A discrete function is just a set of data points.
+<span class="nc" id="L23">  static final double[] function = {16, 12, 10, 3, 6, 7, 9, 10, 11, 12, 13, 17};</span>
+
+  // Define your own function on whatever you're attempting to ternary
+  // search. Remember that your function must be a discrete and a unimodal
+  // function, this means a function which decreases then increases (U shape)
+  static double f(int i) {
+<span class="nc" id="L29">    return function[i];</span>
+  }
+
+  static double discreteTernarySearch(int lo, int hi) {
+<span class="nc bnc" id="L33" title="All 2 branches missed.">    while (lo != hi) {</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">      if (hi - lo == 1) return Math.min(f(lo), f(hi));</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">      if (hi - lo == 2) return Math.min(f(lo), Math.min(f(lo + 1), f(hi)));</span>
+<span class="nc" id="L36">      int mid1 = (2 * lo + hi) / 3, mid2 = (lo + 2 * hi) / 3;</span>
+<span class="nc" id="L37">      double res1 = f(mid1), res2 = f(mid2);</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">      if (Math.abs(res1 - res2) &lt; 0.000000001) {</span>
+<span class="nc" id="L39">        lo = mid1;</span>
+<span class="nc" id="L40">        hi = mid2;</span>
+<span class="nc bnc" id="L41" title="All 2 branches missed.">      } else if (res1 &gt; res2) lo = mid1;</span>
+<span class="nc" id="L42">      else hi = mid2;</span>
+<span class="nc" id="L43">    }</span>
+<span class="nc" id="L44">    return lo;</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L49">    int lo = 0;</span>
+<span class="nc" id="L50">    int hi = function.length - 1;</span>
+
+    // Use ternary search to find the minimum value on the
+    // whole interval of out function.
+<span class="nc" id="L54">    double minValue = discreteTernarySearch(lo, hi);</span>
+<span class="nc" id="L55">    System.out.printf(&quot;%.4f\n&quot;, minValue);</span>
+<span class="nc" id="L56">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

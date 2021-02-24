@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SkipList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.skiplist</a> &gt; <span class="el_source">SkipList.java</span></div><h1>SkipList.java</h1><pre class="source lang-java linenums">/**
+ * SkipList is a data structure that is useful for dealing with dynamic sorted data. In particular
+ * it gives O(log(n)) average complexity of insertion, removal, and find operations. This
+ * implementation has been augmented with a method for determining the rank of an element in the
+ * SkipList. Finding the rank of an element is also O(log(n)) on average. The complexities are
+ * average complexities since this algorithm is dependent on randomisation to achieve nice balanced
+ * properties. To make this efficient, instantiate the SkipList with a height equal to, or just
+ * greater than, log(n) where n is the number of elements that will be in the list. On average, this
+ * data structure uses O(n) space. Worst case space is O(nlog(n)), and worst case for all other
+ * operations is O(n)
+ *
+ * @author Finn Lidbetter
+ */
+package com.williamfiset.algorithms.datastructures.skiplist;
+
+import java.util.Random;
+
+class SkipList {
+<span class="nc" id="L19">  Random rand = new Random(0);</span>
+  int height;
+  Node head;
+  Node tail;
+  // Initialise with the height of the SkipList and Keys smaller and larger
+  // than all other keys that will be inserted in the SkipList
+<span class="nc" id="L25">  public SkipList(int height, Key minKey, Key maxKey, int h) {</span>
+<span class="nc" id="L26">    this.height = height;</span>
+<span class="nc" id="L27">    head = new Node(minKey);</span>
+<span class="nc" id="L28">    tail = new Node(maxKey);</span>
+<span class="nc" id="L29">    Node currLeft = head;</span>
+<span class="nc" id="L30">    Node currRight = tail;</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">    for (int i = 0; i &lt;= h; i++) {</span>
+<span class="nc" id="L32">      currLeft.right = currRight;</span>
+<span class="nc" id="L33">      currRight.left = currLeft;</span>
+<span class="nc" id="L34">      currLeft.down = new Node(currLeft.k);</span>
+<span class="nc" id="L35">      currLeft.down.up = currLeft;</span>
+<span class="nc" id="L36">      currRight.down = new Node(currRight.k);</span>
+<span class="nc" id="L37">      currRight.down.up = currRight;</span>
+<span class="nc" id="L38">      currLeft.leftDist = 0;</span>
+<span class="nc" id="L39">      currRight.leftDist = 1;</span>
+<span class="nc" id="L40">      currLeft.height = height - i;</span>
+<span class="nc" id="L41">      currRight.height = height - i;</span>
+<span class="nc" id="L42">      currLeft = currLeft.down;</span>
+<span class="nc" id="L43">      currRight = currRight.down;</span>
+    }
+<span class="nc" id="L45">    currLeft.up.down = null;</span>
+<span class="nc" id="L46">    currRight.up.down = null;</span>
+<span class="nc" id="L47">  }</span>
+
+  public void insert(Node n2) {
+<span class="nc" id="L50">    int r = rand.nextInt();</span>
+<span class="nc bnc" id="L51" title="All 2 branches missed.">    if (r &lt; 0) r *= -1;</span>
+<span class="nc" id="L52">    r %= (1 &lt;&lt; (height - 1));</span>
+<span class="nc" id="L53">    int nodeHeight = Integer.numberOfLeadingZeros(r) - (32 - (height - 1));</span>
+<span class="nc" id="L54">    head.find(n2).insert(n2, null, nodeHeight, 1);</span>
+<span class="nc" id="L55">  }</span>
+
+  public void remove(Node n2) {
+<span class="nc" id="L58">    head.find(n2).remove(n2);</span>
+<span class="nc" id="L59">  }</span>
+
+  public int getRank(Node n2) {
+<span class="nc" id="L62">    Node curr = head.find(n2);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">    if (curr.compareTo(n2) != 0) return -1;</span>
+<span class="nc" id="L64">    int distSum = 0;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    while (curr.left != null) {</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">      while (curr.up != null) {</span>
+<span class="nc" id="L67">        curr = curr.up;</span>
+      }
+<span class="nc" id="L69">      distSum += curr.leftDist;</span>
+<span class="nc" id="L70">      curr = curr.left;</span>
+    }
+<span class="nc" id="L72">    return distSum;</span>
+  }
+
+  class Node implements Comparable&lt;Node&gt; {
+    Node left;
+    Node right;
+    Node up;
+    Node down;
+    int height;
+    int leftDist;
+    Key k;
+
+<span class="nc" id="L84">    public Node(Key kk) {</span>
+<span class="nc" id="L85">      k = kk;</span>
+<span class="nc" id="L86">    }</span>
+
+    public int compareTo(Node n2) {
+<span class="nc" id="L89">      return k.compareTo(n2.k);</span>
+    }
+
+    public Node find(Node f) {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">      if (f.compareTo(right) &gt;= 0) {</span>
+<span class="nc" id="L94">        return right.find(f);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">      } else if (down != null) {</span>
+<span class="nc" id="L96">        return down.find(f);</span>
+      }
+<span class="nc" id="L98">      return this;</span>
+    }
+
+    public void insert(Node n2, Node lower, int insertHeight, int distance) {
+<span class="nc bnc" id="L102" title="All 2 branches missed.">      if (height &lt;= insertHeight) {</span>
+<span class="nc" id="L103">        n2.left = this;</span>
+<span class="nc" id="L104">        n2.right = right;</span>
+<span class="nc" id="L105">        n2.down = lower;</span>
+<span class="nc" id="L106">        right.left = n2;</span>
+<span class="nc" id="L107">        right = n2;</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (lower != null) lower.up = n2;</span>
+<span class="nc" id="L109">        n2.height = height;</span>
+<span class="nc" id="L110">        n2.leftDist = distance;</span>
+<span class="nc" id="L111">        n2.right.leftDist -= n2.leftDist - 1;</span>
+<span class="nc" id="L112">        Node curr = this;</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        while (curr.up == null) {</span>
+<span class="nc" id="L114">          distance += curr.leftDist;</span>
+<span class="nc" id="L115">          curr = curr.left;</span>
+        }
+<span class="nc" id="L117">        curr = curr.up;</span>
+<span class="nc" id="L118">        curr.insert(new Node(n2.k), n2, insertHeight, distance);</span>
+<span class="nc" id="L119">      } else {</span>
+<span class="nc" id="L120">        Node curr = this;</span>
+<span class="nc" id="L121">        curr.right.leftDist++;</span>
+<span class="nc bnc" id="L122" title="All 4 branches missed.">        while (curr.left != null || curr.up != null) {</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">          while (curr.up == null) {</span>
+<span class="nc" id="L124">            curr = curr.left;</span>
+          }
+<span class="nc" id="L126">          curr = curr.up;</span>
+<span class="nc" id="L127">          curr.right.leftDist++;</span>
+        }
+      }
+<span class="nc" id="L130">    }</span>
+
+    public void remove(Node n2) {
+<span class="nc" id="L133">      Node curr = this;</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">      if (curr.compareTo(n2) != 0) return;</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">      while (curr.up != null) {</span>
+<span class="nc" id="L136">        curr.left.right = curr.right;</span>
+<span class="nc" id="L137">        curr.right.left = curr.left;</span>
+<span class="nc" id="L138">        curr.right.leftDist += curr.leftDist - 1;</span>
+<span class="nc" id="L139">        curr = curr.up;</span>
+      }
+<span class="nc" id="L141">      curr.left.right = curr.right;</span>
+<span class="nc" id="L142">      curr.right.left = curr.left;</span>
+<span class="nc" id="L143">      curr.right.leftDist += curr.leftDist - 1;</span>
+<span class="nc bnc" id="L144" title="All 4 branches missed.">      while (curr.left != null || curr.up != null) {</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        while (curr.up == null) {</span>
+<span class="nc" id="L146">          curr = curr.left;</span>
+        }
+<span class="nc" id="L148">        curr = curr.up;</span>
+<span class="nc" id="L149">        curr.right.leftDist--;</span>
+      }
+<span class="nc" id="L151">    }</span>
+  }
+
+  class Key implements Comparable&lt;Key&gt; {
+    int k;
+
+<span class="nc" id="L157">    public Key(int kk) {</span>
+<span class="nc" id="L158">      k = kk;</span>
+<span class="nc" id="L159">    }</span>
+
+    public int compareTo(Key k2) {
+<span class="nc" id="L162">      return k - k2.k;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

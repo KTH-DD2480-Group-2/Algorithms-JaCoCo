@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MatrixDeterminantLaplaceExpansion.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.linearalgebra</a> &gt; <span class="el_source">MatrixDeterminantLaplaceExpansion.java</span></div><h1>MatrixDeterminantLaplaceExpansion.java</h1><pre class="source lang-java linenums">/**
+ * This is an implementation of finding the determinant of an nxn matrix using Laplace/cofactor
+ * expansion. Although this method is mathematically beautiful, it is computationally intensive and
+ * not practical for matrices beyond the size of 7-8.
+ *
+ * &lt;p&gt;Time Complexity: ~O((n+2)!)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.linearalgebra;
+
+<span class="nc" id="L12">public class MatrixDeterminantLaplaceExpansion {</span>
+
+  // Define a small value of epsilon to compare double values
+  static final double EPS = 0.00000001;
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L19">    double[][] m = {{6}};</span>
+<span class="nc" id="L20">    System.out.println(determinant(m)); // 6</span>
+
+<span class="nc" id="L22">    m =</span>
+        new double[][] {
+          {1, 2},
+          {3, 4}
+        };
+<span class="nc" id="L27">    System.out.println(determinant(m)); // -2</span>
+
+<span class="nc" id="L29">    m =</span>
+        new double[][] {
+          {1, -2, 3},
+          {4, -5, 6},
+          {7, -8, 10}
+        };
+<span class="nc" id="L35">    System.out.println(determinant(m)); // 3</span>
+
+<span class="nc" id="L37">    m =</span>
+        new double[][] {
+          {1, -2, 3, 7},
+          {4, -5, 6, 2},
+          {7, -8, 10, 3},
+          {-8, 10, 3, 2}
+        };
+<span class="nc" id="L44">    System.out.println(determinant(m)); // -252</span>
+
+<span class="nc" id="L46">    m =</span>
+        new double[][] {
+          {1, -2, 3, 7},
+          {4, -5, 6, 2},
+          {7, -8, 10, 3},
+          {-8, 10, 3, 2}
+        };
+<span class="nc" id="L53">    System.out.println(determinant(m)); // -252</span>
+
+<span class="nc" id="L55">    m =</span>
+        new double[][] {
+          {1, -2, 3, 7, 12},
+          {4, -5, 6, 2, 4},
+          {7, -8, 10, 3, 1},
+          {-8, 10, 8, 3, 2},
+          {5, 5, 5, 5, 5}
+        };
+<span class="nc" id="L63">    System.out.println(determinant(m)); // -27435</span>
+
+<span class="nc" id="L65">    System.out.println();</span>
+
+<span class="nc" id="L67">    for (int n = 1; ; n++) {</span>
+<span class="nc" id="L68">      m = new double[n][n];</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++)</span>
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        for (int j = 0; j &lt; n; j++) m[i][j] = Math.floor(Math.random() * 10);</span>
+<span class="nc" id="L71">      System.out.printf(&quot;Found determinant of %dx%d matrix to be: %.4f\n&quot;, n, n, determinant(m));</span>
+    }
+  }
+
+  // Given an n*n matrix, this method finds the determinant using Laplace/cofactor expansion.
+  // Time Complexity: ~O((n+2)!)
+  public static double determinant(double[][] matrix) {
+
+<span class="nc" id="L79">    final int n = matrix.length;</span>
+
+    // Use closed form for 1x1 determinant
+<span class="nc bnc" id="L82" title="All 2 branches missed.">    if (n == 1) return matrix[0][0];</span>
+
+    // Use closed form for 2x2 determinant
+<span class="nc bnc" id="L85" title="All 2 branches missed.">    if (n == 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];</span>
+
+    // For 3x3 matrices and up use Laplace/cofactor expansion
+<span class="nc" id="L88">    return laplace(matrix);</span>
+  }
+
+  // This method uses cofactor expansion to compute the determinant
+  // of a matrix. Unfortunately, this method is very slow and uses
+  // A LOT of memory, hence it is not too practical for large matrices.
+  private static double laplace(double[][] m) {
+
+<span class="nc" id="L96">    final int n = m.length;</span>
+
+    // Base case is 3x3 determinant
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    if (n == 3) {</span>
+<span class="nc" id="L100">      double a = m[0][0], b = m[0][1], c = m[0][2];</span>
+<span class="nc" id="L101">      double d = m[1][0], e = m[1][1], f = m[1][2];</span>
+<span class="nc" id="L102">      double g = m[2][0], h = m[2][1], i = m[2][2];</span>
+<span class="nc" id="L103">      return a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);</span>
+    }
+
+<span class="nc" id="L106">    int det = 0;</span>
+
+<span class="nc bnc" id="L108" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">      for (int j = 0; j &lt; n; j++) {</span>
+
+<span class="nc" id="L111">        double c = m[i][j];</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (Math.abs(c) &gt; EPS) {</span>
+<span class="nc" id="L113">          double[][] newMatrix = constructMatrix(m, j);</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">          double parity = ((j &amp; 1) == 0) ? +1 : -1;</span>
+<span class="nc" id="L115">          det += parity * c * laplace(newMatrix);</span>
+        }
+      }
+    }
+
+<span class="nc" id="L120">    return det;</span>
+  }
+
+  // Constructs a matrix one dimension smaller than the last by
+  // excluding the top row and some selected column. This
+  // method ends up consuming a lot of space we called recursively multiple times
+  // since it allocates meory for a new matrix.
+  private static double[][] constructMatrix(double[][] m, int skipColumn) {
+
+<span class="nc" id="L129">    int n = m.length;</span>
+<span class="nc" id="L130">    double[][] newMatrix = new double[n - 1][n - 1];</span>
+
+<span class="nc" id="L132">    int ii = 0;</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">    for (int i = 1; i &lt; n; i++, ii++) {</span>
+<span class="nc" id="L134">      int jj = 0;</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">      for (int j = 0; j &lt; n; j++) {</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">        if (j == skipColumn) continue;</span>
+<span class="nc" id="L137">        double v = m[i][j];</span>
+<span class="nc" id="L138">        newMatrix[ii][jj++] = v;</span>
+      }
+    }
+
+<span class="nc" id="L142">    return newMatrix;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

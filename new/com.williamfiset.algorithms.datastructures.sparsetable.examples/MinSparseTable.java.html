@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinSparseTable.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.sparsetable.examples</a> &gt; <span class="el_source">MinSparseTable.java</span></div><h1>MinSparseTable.java</h1><pre class="source lang-java linenums">/**
+ * Min sparse table example
+ *
+ * &lt;p&gt;Download the code: &lt;br&gt;
+ * $ git clone https://github.com/williamfiset/algorithms
+ *
+ * &lt;p&gt;Run: &lt;br&gt;
+ * $ ./gradlew run -Palgorithm=datastructures.sparsetable.examples.MinSparseTable
+ *
+ * &lt;p&gt;Construction complexity: O(nlogn), query complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.sparsetable.examples;
+
+// Sparse table for efficient minimum range queries in O(1) with O(nlogn) space
+public class MinSparseTable {
+
+  // Example usage:
+  public static void main(String[] args) {
+    // index values: 0, 1,  2, 3, 4,  5, 6
+<span class="nc" id="L22">    long[] values = {1, 2, -3, 2, 4, -1, 5};</span>
+<span class="nc" id="L23">    MinSparseTable sparseTable = new MinSparseTable(values);</span>
+
+<span class="nc" id="L25">    System.out.println(sparseTable.queryMin(1, 5)); // prints -3</span>
+<span class="nc" id="L26">    System.out.println(sparseTable.queryMinIndex(1, 5)); // prints 2</span>
+
+<span class="nc" id="L28">    System.out.println(sparseTable.queryMin(3, 3)); // prints 2</span>
+<span class="nc" id="L29">    System.out.println(sparseTable.queryMinIndex(3, 3)); // prints 3</span>
+
+<span class="nc" id="L31">    System.out.println(sparseTable.queryMin(3, 6)); // prints -1</span>
+<span class="nc" id="L32">    System.out.println(sparseTable.queryMinIndex(3, 6)); // prints 5</span>
+<span class="nc" id="L33">  }</span>
+
+  // The number of elements in the original input array.
+  private int n;
+
+  // The maximum power of 2 needed. This value is floor(log2(n))
+  private int P;
+
+  // Fast log base 2 logarithm lookup table, 1 &lt;= i &lt;= n
+  private int[] log2;
+
+  // The sparse table values.
+  private long[][] dp;
+
+  // Index Table (IT) associated with the values in the sparse table. This table
+  // is only useful when we want to query the index of the min (or max) element
+  // in the range [l, r] rather than the value itself. The index table doesnâ€™t
+  // make sense for most other range query types like gcd or sum.
+  private int[][] it;
+
+<span class="nc" id="L53">  public MinSparseTable(long[] values) {</span>
+<span class="nc" id="L54">    n = values.length;</span>
+<span class="nc" id="L55">    P = (int) (Math.log(n) / Math.log(2));</span>
+<span class="nc" id="L56">    dp = new long[P + 1][n];</span>
+<span class="nc" id="L57">    it = new int[P + 1][n];</span>
+
+<span class="nc bnc" id="L59" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L60">      dp[0][i] = values[i];</span>
+<span class="nc" id="L61">      it[0][i] = i;</span>
+    }
+
+<span class="nc" id="L64">    log2 = new int[n + 1];</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    for (int i = 2; i &lt;= n; i++) {</span>
+<span class="nc" id="L66">      log2[i] = log2[i / 2] + 1;</span>
+    }
+
+    // Build sparse table combining the values of the previous intervals.
+<span class="nc bnc" id="L70" title="All 2 branches missed.">    for (int p = 1; p &lt;= P; p++) {</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">      for (int i = 0; i + (1 &lt;&lt; p) &lt;= n; i++) {</span>
+<span class="nc" id="L72">        long leftInterval = dp[p - 1][i];</span>
+<span class="nc" id="L73">        long rightInterval = dp[p - 1][i + (1 &lt;&lt; (p - 1))];</span>
+<span class="nc" id="L74">        dp[p][i] = Math.min(leftInterval, rightInterval);</span>
+
+        // Propagate the index of the best value
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (leftInterval &lt;= rightInterval) {</span>
+<span class="nc" id="L78">          it[p][i] = it[p - 1][i];</span>
+        } else {
+<span class="nc" id="L80">          it[p][i] = it[p - 1][i + (1 &lt;&lt; (p - 1))];</span>
+        }
+      }
+    }
+<span class="nc" id="L84">  }</span>
+
+  // Do a min query on the interval [l, r] in O(1).
+  //
+  // We can get O(1) query by finding the smallest power of 2 that fits within
+  // the interval length which we'll call k. Then we can query the intervals
+  // [l, l+k] and [r-k+1, r] (which likely overlap) and apply the function
+  // again. Some functions (like min and max) don't care about overlapping
+  // intervals so this trick works, but for a function like sum this would
+  // return the wrong result since it is not an idempotent binary function
+  // (aka an overlap friendly function).
+  private long queryMin(int l, int r) {
+<span class="nc" id="L96">    int length = r - l + 1;</span>
+<span class="nc" id="L97">    int p = log2[length];</span>
+<span class="nc" id="L98">    int k = 1 &lt;&lt; p; // 2 to the power of p</span>
+<span class="nc" id="L99">    return Math.min(dp[p][l], dp[p][r - k + 1]);</span>
+  }
+
+  // Returns the index of the minimum element in the range [l, r].
+  public int queryMinIndex(int l, int r) {
+<span class="nc" id="L104">    int length = r - l + 1;</span>
+<span class="nc" id="L105">    int p = log2[length];</span>
+<span class="nc" id="L106">    int k = 1 &lt;&lt; p; // 2 to the power of p</span>
+<span class="nc" id="L107">    long leftInterval = dp[p][l];</span>
+<span class="nc" id="L108">    long rightInterval = dp[p][r - k + 1];</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">    if (leftInterval &lt;= rightInterval) {</span>
+<span class="nc" id="L110">      return it[p][l];</span>
+    } else {
+<span class="nc" id="L112">      return it[p][r - k + 1];</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

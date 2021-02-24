@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DinicsExample.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow.examples</a> &gt; <span class="el_source">DinicsExample.java</span></div><h1>DinicsExample.java</h1><pre class="source lang-java linenums">/**
+ * Implementation of Dinic's network flow algorithm. The algorithm works by first constructing a
+ * level graph using a BFS and then finding augmenting paths on the level graph using multiple DFSs.
+ *
+ * &lt;p&gt;Time Complexity: O(EVÂ²)
+ *
+ * &lt;p&gt;Download the code: $ git clone https://github.com/williamfiset/Algorithms
+ *
+ * &lt;p&gt;Change directory to the root of the Algorithms directory: $ cd Algorithms
+ *
+ * &lt;p&gt;Build: $ javac -d src/main/java
+ * src/main/java/com/williamfiset/algorithms/graphtheory/networkflow/examples/DinicsExample.java
+ *
+ * &lt;p&gt;Run: $ java -cp src/main/java
+ * com/williamfiset/algorithms/graphtheory/networkflow/examples/DinicsExample
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow.examples;
+
+import static java.lang.Math.min;
+
+import java.util.*;
+
+<span class="nc" id="L23">public class DinicsExample {</span>
+
+  private static class Edge {
+    public int from, to;
+    public Edge residual;
+    public long flow;
+    public final long capacity;
+
+<span class="nc" id="L31">    public Edge(int from, int to, long capacity) {</span>
+<span class="nc" id="L32">      this.from = from;</span>
+<span class="nc" id="L33">      this.to = to;</span>
+<span class="nc" id="L34">      this.capacity = capacity;</span>
+<span class="nc" id="L35">    }</span>
+
+    public boolean isResidual() {
+<span class="nc bnc" id="L38" title="All 2 branches missed.">      return capacity == 0;</span>
+    }
+
+    public long remainingCapacity() {
+<span class="nc" id="L42">      return capacity - flow;</span>
+    }
+
+    public void augment(long bottleNeck) {
+<span class="nc" id="L46">      flow += bottleNeck;</span>
+<span class="nc" id="L47">      residual.flow -= bottleNeck;</span>
+<span class="nc" id="L48">    }</span>
+
+    public String toString(int s, int t) {
+<span class="nc bnc" id="L51" title="All 4 branches missed.">      String u = (from == s) ? &quot;s&quot; : ((from == t) ? &quot;t&quot; : String.valueOf(from));</span>
+<span class="nc bnc" id="L52" title="All 4 branches missed.">      String v = (to == s) ? &quot;s&quot; : ((to == t) ? &quot;t&quot; : String.valueOf(to));</span>
+<span class="nc" id="L53">      return String.format(</span>
+          &quot;Edge %s -&gt; %s | flow = %3d | capacity = %3d | is residual: %s&quot;,
+<span class="nc" id="L55">          u, v, flow, capacity, isResidual());</span>
+    }
+  }
+
+  private abstract static class NetworkFlowSolverBase {
+
+    // To avoid overflow, set infinity to a value less than Long.MAX_VALUE;
+    static final long INF = Long.MAX_VALUE / 2;
+
+    // Inputs: n = number of nodes, s = source, t = sink
+    final int n, s, t;
+
+    // Indicates whether the network flow algorithm has ran. The solver only
+    // needs to run once because it always yields the same result.
+    protected boolean solved;
+
+    // The maximum flow. Calculated by calling the {@link #solve} method.
+    protected long maxFlow;
+
+    // The adjacency list representing the flow graph.
+    protected List&lt;Edge&gt;[] graph;
+
+    /**
+     * Creates an instance of a flow network solver. Use the {@link #addEdge} method to add edges to
+     * the graph.
+     *
+     * @param n - The number of nodes in the graph including s and t.
+     * @param s - The index of the source node, 0 &lt;= s &lt; n
+     * @param t - The index of the sink node, 0 &lt;= t &lt; n and t != s
+     */
+<span class="nc" id="L85">    public NetworkFlowSolverBase(int n, int s, int t) {</span>
+<span class="nc" id="L86">      this.n = n;</span>
+<span class="nc" id="L87">      this.s = s;</span>
+<span class="nc" id="L88">      this.t = t;</span>
+<span class="nc" id="L89">      initializeEmptyFlowGraph();</span>
+<span class="nc" id="L90">    }</span>
+
+    // Constructs an empty graph with n nodes including s and t.
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private void initializeEmptyFlowGraph() {
+<span class="nc" id="L95">      graph = new List[n];</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++) graph[i] = new ArrayList&lt;Edge&gt;();</span>
+<span class="nc" id="L97">    }</span>
+
+    /**
+     * Adds a directed edge (and its residual edge) to the flow graph.
+     *
+     * @param from - The index of the node the directed edge starts at.
+     * @param to - The index of the node the directed edge ends at.
+     * @param capacity - The capacity of the edge
+     */
+    public void addEdge(int from, int to, long capacity) {
+<span class="nc bnc" id="L107" title="All 2 branches missed.">      if (capacity &lt;= 0) throw new IllegalArgumentException(&quot;Forward edge capacity &lt;= 0&quot;);</span>
+<span class="nc" id="L108">      Edge e1 = new Edge(from, to, capacity);</span>
+<span class="nc" id="L109">      Edge e2 = new Edge(to, from, 0);</span>
+<span class="nc" id="L110">      e1.residual = e2;</span>
+<span class="nc" id="L111">      e2.residual = e1;</span>
+<span class="nc" id="L112">      graph[from].add(e1);</span>
+<span class="nc" id="L113">      graph[to].add(e2);</span>
+<span class="nc" id="L114">    }</span>
+
+    /**
+     * Returns the residual graph after the solver has been executed. This allows you to inspect the
+     * {@link Edge#flow} and {@link Edge#capacity} values of each edge. This is useful if you are
+     * debugging or want to figure out which edges were used during the max flow.
+     */
+    public List&lt;Edge&gt;[] getGraph() {
+<span class="nc" id="L122">      execute();</span>
+<span class="nc" id="L123">      return graph;</span>
+    }
+
+    // Returns the maximum flow from the source to the sink.
+    public long getMaxFlow() {
+<span class="nc" id="L128">      execute();</span>
+<span class="nc" id="L129">      return maxFlow;</span>
+    }
+
+    // Wrapper method that ensures we only call solve() once
+    private void execute() {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">      if (solved) return;</span>
+<span class="nc" id="L135">      solved = true;</span>
+<span class="nc" id="L136">      solve();</span>
+<span class="nc" id="L137">    }</span>
+
+    // Method to implement which solves the network flow problem.
+    public abstract void solve();
+  }
+
+  private static class DinicsSolver extends NetworkFlowSolverBase {
+
+    private int[] level;
+
+    /**
+     * Creates an instance of a flow network solver. Use the {@link #addEdge} method to add edges to
+     * the graph.
+     *
+     * @param n - The number of nodes in the graph including source and sink nodes.
+     * @param s - The index of the source node, 0 &lt;= s &lt; n
+     * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+     */
+    public DinicsSolver(int n, int s, int t) {
+<span class="nc" id="L156">      super(n, s, t);</span>
+<span class="nc" id="L157">      level = new int[n];</span>
+<span class="nc" id="L158">    }</span>
+
+    @Override
+    public void solve() {
+      // next[i] indicates the next edge index to take in the adjacency list for node i. This is
+      // part
+      // of the Shimon Even and Alon Itai optimization of pruning deads ends as part of the DFS
+      // phase.
+<span class="nc" id="L166">      int[] next = new int[n];</span>
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">      while (bfs()) {</span>
+<span class="nc" id="L169">        Arrays.fill(next, 0);</span>
+        // Find max flow by adding all augmenting path flows.
+<span class="nc bnc" id="L171" title="All 2 branches missed.">        for (long f = dfs(s, next, INF); f != 0; f = dfs(s, next, INF)) {</span>
+<span class="nc" id="L172">          maxFlow += f;</span>
+        }
+      }
+<span class="nc" id="L175">    }</span>
+
+    // Do a BFS from source to sink and compute the depth/level of each node
+    // which is the minimum number of edges from that node to the source.
+    private boolean bfs() {
+<span class="nc" id="L180">      Arrays.fill(level, -1);</span>
+<span class="nc" id="L181">      Deque&lt;Integer&gt; q = new ArrayDeque&lt;&gt;(n);</span>
+<span class="nc" id="L182">      q.offer(s);</span>
+<span class="nc" id="L183">      level[s] = 0;</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">      while (!q.isEmpty()) {</span>
+<span class="nc" id="L185">        int node = q.poll();</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        for (Edge edge : graph[node]) {</span>
+<span class="nc" id="L187">          long cap = edge.remainingCapacity();</span>
+<span class="nc bnc" id="L188" title="All 4 branches missed.">          if (cap &gt; 0 &amp;&amp; level[edge.to] == -1) {</span>
+<span class="nc" id="L189">            level[edge.to] = level[node] + 1;</span>
+<span class="nc" id="L190">            q.offer(edge.to);</span>
+          }
+<span class="nc" id="L192">        }</span>
+<span class="nc" id="L193">      }</span>
+      // Return whether we were able to reach the sink node.
+<span class="nc bnc" id="L195" title="All 2 branches missed.">      return level[t] != -1;</span>
+    }
+
+    private long dfs(int at, int[] next, long flow) {
+<span class="nc bnc" id="L199" title="All 2 branches missed.">      if (at == t) return flow;</span>
+<span class="nc" id="L200">      final int numEdges = graph[at].size();</span>
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">      for (; next[at] &lt; numEdges; next[at]++) {</span>
+<span class="nc" id="L203">        Edge edge = graph[at].get(next[at]);</span>
+<span class="nc" id="L204">        long cap = edge.remainingCapacity();</span>
+<span class="nc bnc" id="L205" title="All 4 branches missed.">        if (cap &gt; 0 &amp;&amp; level[edge.to] == level[at] + 1) {</span>
+
+<span class="nc" id="L207">          long bottleNeck = dfs(edge.to, next, min(flow, cap));</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">          if (bottleNeck &gt; 0) {</span>
+<span class="nc" id="L209">            edge.augment(bottleNeck);</span>
+<span class="nc" id="L210">            return bottleNeck;</span>
+          }
+        }
+      }
+<span class="nc" id="L214">      return 0;</span>
+    }
+  }
+
+  public static void main(String[] args) {
+<span class="nc" id="L219">    int n = 11;</span>
+<span class="nc" id="L220">    int s = n - 1;</span>
+<span class="nc" id="L221">    int t = n - 2;</span>
+
+    NetworkFlowSolverBase solver;
+<span class="nc" id="L224">    solver = new DinicsSolver(n, s, t);</span>
+
+    // Source edges
+<span class="nc" id="L227">    solver.addEdge(s, 0, 5);</span>
+<span class="nc" id="L228">    solver.addEdge(s, 1, 10);</span>
+<span class="nc" id="L229">    solver.addEdge(s, 2, 15);</span>
+
+    // Middle edges
+<span class="nc" id="L232">    solver.addEdge(0, 3, 10);</span>
+<span class="nc" id="L233">    solver.addEdge(1, 0, 15);</span>
+<span class="nc" id="L234">    solver.addEdge(1, 4, 20);</span>
+<span class="nc" id="L235">    solver.addEdge(2, 5, 25);</span>
+<span class="nc" id="L236">    solver.addEdge(3, 4, 25);</span>
+<span class="nc" id="L237">    solver.addEdge(3, 6, 10);</span>
+<span class="nc" id="L238">    solver.addEdge(4, 2, 5);</span>
+<span class="nc" id="L239">    solver.addEdge(4, 7, 30);</span>
+<span class="nc" id="L240">    solver.addEdge(5, 7, 20);</span>
+<span class="nc" id="L241">    solver.addEdge(5, 8, 10);</span>
+<span class="nc" id="L242">    solver.addEdge(7, 8, 15);</span>
+
+    // Sink edges
+<span class="nc" id="L245">    solver.addEdge(6, t, 5);</span>
+<span class="nc" id="L246">    solver.addEdge(7, t, 15);</span>
+<span class="nc" id="L247">    solver.addEdge(8, t, 10);</span>
+
+    // Prints: &quot;Maximum flow: 30&quot;
+<span class="nc" id="L250">    System.out.printf(&quot;Maximum flow: %d\n&quot;, solver.getMaxFlow());</span>
+<span class="nc" id="L251">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

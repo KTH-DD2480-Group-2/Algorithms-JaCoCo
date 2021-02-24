@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinDHeap.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.priorityqueue</a> &gt; <span class="el_source">MinDHeap.java</span></div><h1>MinDHeap.java</h1><pre class="source lang-java linenums">/**
+ * A generic implementation of a D-ary heap inspired by the work of David Brink.
+ *
+ * @author David Brink, William Fiset
+ */
+package com.williamfiset.algorithms.datastructures.priorityqueue;
+
+@SuppressWarnings(&quot;unchecked&quot;)
+public class MinDHeap&lt;T extends Comparable&lt;T&gt;&gt; {
+
+  private T[] heap;
+  private int d, n, sz;
+  private int[] child, parent;
+
+  // Initializes a D-ary heap with a maximum capacity of n
+<span class="fc" id="L16">  public MinDHeap(int degree, int maxNodes) {</span>
+<span class="fc" id="L17">    d = Math.max(2, degree);</span>
+<span class="fc" id="L18">    n = Math.max(d, maxNodes);</span>
+
+<span class="fc" id="L20">    heap = (T[]) new Comparable[n];</span>
+<span class="fc" id="L21">    child = new int[n];</span>
+<span class="fc" id="L22">    parent = new int[n];</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L24">      parent[i] = (i - 1) / d;</span>
+<span class="fc" id="L25">      child[i] = i * d + 1;</span>
+    }
+<span class="fc" id="L27">  }</span>
+
+  // Returns the number of elements currently present inside the PQ
+  public int size() {
+<span class="fc" id="L31">    return sz;</span>
+  }
+
+  // Returns true/false depending on whether the PQ is empty
+  public boolean isEmpty() {
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    return sz == 0;</span>
+  }
+
+  // Clears all the elements inside the PQ
+  public void clear() {
+<span class="fc" id="L41">    java.util.Arrays.fill(heap, null);</span>
+<span class="fc" id="L42">    sz = 0;</span>
+<span class="fc" id="L43">  }</span>
+
+  // Returns the element at the top of the PQ or null if the PQ is empty
+  public T peek() {
+<span class="fc bfc" id="L47" title="All 2 branches covered.">    if (isEmpty()) return null;</span>
+<span class="fc" id="L48">    return heap[0];</span>
+  }
+
+  // Polls an element from the priority queue.
+  // Make sure the queue is not empty before calling.
+  public T poll() {
+<span class="fc bfc" id="L54" title="All 2 branches covered.">    if (isEmpty()) return null;</span>
+<span class="fc" id="L55">    T root = heap[0];</span>
+<span class="fc" id="L56">    heap[0] = heap[--sz];</span>
+<span class="fc" id="L57">    heap[sz] = null;</span>
+<span class="fc" id="L58">    sink(0);</span>
+<span class="fc" id="L59">    return root;</span>
+  }
+
+  // Adds a none null element to the priority queue
+  public void add(T elem) {
+<span class="pc bpc" id="L64" title="1 of 2 branches missed.">    if (elem == null) throw new IllegalArgumentException(&quot;No null elements please :)&quot;);</span>
+<span class="fc" id="L65">    heap[sz] = elem;</span>
+<span class="fc" id="L66">    swim(sz);</span>
+<span class="fc" id="L67">    sz++;</span>
+<span class="fc" id="L68">  }</span>
+
+  private void sink(int i) {
+<span class="fc bfc" id="L71" title="All 2 branches covered.">    for (int j = minChild(i); j != -1; ) {</span>
+<span class="fc" id="L72">      swap(i, j);</span>
+<span class="fc" id="L73">      i = j;</span>
+<span class="fc" id="L74">      j = minChild(i);</span>
+    }
+<span class="fc" id="L76">  }</span>
+
+  private void swim(int i) {
+<span class="fc bfc" id="L79" title="All 2 branches covered.">    while (less(i, parent[i])) {</span>
+<span class="fc" id="L80">      swap(i, parent[i]);</span>
+<span class="fc" id="L81">      i = parent[i];</span>
+    }
+<span class="fc" id="L83">  }</span>
+
+  // From the parent node at index i find the minimum child below it
+  private int minChild(int i) {
+<span class="fc" id="L87">    int index = -1, from = child[i], to = Math.min(sz, from + d);</span>
+<span class="fc bfc" id="L88" title="All 4 branches covered.">    for (int j = from; j &lt; to; j++) if (less(j, i)) index = i = j;</span>
+<span class="fc" id="L89">    return index;</span>
+  }
+
+  private boolean less(int i, int j) {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">    return heap[i].compareTo(heap[j]) &lt; 0;</span>
+  }
+
+  private void swap(int i, int j) {
+<span class="fc" id="L97">    T tmp = heap[i];</span>
+<span class="fc" id="L98">    heap[i] = heap[j];</span>
+<span class="fc" id="L99">    heap[j] = tmp;</span>
+<span class="fc" id="L100">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

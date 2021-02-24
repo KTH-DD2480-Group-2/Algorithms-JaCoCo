@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PointCircleTangent.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">PointCircleTangent.java</span></div><h1>PointCircleTangent.java</h1><pre class="source lang-java linenums">/**
+ * Given a circle and a point around or inside the circle we wish to find place(s) of intersection
+ * of the lines from the point which are tangent to the circle. For an animation see here:
+ * http://jsfiddle.net/zxqCw/1/
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+import java.awt.geom.Point2D;
+
+<span class="nc" id="L16">public class PointCircleTangent {</span>
+
+  // A very same epsilon value used as a threshold
+  public static final double EPS = 0.0000001;
+
+  // Due to double rounding precision the value passed into the asin
+  // function may be outside its domain of [-1, +1] which would return
+  // the value Double.NaN which we do not want.
+  private static double arcsinSafe(double x) {
+<span class="nc bnc" id="L25" title="All 2 branches missed.">    if (x &lt;= -1.0) return -PI / 2.0;</span>
+<span class="nc bnc" id="L26" title="All 2 branches missed.">    if (x &gt;= +1.0) return +PI / 2.0;</span>
+<span class="nc" id="L27">    return asin(x);</span>
+  }
+
+  // Finds the point(s) of intersection of the lines tangent to the circle centered
+  // at 'center' from the point 'point'.
+  public static Point2D[] pointCircleTangentPoints(Point2D center, double radius, Point2D pt) {
+
+<span class="nc" id="L34">    double px = pt.getX(), py = pt.getY();</span>
+<span class="nc" id="L35">    double cx = center.getX(), cy = center.getY();</span>
+
+    // Compute the distance to the circle center
+<span class="nc" id="L38">    double dx = cx - px;</span>
+<span class="nc" id="L39">    double dy = cy - py;</span>
+<span class="nc" id="L40">    double dist = sqrt(dx * dx + dy * dy);</span>
+
+    // Point is strictly contained within the circle
+<span class="nc bnc" id="L43" title="All 2 branches missed.">    if (dist &lt; radius) return new Point2D[] {};</span>
+
+    double angle, angle1, angle2;
+
+<span class="nc" id="L47">    angle1 = arcsinSafe(radius / dist);</span>
+<span class="nc" id="L48">    angle2 = atan2(dy, dx);</span>
+
+<span class="nc" id="L50">    angle = angle2 - angle1;</span>
+<span class="nc" id="L51">    Point2D p1 = new Point2D.Double(cx + radius * sin(angle), cy + radius * -cos(angle));</span>
+
+<span class="nc" id="L53">    angle = angle1 + angle2;</span>
+<span class="nc" id="L54">    Point2D p2 = new Point2D.Double(cx + radius * -sin(angle), cy + radius * cos(angle));</span>
+
+    // Points are sufficiently close to be considered the same point
+    // (i.e the original point is on the circle circumference)
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    if (p1.distance(p2) &lt; EPS) return new Point2D[] {pt};</span>
+<span class="nc" id="L59">    return new Point2D[] {p1, p2};</span>
+  }
+
+  // Example usage
+  public static void main(String[] args) {
+
+    // Suppose there's a circle centered at (5, 0) with a radius
+    // of two and a point at the origin (0,0) and we wish to determine
+    // the intersection of the tangents when draw two lines extending from
+    // the point at the origin onto the circumference of the circle
+
+    // Circle
+<span class="nc" id="L71">    double radius = 2.0;</span>
+<span class="nc" id="L72">    Point2D circleCenter = new Point2D.Double(5, 0);</span>
+
+    // Point
+<span class="nc" id="L75">    Point2D origin = new Point2D.Double(0, 0);</span>
+<span class="nc" id="L76">    Point2D[] points = pointCircleTangentPoints(circleCenter, radius, origin);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">    if (points.length == 2) {</span>
+<span class="nc" id="L78">      Point2D pt1 = points[0];</span>
+<span class="nc" id="L79">      Point2D pt2 = points[1];</span>
+<span class="nc" id="L80">      System.out.println(&quot;Points found: &quot; + pt1 + &quot; &quot; + pt2);</span>
+    }
+<span class="nc" id="L82">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

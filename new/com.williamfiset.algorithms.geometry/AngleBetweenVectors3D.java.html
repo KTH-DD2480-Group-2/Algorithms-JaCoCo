@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AngleBetweenVectors3D.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">AngleBetweenVectors3D.java</span></div><h1>AngleBetweenVectors3D.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to find the smaller of the two angles between two vectors in R3
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+<span class="nc" id="L12">public class AngleBetweenVectors3D {</span>
+
+  // Return the smaller of the two angles between two 3D vectors in radians
+  public static double angleBetweenVectors(
+      double v1x, double v1y, double v1z, double v2x, double v2y, double v2z) {
+    // To determine the angle between two vectors v1 and v2 we can use
+    // the following formula: dot(v1,v2) = len(v1)*len(v2)*cosÎ¸ and solve
+    // for Î¸ where dot(a,b) is the dot product and len(c) is the length of c.
+<span class="nc" id="L20">    double dotproduct = (v1x * v2x) + (v1y * v2y) + (v1z * v2z);</span>
+<span class="nc" id="L21">    double v1Length = sqrt(v1x * v1x + v1y * v1y + v1z * v1z);</span>
+<span class="nc" id="L22">    double v2Length = sqrt(v2x * v2x + v2y * v2y + v2z * v2z);</span>
+
+<span class="nc" id="L24">    double value = dotproduct / (v1Length * v2Length);</span>
+
+    // Double precision may lead to a slightly invalid domain for the
+    // arccos function, so make sure to check boundary conditions
+<span class="nc bnc" id="L28" title="All 2 branches missed.">    if (value &lt;= -1.0) return PI;</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">    if (value &gt;= +1.0) return 0;</span>
+<span class="nc" id="L30">    return acos(value);</span>
+  }
+
+  public static void main(String[] args) {
+<span class="nc" id="L34">    System.out.println(</span>
+<span class="nc" id="L35">        &quot;Angle between  (1,1,0),  (1,1,1): &quot; + angleBetweenVectors(1, 1, 0, 1, 1, 1));</span>
+<span class="nc" id="L36">    System.out.println(</span>
+<span class="nc" id="L37">        &quot;Angle between  (5,5,5),  (5,5,5): &quot; + angleBetweenVectors(5, 5, 5, 5, 5, 5));</span>
+<span class="nc" id="L38">    System.out.println(</span>
+<span class="nc" id="L39">        &quot;Angle between  (-5,-5,-5),  (-5,-5,-5): &quot; + angleBetweenVectors(-5, -5, -5, -5, -5, -5));</span>
+<span class="nc" id="L40">    System.out.println(</span>
+<span class="nc" id="L41">        &quot;Angle between  (2,2,2),  (-1,-1,-1): &quot; + angleBetweenVectors(2, 2, 2, -1, -1, -1));</span>
+<span class="nc" id="L42">    System.out.println(</span>
+<span class="nc" id="L43">        &quot;Angle between  (4,-6,5), (-3,7,12): &quot; + angleBetweenVectors(4, -6, 5, -3, 7, 12));</span>
+<span class="nc" id="L44">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

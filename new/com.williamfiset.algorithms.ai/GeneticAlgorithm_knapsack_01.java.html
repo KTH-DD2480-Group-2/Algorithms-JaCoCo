@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GeneticAlgorithm_knapsack_01.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.ai</a> &gt; <span class="el_source">GeneticAlgorithm_knapsack_01.java</span></div><h1>GeneticAlgorithm_knapsack_01.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to attack the 0/1 knapsack problem using an evolutionary genetic
+ * algorithm. The reason why we are interested in doing this is because the dynamic programming
+ * approach to knapsack only runs in pseudo polynomial time and fails terribly with large weight
+ * values, hence an approximation to the real answer would be nice.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.ai;
+
+import java.util.*;
+
+<span class="nc" id="L13">public class GeneticAlgorithm_knapsack_01 {</span>
+
+<span class="nc" id="L15">  static final Random RANDOM = new Random();</span>
+
+  // Genetic algorithm parameters (P = Population)
+  static final int P = 500;
+  static final int MAX_EPOCH = 10000;
+  static final double MUTATION_RATE = 0.0125;
+
+  // The power variable tweaks the weight of the fitness function
+  // to emphasize better individuals. The power slowly increments
+  // over time to help get out of local minimums in later epochs.
+  static double power;
+  static final double POWER_INC = 0.0001;
+
+  // Runs a single simulation to find the best price for
+  // the 0/1 knapsack problem using a GA
+  static long run(int capacity, int[] weights, int[] values) {
+
+<span class="nc" id="L32">    power = 1.0;</span>
+<span class="nc" id="L33">    final int N = weights.length;</span>
+
+    // Create initial population
+<span class="nc" id="L36">    Individual[] generation = new Individual[P + 1];</span>
+<span class="nc" id="L37">    Individual[] nextGeneration = new Individual[P + 1];</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">    for (int i = 1; i &lt;= P; i++) generation[i] = new Individual(N);</span>
+
+    // Stores the ranges of individuals in the selection roulette
+<span class="nc" id="L41">    double[] lo = new double[P + 1];</span>
+<span class="nc" id="L42">    double[] hi = new double[P + 1];</span>
+
+<span class="nc" id="L44">    long[] fitness = new long[P + 1];</span>
+<span class="nc" id="L45">    long bestFitness = 0;</span>
+
+<span class="nc bnc" id="L47" title="All 2 branches missed.">    for (int epoch = 1; epoch &lt;= MAX_EPOCH; epoch++, power += POWER_INC) {</span>
+
+      // Compute the total fitness sum across all individuals in order
+      // to be able to normalize and assign importance percentages
+<span class="nc" id="L51">      double fitnessSum = 0;</span>
+
+<span class="nc bnc" id="L53" title="All 2 branches missed.">      for (int i = 1; i &lt;= P; i++) {</span>
+<span class="nc" id="L54">        Individual in = generation[i];</span>
+<span class="nc" id="L55">        fitness[i] = fitness(in, weights, values, capacity, N);</span>
+<span class="nc" id="L56">        fitnessSum += fitness[i];</span>
+<span class="nc" id="L57">        lo[i] = hi[i] = 0;</span>
+      }
+
+      // Track the fittest individual
+<span class="nc" id="L61">      long bestEpochFitness = 0;</span>
+
+      // Setup selection roulette
+<span class="nc bnc" id="L64" title="All 2 branches missed.">      for (int i = 1; i &lt;= P; i++) {</span>
+
+<span class="nc" id="L66">        double norm = fitness[i] / fitnessSum;</span>
+
+<span class="nc" id="L68">        lo[i] = hi[i - 1] = lo[i - 1] + norm;</span>
+
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (fitness[i] &gt; bestEpochFitness) {</span>
+<span class="nc" id="L71">          bestEpochFitness = fitness[i];</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">          if (bestEpochFitness &gt; bestFitness) bestFitness = bestEpochFitness;</span>
+        }
+      }
+
+<span class="nc bnc" id="L76" title="All 2 branches missed.">      if (epoch % 50 == 0)</span>
+<span class="nc" id="L77">        System.out.printf(&quot;Epoch: %d, %d$, %d$\n&quot;, epoch, bestEpochFitness, bestFitness);</span>
+
+      // Selection process
+<span class="nc bnc" id="L80" title="All 2 branches missed.">      for (int i = 1; i &lt;= P; i++) {</span>
+
+        // Perform individual selection and crossover
+<span class="nc" id="L83">        Individual parent1 = selectIndividual(generation, lo, hi);</span>
+<span class="nc" id="L84">        Individual parent2 = selectIndividual(generation, lo, hi);</span>
+<span class="nc" id="L85">        Individual child = crossover(parent1, parent2, N);</span>
+
+        // Apply mutations to all parts of the DNA
+        // according to a predefined mutation rate
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        for (int j = 0; j &lt; N; j++) {</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">          if (Math.random() &lt; MUTATION_RATE) mutate(child, j);</span>
+        }
+
+<span class="nc" id="L93">        nextGeneration[i] = child;</span>
+      }
+
+<span class="nc" id="L96">      generation = nextGeneration;</span>
+    }
+
+<span class="nc" id="L99">    return bestFitness;</span>
+  }
+
+  static long fitness(Individual in, int[] weights, int[] values, int capacity, int n) {
+<span class="nc" id="L103">    long value = 0, weight = 0;</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">      if (in.bits.get(i)) {</span>
+<span class="nc" id="L106">        value += values[i];</span>
+<span class="nc" id="L107">        weight += weights[i];</span>
+      }
+<span class="nc bnc" id="L109" title="All 2 branches missed.">      if (weight &gt; capacity) return 0;</span>
+    }
+<span class="nc" id="L111">    return value;</span>
+  }
+
+  static void mutate(Individual in, int i) {
+<span class="nc" id="L115">    in.bits.flip(i);</span>
+<span class="nc" id="L116">  }</span>
+
+  static Individual selectIndividual(Individual[] generation, double[] lo, double[] hi) {
+
+<span class="nc" id="L120">    double r = Math.random();</span>
+
+    // Binary search to find individual
+<span class="nc" id="L123">    int mid, l = 0, h = P - 1;</span>
+    while (true) {
+<span class="nc" id="L125">      mid = (l + h) &gt;&gt;&gt; 1;</span>
+<span class="nc bnc" id="L126" title="All 4 branches missed.">      if (lo[mid] &lt;= r &amp;&amp; r &lt; hi[mid]) return generation[mid + 1];</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">      if (r &lt; lo[mid]) h = mid - 1;</span>
+<span class="nc" id="L128">      else l = mid + 1;</span>
+    }
+  }
+
+  static Individual crossover(Individual p1, Individual p2, int n) {
+<span class="nc" id="L133">    int splitPoint = RANDOM.nextInt(n);</span>
+<span class="nc" id="L134">    BitSet newBitSet = new BitSet(n);</span>
+<span class="nc bnc" id="L135" title="All 4 branches missed.">    for (int i = 0; i &lt; splitPoint; i++) if (p1.bits.get(i)) newBitSet.flip(i);</span>
+<span class="nc bnc" id="L136" title="All 4 branches missed.">    for (int i = splitPoint; i &lt; n; i++) if (p2.bits.get(i)) newBitSet.flip(i);</span>
+<span class="nc" id="L137">    return new Individual(newBitSet);</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L142">    int n = 50;</span>
+<span class="nc" id="L143">    int multiplier = 100000;</span>
+
+<span class="nc" id="L145">    int[] weights = new int[n];</span>
+<span class="nc" id="L146">    int[] values = new int[n];</span>
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L149">      weights[i] = (int) (Math.random() * multiplier);</span>
+<span class="nc" id="L150">      values[i] = (int) (Math.random() * multiplier);</span>
+    }
+
+<span class="nc" id="L153">    int cap = (n * multiplier) / 3;</span>
+<span class="nc" id="L154">    long gaAns = run(cap, weights, values);</span>
+<span class="nc" id="L155">    int answer = Knapsack_01.knapsack(cap, weights, values);</span>
+
+<span class="nc" id="L157">    System.out.println(&quot;\nGenetic algorithm approximation: &quot; + gaAns + &quot;$&quot;);</span>
+<span class="nc" id="L158">    System.out.println(&quot;Actual answer calculated with DP:  &quot; + answer + &quot;$\n&quot;);</span>
+<span class="nc" id="L159">    System.out.printf(</span>
+        &quot;Genetic algorithm was %.5f%% off from true answer\n\n&quot;,
+<span class="nc" id="L161">        (1.0 - ((double) gaAns) / answer) * 100);</span>
+<span class="nc" id="L162">  }</span>
+
+  static class Individual {
+
+    BitSet bits;
+
+    // Constructs a random individual
+<span class="nc" id="L169">    public Individual(int n) {</span>
+<span class="nc" id="L170">      bits = new BitSet(n);</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">        if (Math.random() &lt; 0.5) {</span>
+<span class="nc" id="L173">          bits.flip(i);</span>
+        }
+      }
+<span class="nc" id="L176">    }</span>
+
+<span class="nc" id="L178">    public Individual(BitSet set) {</span>
+<span class="nc" id="L179">      this.bits = set;</span>
+<span class="nc" id="L180">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L184">      return bits.toString();</span>
+    }
+  }
+
+<span class="nc" id="L188">  static class Knapsack_01 {</span>
+
+    /**
+     * @param maxWeight - The maximum weight of the knapsack
+     * @param W - The weights of the items
+     * @param V - The values of the items
+     * @return The maximum achievable profit of selecting a subset of the elements such that the
+     *     capacity of the knapsack is not exceeded
+     */
+    public static int knapsack(int maxWeight, int[] W, int[] V) {
+
+<span class="nc bnc" id="L199" title="All 8 branches missed.">      if (W == null || V == null || W.length != V.length || maxWeight &lt; 0) {</span>
+<span class="nc" id="L200">        throw new IllegalArgumentException(&quot;Invalid input&quot;);</span>
+      }
+
+<span class="nc" id="L203">      final int N = W.length;</span>
+
+      // Initialize a table where individual rows represent items
+      // and columns represent the weight of the knapsack
+<span class="nc" id="L207">      int[][] DP = new int[N + 1][maxWeight + 1];</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">      for (int i = 1; i &lt;= N; i++) {</span>
+
+        // Get the value and weight of the item
+<span class="nc" id="L212">        int w = W[i - 1], v = V[i - 1];</span>
+
+<span class="nc bnc" id="L214" title="All 2 branches missed.">        for (int sz = 1; sz &lt;= maxWeight; sz++) {</span>
+
+          // Consider not picking this element
+<span class="nc" id="L217">          DP[i][sz] = DP[i - 1][sz];</span>
+
+          // Consider including the current element and
+          // see if this would be more profitable
+<span class="nc bnc" id="L221" title="All 4 branches missed.">          if (sz &gt;= w &amp;&amp; DP[i - 1][sz - w] + v &gt; DP[i][sz]) {</span>
+<span class="nc" id="L222">            DP[i][sz] = DP[i - 1][sz - w] + v;</span>
+          }
+        }
+      }
+
+      // Return the maximum profit
+<span class="nc" id="L228">      return DP[N][maxWeight];</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

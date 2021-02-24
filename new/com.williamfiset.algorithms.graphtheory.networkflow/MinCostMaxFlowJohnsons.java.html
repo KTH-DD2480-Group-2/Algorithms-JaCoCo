@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinCostMaxFlowJohnsons.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">MinCostMaxFlowJohnsons.java</span></div><h1>MinCostMaxFlowJohnsons.java</h1><pre class="source lang-java linenums">/**
+ * Min cost max flow implementation using Johnson's algorithm (initial Bellman- Ford + subsequent
+ * Dijkstra runs) as a method of finding augmenting paths.
+ *
+ * &lt;p&gt;Tested against: - https://open.kattis.com/problems/mincostmaxflow -
+ * https://open.kattis.com/problems/jobpostings
+ *
+ * &lt;p&gt;Time Complexity: O(EÂ²Vlog(V))
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import static java.lang.Math.min;
+
+import java.util.*;
+
+public class MinCostMaxFlowJohnsons extends NetworkFlowSolverBase {
+
+  /**
+   * Creates an instance of a flow network solver. Use the {@link NetworkFlowSolverBase#addEdge}
+   * method to add edges to the graph.
+   *
+   * @param n - The number of nodes in the graph including source and sink nodes.
+   * @param s - The index of the source node, 0 &lt;= s &lt; n
+   * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+   */
+  public MinCostMaxFlowJohnsons(int n, int s, int t) {
+<span class="fc" id="L29">    super(n, s, t);</span>
+<span class="fc" id="L30">  }</span>
+
+  private void init() {
+<span class="fc" id="L33">    long[] dist = new long[n];</span>
+<span class="fc" id="L34">    Arrays.fill(dist, INF);</span>
+<span class="fc" id="L35">    dist[s] = 0;</span>
+
+    // Run Bellman-Ford algorithm to get the optimal distance to each node, O(VE)
+<span class="fc bfc" id="L38" title="All 2 branches covered.">    for (int i = 0; i &lt; n - 1; i++)</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">      for (List&lt;Edge&gt; edges : graph)</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        for (Edge edge : edges)</span>
+<span class="fc bfc" id="L41" title="All 4 branches covered.">          if (edge.remainingCapacity() &gt; 0 &amp;&amp; dist[edge.from] + edge.cost &lt; dist[edge.to])</span>
+<span class="fc" id="L42">            dist[edge.to] = dist[edge.from] + edge.cost;</span>
+
+<span class="fc" id="L44">    adjustEdgeCosts(dist);</span>
+<span class="fc" id="L45">  }</span>
+
+  // Adjust edge costs to be non-negative for Dijkstra's algorithm, O(E)
+  private void adjustEdgeCosts(long[] dist) {
+<span class="fc bfc" id="L49" title="All 2 branches covered.">    for (int from = 0; from &lt; n; from++) {</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">      for (Edge edge : graph[from]) {</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">        if (edge.remainingCapacity() &gt; 0) {</span>
+<span class="fc" id="L52">          edge.cost += dist[from] - dist[edge.to];</span>
+        } else {
+<span class="fc" id="L54">          edge.cost = 0;</span>
+        }
+<span class="fc" id="L56">      }</span>
+    }
+<span class="fc" id="L58">  }</span>
+
+  @Override
+  public void solve() {
+<span class="fc" id="L62">    init();</span>
+
+    // Sum up the bottlenecks on each augmenting path to find the max flow and min cost.
+    List&lt;Edge&gt; path;
+<span class="fc bfc" id="L66" title="All 2 branches covered.">    while ((path = getAugmentingPath()).size() != 0) {</span>
+
+      // Find bottle neck edge value along path.
+<span class="fc" id="L69">      long bottleNeck = Long.MAX_VALUE;</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">      for (Edge edge : path) bottleNeck = min(bottleNeck, edge.remainingCapacity());</span>
+
+      // Retrace path while augmenting the flow
+<span class="fc bfc" id="L73" title="All 2 branches covered.">      for (Edge edge : path) {</span>
+<span class="fc" id="L74">        edge.augment(bottleNeck);</span>
+<span class="fc" id="L75">        minCost += bottleNeck * edge.originalCost;</span>
+<span class="fc" id="L76">      }</span>
+<span class="fc" id="L77">      maxFlow += bottleNeck;</span>
+<span class="fc" id="L78">    }</span>
+<span class="fc" id="L79">  }</span>
+
+  // Finds an augmenting path from the source node to the sink using Johnson's
+  // shortest path algorithm. First, Bellman-Ford was ran to get the shortest
+  // path from the source to every node, and then the graph was cost adjusted
+  // to remove negative edge weights so that Dijkstra's can be used in
+  // subsequent runs for improved time complexity.
+  private List&lt;Edge&gt; getAugmentingPath() {
+
+    class Node implements Comparable&lt;Node&gt; {
+      int id;
+      long value;
+
+<span class="fc" id="L92">      public Node(int id, long value) {</span>
+<span class="fc" id="L93">        this.id = id;</span>
+<span class="fc" id="L94">        this.value = value;</span>
+<span class="fc" id="L95">      }</span>
+
+      @Override
+      public int compareTo(Node other) {
+<span class="fc" id="L99">        return (int) (value - other.value);</span>
+      }
+    }
+
+<span class="fc" id="L103">    long[] dist = new long[n];</span>
+<span class="fc" id="L104">    Arrays.fill(dist, INF);</span>
+<span class="fc" id="L105">    dist[s] = 0;</span>
+
+<span class="fc" id="L107">    markAllNodesAsUnvisited();</span>
+<span class="fc" id="L108">    Edge[] prev = new Edge[n];</span>
+
+<span class="fc" id="L110">    PriorityQueue&lt;Node&gt; pq = new PriorityQueue&lt;&gt;();</span>
+<span class="fc" id="L111">    pq.offer(new Node(s, 0));</span>
+
+    // Run Dijkstra's to find augmenting path.
+<span class="fc bfc" id="L114" title="All 2 branches covered.">    while (!pq.isEmpty()) {</span>
+<span class="fc" id="L115">      Node node = pq.poll();</span>
+<span class="fc" id="L116">      visit(node.id);</span>
+<span class="pc bpc" id="L117" title="1 of 2 branches missed.">      if (dist[node.id] &lt; node.value) continue;</span>
+<span class="fc" id="L118">      List&lt;Edge&gt; edges = graph[node.id];</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">      for (int i = 0; i &lt; edges.size(); i++) {</span>
+<span class="fc" id="L120">        Edge edge = edges.get(i);</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (visited(edge.to)) continue;</span>
+<span class="fc" id="L122">        long newDist = dist[edge.from] + edge.cost;</span>
+<span class="fc bfc" id="L123" title="All 4 branches covered.">        if (edge.remainingCapacity() &gt; 0 &amp;&amp; newDist &lt; dist[edge.to]) {</span>
+<span class="fc" id="L124">          prev[edge.to] = edge;</span>
+<span class="fc" id="L125">          dist[edge.to] = newDist;</span>
+<span class="fc" id="L126">          pq.offer(new Node(edge.to, dist[edge.to]));</span>
+        }
+      }
+<span class="fc" id="L129">    }</span>
+
+<span class="fc" id="L131">    LinkedList&lt;Edge&gt; path = new LinkedList&lt;&gt;();</span>
+<span class="fc bfc" id="L132" title="All 2 branches covered.">    if (dist[t] == INF) return path;</span>
+
+<span class="fc" id="L134">    adjustEdgeCosts(dist);</span>
+
+<span class="fc bfc" id="L136" title="All 2 branches covered.">    for (Edge edge = prev[t]; edge != null; edge = prev[edge.from]) path.addFirst(edge);</span>
+<span class="fc" id="L137">    return path;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

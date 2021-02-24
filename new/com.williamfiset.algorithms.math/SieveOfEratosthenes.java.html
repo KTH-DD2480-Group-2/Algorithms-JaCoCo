@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SieveOfEratosthenes.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">SieveOfEratosthenes.java</span></div><h1>SieveOfEratosthenes.java</h1><pre class="source lang-java linenums">/**
+ * Use the sieve of eratosthenes to find all the prime numbers up to a certain limit.
+ *
+ * &lt;p&gt;Time Complexity: O(nloglogn)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.math;
+
+<span class="nc" id="L10">public class SieveOfEratosthenes {</span>
+
+  // Gets all primes up to, but NOT including limit (returned as a list of primes)
+  public static int[] sieve(int limit) {
+
+<span class="nc bnc" id="L15" title="All 2 branches missed.">    if (limit &lt;= 2) return new int[0];</span>
+
+    // Find an upper bound on the number of prime numbers up to our limit.
+    // https://en.wikipedia.org/wiki/Prime-counting_function#Inequalities
+<span class="nc" id="L19">    final int numPrimes = (int) (1.25506 * limit / Math.log((double) limit));</span>
+<span class="nc" id="L20">    int[] primes = new int[numPrimes];</span>
+<span class="nc" id="L21">    int index = 0;</span>
+
+<span class="nc" id="L23">    boolean[] isComposite = new boolean[limit];</span>
+<span class="nc" id="L24">    final int sqrtLimit = (int) Math.sqrt(limit);</span>
+<span class="nc bnc" id="L25" title="All 2 branches missed.">    for (int i = 2; i &lt;= sqrtLimit; i++) {</span>
+<span class="nc bnc" id="L26" title="All 2 branches missed.">      if (!isComposite[i]) {</span>
+<span class="nc" id="L27">        primes[index++] = i;</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">        for (int j = i * i; j &lt; limit; j += i) isComposite[j] = true;</span>
+      }
+    }
+<span class="nc bnc" id="L31" title="All 4 branches missed.">    for (int i = sqrtLimit + 1; i &lt; limit; i++) if (!isComposite[i]) primes[index++] = i;</span>
+<span class="nc" id="L32">    return java.util.Arrays.copyOf(primes, index);</span>
+  }
+
+  public static void main(String[] args) {
+
+    // Generate all the primes up to 29 not inclusive
+<span class="nc" id="L38">    int[] primes = sieve(29);</span>
+
+    // Prints [2, 3, 5, 7, 11, 13, 17, 19, 23]
+<span class="nc" id="L41">    System.out.println(java.util.Arrays.toString(primes));</span>
+<span class="nc" id="L42">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

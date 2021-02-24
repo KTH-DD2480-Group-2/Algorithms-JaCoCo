@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DijkstrasShortestPathAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">DijkstrasShortestPathAdjacencyList.java</span></div><h1>DijkstrasShortestPathAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of Dijkstra's shortest path algorithm from a start node to a
+ * specific ending node. Dijkstra can also be modified to find the shortest path between a starting
+ * node and all other nodes in the graph. However, in this implementation since we're only going
+ * from a starting node to an ending node we can employ an optimization to stop early once we've
+ * visited all the neighbors of the ending node.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.PriorityQueue;
+
+public class DijkstrasShortestPathAdjacencyList {
+
+  // Small epsilon value to comparing double values.
+  private static final double EPS = 1e-6;
+
+  // An edge class to represent a directed edge
+  // between two nodes with a certain cost.
+  public static class Edge {
+    double cost;
+    int from, to;
+
+<span class="nc" id="L30">    public Edge(int from, int to, double cost) {</span>
+<span class="nc" id="L31">      this.from = from;</span>
+<span class="nc" id="L32">      this.to = to;</span>
+<span class="nc" id="L33">      this.cost = cost;</span>
+<span class="nc" id="L34">    }</span>
+  }
+
+  // Node class to track the nodes to visit while running Dijkstra's
+  public static class Node {
+    int id;
+    double value;
+
+<span class="nc" id="L42">    public Node(int id, double value) {</span>
+<span class="nc" id="L43">      this.id = id;</span>
+<span class="nc" id="L44">      this.value = value;</span>
+<span class="nc" id="L45">    }</span>
+  }
+
+  private int n;
+  private double[] dist;
+  private Integer[] prev;
+  private List&lt;List&lt;Edge&gt;&gt; graph;
+
+<span class="nc" id="L53">  private Comparator&lt;Node&gt; comparator =</span>
+<span class="nc" id="L54">      new Comparator&lt;Node&gt;() {</span>
+        @Override
+        public int compare(Node node1, Node node2) {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">          if (Math.abs(node1.value - node2.value) &lt; EPS) return 0;</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">          return (node1.value - node2.value) &gt; 0 ? +1 : -1;</span>
+        }
+      };
+
+  /**
+   * Initialize the solver by providing the graph size and a starting node. Use the {@link #addEdge}
+   * method to actually add edges to the graph.
+   *
+   * @param n - The number of nodes in the graph.
+   */
+<span class="nc" id="L68">  public DijkstrasShortestPathAdjacencyList(int n) {</span>
+<span class="nc" id="L69">    this.n = n;</span>
+<span class="nc" id="L70">    createEmptyGraph();</span>
+<span class="nc" id="L71">  }</span>
+
+  public DijkstrasShortestPathAdjacencyList(int n, Comparator&lt;Node&gt; comparator) {
+<span class="nc" id="L74">    this(n);</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">    if (comparator == null) throw new IllegalArgumentException(&quot;Comparator cannot be null&quot;);</span>
+<span class="nc" id="L76">    this.comparator = comparator;</span>
+<span class="nc" id="L77">  }</span>
+
+  /**
+   * Adds a directed edge to the graph.
+   *
+   * @param from - The index of the node the directed edge starts at.
+   * @param to - The index of the node the directed edge end at.
+   * @param cost - The cost of the edge.
+   */
+  public void addEdge(int from, int to, int cost) {
+<span class="nc" id="L87">    graph.get(from).add(new Edge(from, to, cost));</span>
+<span class="nc" id="L88">  }</span>
+
+  // Use {@link #addEdge} method to add edges to the graph and use this method
+  // to retrieve the constructed graph.
+  public List&lt;List&lt;Edge&gt;&gt; getGraph() {
+<span class="nc" id="L93">    return graph;</span>
+  }
+
+  /**
+   * Reconstructs the shortest path (of nodes) from 'start' to 'end' inclusive.
+   *
+   * @return An array of nodes indexes of the shortest path from 'start' to 'end'. If 'start' and
+   *     'end' are not connected then an empty array is returned.
+   */
+  public List&lt;Integer&gt; reconstructPath(int start, int end) {
+<span class="nc bnc" id="L103" title="All 4 branches missed.">    if (end &lt; 0 || end &gt;= n) throw new IllegalArgumentException(&quot;Invalid node index&quot;);</span>
+<span class="nc bnc" id="L104" title="All 4 branches missed.">    if (start &lt; 0 || start &gt;= n) throw new IllegalArgumentException(&quot;Invalid node index&quot;);</span>
+<span class="nc" id="L105">    double dist = dijkstra(start, end);</span>
+<span class="nc" id="L106">    List&lt;Integer&gt; path = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">    if (dist == Double.POSITIVE_INFINITY) return path;</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">    for (Integer at = end; at != null; at = prev[at]) path.add(at);</span>
+<span class="nc" id="L109">    Collections.reverse(path);</span>
+<span class="nc" id="L110">    return path;</span>
+  }
+
+  // Run Dijkstra's algorithm on a directed graph to find the shortest path
+  // from a starting node to an ending node. If there is no path between the
+  // starting node and the destination node the returned value is set to be
+  // Double.POSITIVE_INFINITY.
+  public double dijkstra(int start, int end) {
+    // Maintain an array of the minimum distance to each node
+<span class="nc" id="L119">    dist = new double[n];</span>
+<span class="nc" id="L120">    Arrays.fill(dist, Double.POSITIVE_INFINITY);</span>
+<span class="nc" id="L121">    dist[start] = 0;</span>
+
+    // Keep a priority queue of the next most promising node to visit.
+<span class="nc" id="L124">    PriorityQueue&lt;Node&gt; pq = new PriorityQueue&lt;&gt;(2 * n, comparator);</span>
+<span class="nc" id="L125">    pq.offer(new Node(start, 0));</span>
+
+    // Array used to track which nodes have already been visited.
+<span class="nc" id="L128">    boolean[] visited = new boolean[n];</span>
+<span class="nc" id="L129">    prev = new Integer[n];</span>
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">    while (!pq.isEmpty()) {</span>
+<span class="nc" id="L132">      Node node = pq.poll();</span>
+<span class="nc" id="L133">      visited[node.id] = true;</span>
+
+      // We already found a better path before we got to
+      // processing this node so we can ignore it.
+<span class="nc bnc" id="L137" title="All 2 branches missed.">      if (dist[node.id] &lt; node.value) continue;</span>
+
+<span class="nc" id="L139">      List&lt;Edge&gt; edges = graph.get(node.id);</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">      for (int i = 0; i &lt; edges.size(); i++) {</span>
+<span class="nc" id="L141">        Edge edge = edges.get(i);</span>
+
+        // You cannot get a shorter path by revisiting
+        // a node you have already visited before.
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (visited[edge.to]) continue;</span>
+
+        // Relax edge by updating minimum cost if applicable.
+<span class="nc" id="L148">        double newDist = dist[edge.from] + edge.cost;</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">        if (newDist &lt; dist[edge.to]) {</span>
+<span class="nc" id="L150">          prev[edge.to] = edge.from;</span>
+<span class="nc" id="L151">          dist[edge.to] = newDist;</span>
+<span class="nc" id="L152">          pq.offer(new Node(edge.to, dist[edge.to]));</span>
+        }
+      }
+      // Once we've visited all the nodes spanning from the end
+      // node we know we can return the minimum distance value to
+      // the end node because it cannot get any better after this point.
+<span class="nc bnc" id="L158" title="All 2 branches missed.">      if (node.id == end) return dist[end];</span>
+<span class="nc" id="L159">    }</span>
+    // End node is unreachable
+<span class="nc" id="L161">    return Double.POSITIVE_INFINITY;</span>
+  }
+
+  // Construct an empty graph with n nodes including the source and sink nodes.
+  private void createEmptyGraph() {
+<span class="nc" id="L166">    graph = new ArrayList&lt;&gt;(n);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L168">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RadixSort.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.sorting</a> &gt; <span class="el_source">RadixSort.java</span></div><h1>RadixSort.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of Radix Sort.
+ *
+ * &lt;p&gt;See https://en.wikipedia.org/wiki/Radix_sort for details on runtime and complexity Radix sorts
+ * operates in O(nw) time, where n is the number of keys, and w is the key length where w is
+ * constant on primitive types like Integer which gives it a better performance than other
+ * compare-based sort algorithms, like i.e. QuickSort
+ *
+ * &lt;p&gt;Time Complexity: O(nw)
+ *
+ * &lt;p&gt;Run with:
+ *
+ * &lt;p&gt;$ ./gradlew run -Palgorithm=sorting.RadixSort
+ *
+ * @author EAlexa
+ */
+package com.williamfiset.algorithms.sorting;
+
+<span class="fc" id="L19">public class RadixSort implements InplaceSort {</span>
+
+  @Override
+  public void sort(int[] values) {
+<span class="fc" id="L23">    RadixSort.radixSort(values);</span>
+<span class="fc" id="L24">  }</span>
+
+  static int getMax(int[] array) {
+<span class="fc" id="L27">    int max = array[0];</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">    for (int i = 0; i &lt; array.length; i++) {</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">      if (array[i] &gt; max) {</span>
+<span class="fc" id="L30">        max = array[i];</span>
+      }
+    }
+<span class="fc" id="L33">    return max;</span>
+  }
+
+  static int calculateNumberOfDigits(int number) {
+<span class="fc" id="L37">    return (int) Math.log10(number) + 1;</span>
+  }
+
+  // Requires all numbers to be greater than or equal to 1
+  public static void radixSort(int[] numbers) {
+<span class="pc bpc" id="L42" title="1 of 4 branches missed.">    if (numbers == null || numbers.length &lt;= 1) {</span>
+<span class="fc" id="L43">      return;</span>
+    }
+<span class="fc" id="L45">    int maximum = getMax(numbers);</span>
+<span class="fc" id="L46">    int numberOfDigits = calculateNumberOfDigits(maximum);</span>
+<span class="fc" id="L47">    int placeValue = 1;</span>
+<span class="fc bfc" id="L48" title="All 2 branches covered.">    while (numberOfDigits-- &gt; 0) {</span>
+<span class="fc" id="L49">      countSort(numbers, placeValue);</span>
+<span class="fc" id="L50">      placeValue *= 10;</span>
+    }
+<span class="fc" id="L52">  }</span>
+
+  private static void countSort(int[] numbers, int placeValue) {
+<span class="fc" id="L55">    int range = 10;</span>
+
+<span class="fc" id="L57">    int[] frequency = new int[range];</span>
+<span class="fc" id="L58">    int[] sortedValues = new int[numbers.length];</span>
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">    for (int i = 0; i &lt; numbers.length; i++) {</span>
+<span class="fc" id="L61">      int digit = (numbers[i] / placeValue) % range;</span>
+<span class="fc" id="L62">      frequency[digit]++;</span>
+    }
+
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    for (int i = 1; i &lt; range; i++) {</span>
+<span class="fc" id="L66">      frequency[i] += frequency[i - 1];</span>
+    }
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">    for (int i = numbers.length - 1; i &gt;= 0; i--) {</span>
+<span class="fc" id="L70">      int digit = (numbers[i] / placeValue) % range;</span>
+<span class="fc" id="L71">      sortedValues[frequency[digit] - 1] = numbers[i];</span>
+<span class="fc" id="L72">      frequency[digit]--;</span>
+    }
+
+<span class="fc" id="L75">    System.arraycopy(sortedValues, 0, numbers, 0, numbers.length);</span>
+<span class="fc" id="L76">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L79">    InplaceSort sorter = new RadixSort();</span>
+<span class="nc" id="L80">    int[] numbers = {387, 468, 134, 123, 68, 221, 769, 37, 7, 890, 1, 587};</span>
+<span class="nc" id="L81">    sorter.sort(numbers);</span>
+    // Prints:
+    // [1, 7, 37, 68, 123, 134, 221, 387, 468, 587, 769, 890]
+<span class="nc" id="L84">    System.out.println(java.util.Arrays.toString(numbers));</span>
+<span class="nc" id="L85">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

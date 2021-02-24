@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BucketSort.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.sorting</a> &gt; <span class="el_source">BucketSort.java</span></div><h1>BucketSort.java</h1><pre class="source lang-java linenums">/**
+ * Bucket sort implementation
+ *
+ * &lt;p&gt;Run with:
+ *
+ * &lt;p&gt;$ ./gradlew run -Palgorithm=sorting.BucketSort
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.sorting;
+
+import java.util.*;
+
+<span class="fc" id="L14">public class BucketSort implements InplaceSort {</span>
+
+  @Override
+  public void sort(int[] values) {
+<span class="fc" id="L18">    int minValue = Integer.MAX_VALUE;</span>
+<span class="fc" id="L19">    int maxValue = Integer.MIN_VALUE;</span>
+<span class="fc bfc" id="L20" title="All 2 branches covered.">    for (int i = 0; i &lt; values.length; i++) {</span>
+<span class="fc bfc" id="L21" title="All 2 branches covered.">      if (values[i] &lt; minValue) minValue = values[i];</span>
+<span class="fc bfc" id="L22" title="All 2 branches covered.">      if (values[i] &gt; maxValue) maxValue = values[i];</span>
+    }
+<span class="fc" id="L24">    BucketSort.bucketSort(values, minValue, maxValue);</span>
+<span class="fc" id="L25">  }</span>
+
+  // Performs a bucket sort of an array in which all the elements are
+  // bounded in the range [minValue, maxValue]. For bucket sort to give linear
+  // performance the elements need to be uniformly distributed
+  private static void bucketSort(int[] ar, int minValue, int maxValue) {
+<span class="pc bpc" id="L31" title="1 of 6 branches missed.">    if (ar == null || ar.length == 0 || minValue == maxValue) return;</span>
+
+    // N is number elements and M is the range of values
+<span class="fc" id="L34">    final int N = ar.length, M = maxValue - minValue + 1, numBuckets = M / N + 1;</span>
+<span class="fc" id="L35">    List&lt;List&lt;Integer&gt;&gt; buckets = new ArrayList&lt;&gt;(numBuckets);</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    for (int i = 0; i &lt; numBuckets; i++) buckets.add(new ArrayList&lt;&gt;());</span>
+
+    // Place each element in a bucket
+<span class="fc bfc" id="L39" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L40">      int bi = (ar[i] - minValue) / M;</span>
+<span class="fc" id="L41">      List&lt;Integer&gt; bucket = buckets.get(bi);</span>
+<span class="fc" id="L42">      bucket.add(ar[i]);</span>
+    }
+
+    // Sort buckets and stitch together answer
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    for (int bi = 0, j = 0; bi &lt; numBuckets; bi++) {</span>
+<span class="fc" id="L47">      List&lt;Integer&gt; bucket = buckets.get(bi);</span>
+<span class="pc bpc" id="L48" title="1 of 2 branches missed.">      if (bucket != null) {</span>
+<span class="fc" id="L49">        Collections.sort(bucket);</span>
+<span class="fc bfc" id="L50" title="All 2 branches covered.">        for (int k = 0; k &lt; bucket.size(); k++) {</span>
+<span class="fc" id="L51">          ar[j++] = bucket.get(k);</span>
+        }
+      }
+    }
+<span class="fc" id="L55">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L58">    BucketSort sorter = new BucketSort();</span>
+
+<span class="nc" id="L60">    int[] array = {10, 4, 6, 8, 13, 2, 3};</span>
+<span class="nc" id="L61">    sorter.sort(array);</span>
+    // Prints:
+    // [2, 3, 4, 6, 8, 10, 13]
+<span class="nc" id="L64">    System.out.println(java.util.Arrays.toString(array));</span>
+
+<span class="nc" id="L66">    array = new int[] {10, 10, 10, 10, 10};</span>
+<span class="nc" id="L67">    sorter.sort(array);</span>
+    // Prints:
+    // [10, 10, 10, 10, 10]
+<span class="nc" id="L70">    System.out.println(java.util.Arrays.toString(array));</span>
+<span class="nc" id="L71">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

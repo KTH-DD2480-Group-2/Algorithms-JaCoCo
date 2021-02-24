@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeIsomorphism.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms</a> &gt; <span class="el_source">TreeIsomorphism.java</span></div><h1>TreeIsomorphism.java</h1><pre class="source lang-java linenums">/**
+ * Determines if two unrooted trees are isomorphic. This algorithm can easily be modified to support
+ * checking if two rooted trees are isomorphic.
+ *
+ * &lt;p&gt;Tested code against: https://uva.onlinejudge.org/external/124/p12489.pdf
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms;
+
+import java.util.*;
+
+<span class="nc" id="L13">public class TreeIsomorphism {</span>
+
+  public static class TreeNode {
+    private int id;
+    private TreeNode parent;
+    private List&lt;TreeNode&gt; children;
+
+    // Useful constructor for root node.
+    public TreeNode(int id) {
+<span class="fc" id="L22">      this(id, /*parent=*/ null);</span>
+<span class="fc" id="L23">    }</span>
+
+<span class="fc" id="L25">    public TreeNode(int id, TreeNode parent) {</span>
+<span class="fc" id="L26">      this.id = id;</span>
+<span class="fc" id="L27">      this.parent = parent;</span>
+<span class="fc" id="L28">      children = new LinkedList&lt;&gt;();</span>
+<span class="fc" id="L29">    }</span>
+
+    public void addChildren(TreeNode... nodes) {
+<span class="fc bfc" id="L32" title="All 2 branches covered.">      for (TreeNode node : nodes) {</span>
+<span class="fc" id="L33">        children.add(node);</span>
+      }
+<span class="fc" id="L35">    }</span>
+
+    public int id() {
+<span class="fc" id="L38">      return id;</span>
+    }
+
+    public TreeNode parent() {
+<span class="fc" id="L42">      return parent;</span>
+    }
+
+    public List&lt;TreeNode&gt; children() {
+<span class="fc" id="L46">      return children;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L51">      return String.valueOf(id);</span>
+    }
+  }
+
+  // Determines if two unrooted trees are isomorphic
+  public static boolean treesAreIsomorphic(List&lt;List&lt;Integer&gt;&gt; tree1, List&lt;List&lt;Integer&gt;&gt; tree2) {
+<span class="pc bpc" id="L57" title="1 of 4 branches missed.">    if (tree1.isEmpty() || tree2.isEmpty()) {</span>
+<span class="fc" id="L58">      throw new IllegalArgumentException(&quot;Empty tree input&quot;);</span>
+    }
+
+<span class="fc" id="L61">    List&lt;Integer&gt; centers1 = findTreeCenters(tree1);</span>
+<span class="fc" id="L62">    List&lt;Integer&gt; centers2 = findTreeCenters(tree2);</span>
+
+<span class="fc" id="L64">    TreeNode rootedTree1 = rootTree(tree1, centers1.get(0));</span>
+<span class="fc" id="L65">    String tree1Encoding = encode(rootedTree1);</span>
+
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    for (int center : centers2) {</span>
+<span class="fc" id="L68">      TreeNode rootedTree2 = rootTree(tree2, center);</span>
+<span class="fc" id="L69">      String tree2Encoding = encode(rootedTree2);</span>
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">      if (tree1Encoding.equals(tree2Encoding)) {</span>
+<span class="fc" id="L72">        return true;</span>
+      }
+<span class="fc" id="L74">    }</span>
+<span class="fc" id="L75">    return false;</span>
+  }
+
+  private static List&lt;Integer&gt; findTreeCenters(List&lt;List&lt;Integer&gt;&gt; tree) {
+<span class="fc" id="L79">    int n = tree.size();</span>
+
+<span class="fc" id="L81">    int[] degree = new int[n];</span>
+<span class="fc" id="L82">    List&lt;Integer&gt; leaves = new ArrayList&lt;&gt;();</span>
+
+    // Find the first outer layer of leaf nodes.
+<span class="fc bfc" id="L85" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L86">      List&lt;Integer&gt; edges = tree.get(i);</span>
+<span class="fc" id="L87">      degree[i] = edges.size();</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">      if (degree[i] &lt;= 1) {</span>
+<span class="fc" id="L89">        leaves.add(i);</span>
+<span class="fc" id="L90">        degree[i] = 0;</span>
+      }
+    }
+
+<span class="fc" id="L94">    int processedLeafs = leaves.size();</span>
+
+    // Iteratively remove leaf nodes layer by layer until only the centers remain.
+<span class="fc bfc" id="L97" title="All 2 branches covered.">    while (processedLeafs &lt; n) {</span>
+<span class="fc" id="L98">      List&lt;Integer&gt; newLeaves = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L99" title="All 2 branches covered.">      for (int node : leaves) {</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        for (int neighbor : tree.get(node)) {</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">          if (--degree[neighbor] == 1) {</span>
+<span class="fc" id="L102">            newLeaves.add(neighbor);</span>
+          }
+<span class="fc" id="L104">        }</span>
+<span class="fc" id="L105">        degree[node] = 0;</span>
+<span class="fc" id="L106">      }</span>
+<span class="fc" id="L107">      processedLeafs += newLeaves.size();</span>
+<span class="fc" id="L108">      leaves = newLeaves;</span>
+<span class="fc" id="L109">    }</span>
+
+<span class="fc" id="L111">    return leaves;</span>
+  }
+
+  private static TreeNode rootTree(List&lt;List&lt;Integer&gt;&gt; graph, int rootId) {
+<span class="fc" id="L115">    TreeNode root = new TreeNode(rootId);</span>
+<span class="fc" id="L116">    return buildTree(graph, root);</span>
+  }
+
+  // Do dfs to construct rooted tree.
+  private static TreeNode buildTree(List&lt;List&lt;Integer&gt;&gt; graph, TreeNode node) {
+<span class="fc bfc" id="L121" title="All 2 branches covered.">    for (int neighbor : graph.get(node.id())) {</span>
+      // Ignore adding an edge pointing back to parent.
+<span class="fc bfc" id="L123" title="All 4 branches covered.">      if (node.parent() != null &amp;&amp; neighbor == node.parent().id()) {</span>
+<span class="fc" id="L124">        continue;</span>
+      }
+
+<span class="fc" id="L127">      TreeNode child = new TreeNode(neighbor, node);</span>
+<span class="fc" id="L128">      node.addChildren(child);</span>
+
+<span class="fc" id="L130">      buildTree(graph, child);</span>
+<span class="fc" id="L131">    }</span>
+<span class="fc" id="L132">    return node;</span>
+  }
+
+  // Constructs the canonical form representation of a tree as a string.
+  public static String encode(TreeNode node) {
+<span class="pc bpc" id="L137" title="1 of 2 branches missed.">    if (node == null) {</span>
+<span class="nc" id="L138">      return &quot;&quot;;</span>
+    }
+<span class="fc" id="L140">    List&lt;String&gt; labels = new LinkedList&lt;&gt;();</span>
+<span class="fc bfc" id="L141" title="All 2 branches covered.">    for (TreeNode child : node.children()) {</span>
+<span class="fc" id="L142">      labels.add(encode(child));</span>
+<span class="fc" id="L143">    }</span>
+<span class="fc" id="L144">    Collections.sort(labels);</span>
+<span class="fc" id="L145">    StringBuilder sb = new StringBuilder();</span>
+<span class="fc bfc" id="L146" title="All 2 branches covered.">    for (String label : labels) {</span>
+<span class="fc" id="L147">      sb.append(label);</span>
+<span class="fc" id="L148">    }</span>
+<span class="fc" id="L149">    return &quot;(&quot; + sb.toString() + &quot;)&quot;;</span>
+  }
+
+  /* Graph/Tree creation helper methods. */
+
+  // Create a graph as a adjacency list with 'n' nodes.
+  public static List&lt;List&lt;Integer&gt;&gt; createEmptyGraph(int n) {
+<span class="fc" id="L156">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) graph.add(new LinkedList&lt;&gt;());</span>
+<span class="fc" id="L158">    return graph;</span>
+  }
+
+  public static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="fc" id="L162">    graph.get(from).add(to);</span>
+<span class="fc" id="L163">    graph.get(to).add(from);</span>
+<span class="fc" id="L164">  }</span>
+
+  /* Example usage */
+
+  public static void main(String[] args) {
+<span class="nc" id="L169">    simpleIsomorphismTest();</span>
+<span class="nc" id="L170">    testEncodingTreeFromSlides();</span>
+<span class="nc" id="L171">  }</span>
+
+  // Test if two tree are isomorphic, meaning they are structurally equivalent
+  // but are labeled differently.
+  private static void simpleIsomorphismTest() {
+<span class="nc" id="L176">    List&lt;List&lt;Integer&gt;&gt; tree1 = createEmptyGraph(5);</span>
+<span class="nc" id="L177">    addUndirectedEdge(tree1, 2, 0);</span>
+<span class="nc" id="L178">    addUndirectedEdge(tree1, 3, 4);</span>
+<span class="nc" id="L179">    addUndirectedEdge(tree1, 2, 1);</span>
+<span class="nc" id="L180">    addUndirectedEdge(tree1, 2, 3);</span>
+
+<span class="nc" id="L182">    List&lt;List&lt;Integer&gt;&gt; tree2 = createEmptyGraph(5);</span>
+<span class="nc" id="L183">    addUndirectedEdge(tree2, 1, 0);</span>
+<span class="nc" id="L184">    addUndirectedEdge(tree2, 2, 4);</span>
+<span class="nc" id="L185">    addUndirectedEdge(tree2, 1, 3);</span>
+<span class="nc" id="L186">    addUndirectedEdge(tree2, 1, 2);</span>
+
+<span class="nc bnc" id="L188" title="All 2 branches missed.">    if (!treesAreIsomorphic(tree1, tree2)) {</span>
+<span class="nc" id="L189">      System.out.println(&quot;Oops, these tree should be isomorphic!&quot;);</span>
+    }
+<span class="nc" id="L191">  }</span>
+
+  private static void testEncodingTreeFromSlides() {
+<span class="nc" id="L194">    List&lt;List&lt;Integer&gt;&gt; tree = createEmptyGraph(10);</span>
+<span class="nc" id="L195">    addUndirectedEdge(tree, 0, 2);</span>
+<span class="nc" id="L196">    addUndirectedEdge(tree, 0, 1);</span>
+<span class="nc" id="L197">    addUndirectedEdge(tree, 0, 3);</span>
+<span class="nc" id="L198">    addUndirectedEdge(tree, 2, 6);</span>
+<span class="nc" id="L199">    addUndirectedEdge(tree, 2, 7);</span>
+<span class="nc" id="L200">    addUndirectedEdge(tree, 1, 4);</span>
+<span class="nc" id="L201">    addUndirectedEdge(tree, 1, 5);</span>
+<span class="nc" id="L202">    addUndirectedEdge(tree, 5, 9);</span>
+<span class="nc" id="L203">    addUndirectedEdge(tree, 3, 8);</span>
+
+<span class="nc" id="L205">    TreeNode root0 = rootTree(tree, 0);</span>
+
+<span class="nc bnc" id="L207" title="All 2 branches missed.">    if (!encode(root0).equals(&quot;(((())())(()())(()))&quot;)) {</span>
+<span class="nc" id="L208">      System.out.println(&quot;Tree encoding is wrong: &quot; + encode(root0));</span>
+    }
+<span class="nc" id="L210">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

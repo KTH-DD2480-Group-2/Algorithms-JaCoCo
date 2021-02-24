@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FordFulkersonDFSAdjacencyMatrix.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">FordFulkersonDFSAdjacencyMatrix.java</span></div><h1>FordFulkersonDFSAdjacencyMatrix.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the Ford-Fulkerson (FF) method with a DFS as a method of finding augmenting
+ * paths. FF allows you to find the max flow through a directed graph as well as the min cut as a
+ * byproduct.
+ *
+ * &lt;p&gt;Time Complexity: O(fV^2), where f is the max flow
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+<span class="nc" id="L12">public class FordFulkersonDFSAdjacencyMatrix {</span>
+
+<span class="nc" id="L14">  static int visitedToken = 1;</span>
+
+  public static int fordFulkerson(int[][] caps, int source, int sink) {
+
+<span class="nc" id="L18">    int n = caps.length;</span>
+<span class="nc" id="L19">    int[] visited = new int[n];</span>
+<span class="nc" id="L20">    boolean[] minCut = new boolean[n];</span>
+
+<span class="nc" id="L22">    for (int maxFlow = 0; ; ) {</span>
+
+      // Try to find an augmenting path from source to sink
+<span class="nc" id="L25">      int flow = dfs(caps, visited, source, sink, Integer.MAX_VALUE);</span>
+<span class="nc" id="L26">      visitedToken++;</span>
+
+<span class="nc" id="L28">      maxFlow += flow;</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">      if (flow == 0) {</span>
+
+<span class="nc" id="L31">        return maxFlow;</span>
+
+        // Uncomment to return the min-cut. The nodes on the &quot;LEFT SIDE&quot; of the
+        // cut are marked as true and those on the &quot;RIGHT SIDE&quot; of the cut
+        // are marked as false. This finds all the nodes which participated in the
+        // last (failed) attempt to find an augmenting path from the source to
+        // the sink in the DFS phase.
+        // for(int i = 0; i &lt; n; i++)
+        //   if (visited[i] == visitedToken-1)
+        //     minCut[i] = true;
+        // return minCut;
+
+      }
+<span class="nc" id="L44">    }</span>
+  }
+
+  private static int dfs(int[][] caps, int[] visited, int node, int sink, int flow) {
+
+    // Found sink node, return flow thus far
+<span class="nc bnc" id="L50" title="All 2 branches missed.">    if (node == sink) return flow;</span>
+
+<span class="nc" id="L52">    int[] cap = caps[node];</span>
+<span class="nc" id="L53">    visited[node] = visitedToken;</span>
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">    for (int i = 0; i &lt; cap.length; i++) {</span>
+<span class="nc bnc" id="L56" title="All 4 branches missed.">      if (visited[i] != visitedToken &amp;&amp; cap[i] &gt; 0) {</span>
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">        if (cap[i] &lt; flow) flow = cap[i];</span>
+<span class="nc" id="L59">        int dfsFlow = dfs(caps, visited, i, sink, flow);</span>
+
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (dfsFlow &gt; 0) {</span>
+<span class="nc" id="L62">          caps[node][i] -= dfsFlow;</span>
+<span class="nc" id="L63">          caps[i][node] += dfsFlow;</span>
+<span class="nc" id="L64">          return dfsFlow;</span>
+        }
+      }
+    }
+
+<span class="nc" id="L69">    return 0;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

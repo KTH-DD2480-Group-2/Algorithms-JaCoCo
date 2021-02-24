@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FastFourierTransformComplexNumbers.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">FastFourierTransformComplexNumbers.java</span></div><h1>FastFourierTransformComplexNumbers.java</h1><pre class="source lang-java linenums">/**
+ * This snippet multiplies 2 complex polynomials very efficiently using the Fast Fourier Transform.
+ *
+ * &lt;p&gt;Time Complexity: O(nlogn)
+ */
+package com.williamfiset.algorithms.math;
+
+<span class="nc" id="L8">public class FastFourierTransformComplexNumbers {</span>
+
+  public static Complex[] fft(Complex[] x) {
+<span class="nc" id="L11">    int n = x.length;</span>
+<span class="nc bnc" id="L12" title="All 2 branches missed.">    if (n == 1) return new Complex[] {x[0]};</span>
+<span class="nc" id="L13">    Complex[] arr = new Complex[n / 2];</span>
+<span class="nc bnc" id="L14" title="All 2 branches missed.">    for (int k = 0; k &lt; n / 2; k++) arr[k] = x[2 * k];</span>
+<span class="nc" id="L15">    Complex[] q = fft(arr);</span>
+<span class="nc bnc" id="L16" title="All 2 branches missed.">    for (int k = 0; k &lt; n / 2; k++) arr[k] = x[2 * k + 1];</span>
+<span class="nc" id="L17">    Complex[] r = fft(arr);</span>
+<span class="nc" id="L18">    Complex[] y = new Complex[n];</span>
+<span class="nc bnc" id="L19" title="All 2 branches missed.">    for (int k = 0; k &lt; n / 2; k++) {</span>
+<span class="nc" id="L20">      double kth = -2 * k * Math.PI / n;</span>
+<span class="nc" id="L21">      Complex wk = new Complex(Math.cos(kth), Math.sin(kth));</span>
+<span class="nc" id="L22">      y[k] = q[k].plus(wk.times(r[k]));</span>
+<span class="nc" id="L23">      y[k + n / 2] = q[k].minus(wk.times(r[k]));</span>
+    }
+<span class="nc" id="L25">    return y;</span>
+  }
+
+  private static Complex[] polyMult(Complex[] a, Complex[] b) {
+<span class="nc" id="L29">    int exp = 32 - Integer.numberOfLeadingZeros(a.length + b.length - 2);</span>
+<span class="nc" id="L30">    int length = (int) Math.pow(2, exp);</span>
+<span class="nc" id="L31">    a = pad(a, length);</span>
+<span class="nc" id="L32">    b = pad(b, length);</span>
+<span class="nc" id="L33">    Complex[] c = fft(a), d = fft(b), e = new Complex[length];</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">    for (int i = 0; i &lt; length; i++) e[i] = c[i].times(d[i]);</span>
+<span class="nc" id="L35">    return ifft(e);</span>
+  }
+
+  private static Complex[] pad(Complex[] arr, int n) {
+<span class="nc" id="L39">    Complex[] padded = new Complex[n];</span>
+<span class="nc bnc" id="L40" title="All 4 branches missed.">    for (int i = 0; i &lt; n; i++) padded[i] = (i &lt; arr.length) ? arr[i] : new Complex(0, 0);</span>
+<span class="nc" id="L41">    return padded;</span>
+  }
+
+  private static Complex[] ifft(Complex[] x) {
+<span class="nc" id="L45">    int n = x.length;</span>
+<span class="nc" id="L46">    Complex[] y = new Complex[n];</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) y[i] = x[i].conjugate();</span>
+<span class="nc" id="L48">    y = fft(y);</span>
+<span class="nc bnc" id="L49" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) y[i] = y[i].conjugate();</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) y[i] = y[i].scalar(1.0 / n);</span>
+<span class="nc" id="L51">    return y;</span>
+  }
+
+  public static class Complex {
+    double r, i;
+
+<span class="nc" id="L57">    public Complex(double real, double imag) {</span>
+<span class="nc" id="L58">      r = real;</span>
+<span class="nc" id="L59">      i = imag;</span>
+<span class="nc" id="L60">    }</span>
+
+    public Complex plus(Complex b) {
+<span class="nc" id="L63">      return new Complex(r + b.r, i + b.i);</span>
+    }
+
+    public Complex minus(Complex b) {
+<span class="nc" id="L67">      return new Complex(r - b.r, i - b.i);</span>
+    }
+
+    public Complex times(Complex b) {
+<span class="nc" id="L71">      return new Complex(r * b.r - i * b.i, r * b.i + i * b.r);</span>
+    }
+
+    public Complex scalar(double s) {
+<span class="nc" id="L75">      return new Complex(r * s, i * s);</span>
+    }
+
+    public Complex conjugate() {
+<span class="nc" id="L79">      return new Complex(r, -i);</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

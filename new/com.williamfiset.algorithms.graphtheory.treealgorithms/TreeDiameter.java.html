@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeDiameter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms</a> &gt; <span class="el_source">TreeDiameter.java</span></div><h1>TreeDiameter.java</h1><pre class="source lang-java linenums">/**
+ * Determining the diameter of a tree is a special case of the graph diameter problem which can be
+ * solved in linear time :)
+ *
+ * &lt;p&gt;Time Complexity: O(V + E)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms;
+
+import java.util.*;
+
+<span class="nc" id="L13">public class TreeDiameter {</span>
+
+  // Set MAX_NUM_NODES to be the maximum number of nodes that will ever
+  // be present in the tree you wish to find the diameter of. Also, you must make
+  // sure you label the tree nodes in the range [0, MAX_NUM_NODES)
+<span class="nc" id="L18">  static int MAX_NUM_NODES = 10;</span>
+
+<span class="nc" id="L20">  static Integer VISITED_TOKEN = 0;</span>
+<span class="nc" id="L21">  static int[] visited = new int[MAX_NUM_NODES];</span>
+
+  // Do a DFS and return a tuple (#nodes seen, index) to/of furthest node
+  private static int[] dfs(List&lt;List&lt;Integer&gt;&gt; graph, int at, int parent) {
+
+    // Already visited this node
+<span class="nc bnc" id="L27" title="All 2 branches missed.">    if (visited[at] == VISITED_TOKEN) return new int[] {0, parent};</span>
+
+    // Visit this node
+<span class="nc" id="L30">    visited[at] = VISITED_TOKEN;</span>
+
+<span class="nc" id="L32">    int bestDist = 0, index = -1;</span>
+<span class="nc" id="L33">    List&lt;Integer&gt; edges = graph.get(at);</span>
+
+<span class="nc bnc" id="L35" title="All 2 branches missed.">    if (edges != null) {</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">      for (Integer to : edges) {</span>
+<span class="nc" id="L37">        int[] tuple = dfs(graph, to, at);</span>
+<span class="nc" id="L38">        int dist = tuple[0] + 1;</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (dist &gt; bestDist) {</span>
+<span class="nc" id="L40">          bestDist = dist;</span>
+<span class="nc" id="L41">          index = tuple[1];</span>
+        }
+<span class="nc" id="L43">      }</span>
+    }
+
+<span class="nc" id="L46">    return new int[] {bestDist, index};</span>
+  }
+
+  // Given an undirected tree setup as an adjacency and a
+  // starting node list determine the diameter of this tree.
+  public static int treeDiameter(List&lt;List&lt;Integer&gt;&gt; graph, int start) {
+
+<span class="nc bnc" id="L53" title="All 2 branches missed.">    if (graph == null) return 0;</span>
+
+    // Do DFS to find furthest node from the start
+<span class="nc" id="L56">    VISITED_TOKEN++;</span>
+<span class="nc" id="L57">    int furthestIndex = dfs(graph, start, -1)[1];</span>
+
+    // Singleton
+<span class="nc bnc" id="L60" title="All 2 branches missed.">    if (furthestIndex == -1) return 0;</span>
+
+    // Do another DFS, but this time from the furthest
+    // node and record the distance to that node.
+<span class="nc" id="L64">    VISITED_TOKEN++;</span>
+<span class="nc" id="L65">    int diameter = dfs(graph, furthestIndex, -1)[0] - 1;</span>
+
+<span class="nc" id="L67">    return diameter;</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L72">    List&lt;List&lt;Integer&gt;&gt; graph = createGraph(MAX_NUM_NODES);</span>
+
+<span class="nc" id="L74">    int numNodes = 8;</span>
+<span class="nc" id="L75">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L76">    addUndirectedEdge(graph, 1, 2);</span>
+<span class="nc" id="L77">    addUndirectedEdge(graph, 2, 3);</span>
+<span class="nc" id="L78">    addUndirectedEdge(graph, 2, 4);</span>
+<span class="nc" id="L79">    addUndirectedEdge(graph, 4, 5);</span>
+<span class="nc" id="L80">    addUndirectedEdge(graph, 4, 6);</span>
+<span class="nc" id="L81">    addUndirectedEdge(graph, 6, 7);</span>
+
+<span class="nc" id="L83">    int diameter = treeDiameter(graph, 0);</span>
+<span class="nc" id="L84">    System.out.println(&quot;Tree diameter: &quot; + diameter);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">    if (diameter != 5) System.out.println(&quot;ERROR&quot;);</span>
+<span class="nc" id="L86">    resetGraph(graph, numNodes);</span>
+
+<span class="nc" id="L88">    numNodes = 10;</span>
+<span class="nc" id="L89">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L90">    addUndirectedEdge(graph, 1, 2);</span>
+<span class="nc" id="L91">    addUndirectedEdge(graph, 2, 3);</span>
+<span class="nc" id="L92">    addUndirectedEdge(graph, 2, 4);</span>
+<span class="nc" id="L93">    addUndirectedEdge(graph, 4, 5);</span>
+<span class="nc" id="L94">    addUndirectedEdge(graph, 4, 6);</span>
+<span class="nc" id="L95">    addUndirectedEdge(graph, 6, 7);</span>
+<span class="nc" id="L96">    addUndirectedEdge(graph, 6, 9);</span>
+<span class="nc" id="L97">    addUndirectedEdge(graph, 7, 8);</span>
+
+<span class="nc" id="L99">    diameter = treeDiameter(graph, 5);</span>
+<span class="nc" id="L100">    System.out.println(&quot;Tree diameter: &quot; + diameter);</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">    if (diameter != 6) System.out.println(&quot;ERROR&quot;);</span>
+<span class="nc" id="L102">    resetGraph(graph, numNodes);</span>
+
+<span class="nc" id="L104">    diameter = treeDiameter(graph, 3);</span>
+<span class="nc" id="L105">    System.out.println(&quot;Tree diameter: &quot; + diameter);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">    if (diameter != 0) System.out.println(&quot;ERROR&quot;);</span>
+<span class="nc" id="L107">  }</span>
+
+  private static List&lt;List&lt;Integer&gt;&gt; createGraph(int size) {
+<span class="nc" id="L110">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(size);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">    for (int i = 0; i &lt; size; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L112">    return graph;</span>
+  }
+
+  private static void resetGraph(List&lt;List&lt;Integer&gt;&gt; graph, int size) {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">    for (int i = 0; i &lt; size; i++) graph.get(i).clear();</span>
+<span class="nc" id="L117">  }</span>
+
+  private static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="nc" id="L120">    graph.get(from).add(to);</span>
+<span class="nc" id="L121">    graph.get(to).add(from);</span>
+<span class="nc" id="L122">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

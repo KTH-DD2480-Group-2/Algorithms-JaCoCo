@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CircularSegmentArea.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">CircularSegmentArea.java</span></div><h1>CircularSegmentArea.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to find the area of a circular segment which lies on the circumference of
+ * a circle of radius r.
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+import java.awt.geom.Point2D;
+
+<span class="nc" id="L15">public class CircularSegmentArea {</span>
+
+  public static double circularSegmentArea(Point2D center, double r, Point2D p1, Point2D p2) {
+
+<span class="nc" id="L19">    double cx = center.getX(), cy = center.getY();</span>
+<span class="nc" id="L20">    double x1 = p1.getX(), y1 = p1.getY();</span>
+<span class="nc" id="L21">    double x2 = p2.getX(), y2 = p2.getY();</span>
+
+<span class="nc" id="L23">    double circleArea = PI * r * r;</span>
+
+    // To find the area of the circular segment cap we will find the area not occupied
+    // by the cap and compute pi*r^2 minus that area. The area not occupied by the circular
+    // cap can be divided into three parts:
+    // 1) A section pertaining to half the circle's area
+    // 2) The area of the triangle formed by (cx,cy), (x1,y1), (x2,y2)
+    // 3) The remaining slice which looks like a slice of pizza
+
+<span class="nc" id="L32">    double halfCircleArea = circleArea / 2.0;</span>
+<span class="nc" id="L33">    double threePointsArea = triangleArea(cx, cy, x1, y1, x2, y2);</span>
+
+    // Compute both vectors from the center of the circle
+    // to the points on the circumference of the circle.
+<span class="nc" id="L37">    double v1x = x1 - cx, v1y = y1 - cy;</span>
+<span class="nc" id="L38">    double v2x = x2 - cx, v2y = y2 - cy;</span>
+
+    // Turn one of the vector around to point in the opposite direction
+<span class="nc" id="L41">    v1x = -v1x;</span>
+<span class="nc" id="L42">    v1y = -v1y;</span>
+
+    // Compute the angle between the vectors and find the slice area
+<span class="nc" id="L45">    double angle = angleBetweenVectors(v1x, v1y, v2x, v2y);</span>
+<span class="nc" id="L46">    double pizzaSliceArea = circleArea * (angle / (2.0 * PI));</span>
+
+<span class="nc" id="L48">    return circleArea - (halfCircleArea + threePointsArea + pizzaSliceArea);</span>
+  }
+
+  // Given three points a, b, c find the area of the triangle
+  public static double triangleArea(
+      double ax, double ay, double bx, double by, double cx, double cy) {
+
+    // Let v1 = &lt;bx-ax, by-ay&gt; and v2 = &lt;cx-ax, cy-ay&gt; be vectors
+    // Take the determinant of v1 and v2 to find the area of the
+    // parallelogram of the two vectors.
+
+<span class="nc" id="L59">    double v1_x = bx - ax;</span>
+<span class="nc" id="L60">    double v1_y = by - ay;</span>
+<span class="nc" id="L61">    double v2_x = cx - ax;</span>
+<span class="nc" id="L62">    double v2_y = cy - ay;</span>
+
+    //                | v1_x v2_x |
+    // Determinant of | v1_y v2_y | is v1_x*v2_y - v2_x*v1_y
+<span class="nc" id="L66">    double determinant = v1_x * v2_y - v2_x * v1_y;</span>
+
+    // Divide by two because we computed the area of the parallelogram
+<span class="nc" id="L69">    return abs(determinant) / 2.0;</span>
+  }
+
+  // Return the smaller of the two angles between two 2D vectors in radians
+  private static double angleBetweenVectors(double v1x, double v1y, double v2x, double v2y) {
+
+    // To determine the angle between two vectors v1 and v2 we can use
+    // the following formula: dot(v1,v2) = len(v1)*len(v2)*cosÎ¸ and solve
+    // for Î¸ where dot(a,b) is the dot product and len(c) is the length of c.
+<span class="nc" id="L78">    double dotproduct = (v1x * v2x) + (v1y * v2y);</span>
+<span class="nc" id="L79">    double v1Length = sqrt(v1x * v1x + v1y * v1y);</span>
+<span class="nc" id="L80">    double v2Length = sqrt(v2x * v2x + v2y * v2y);</span>
+
+<span class="nc" id="L82">    double value = dotproduct / (v1Length * v2Length);</span>
+
+    // Double value rounding precision may lead to the value we're about to pass into
+    // the arccos function to be slightly outside its domain, so do a safety check.
+<span class="nc bnc" id="L86" title="All 2 branches missed.">    if (value &lt;= -1.0) return PI;</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">    if (value &gt;= +1.0) return 0;</span>
+<span class="nc" id="L88">    return acos(value);</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L93">    Point2D center = new Point2D.Double(0, 0);</span>
+<span class="nc" id="L94">    Point2D p1 = new Point2D.Double(2, 0);</span>
+<span class="nc" id="L95">    Point2D p2 = new Point2D.Double(-2, 0);</span>
+<span class="nc" id="L96">    System.out.println(circularSegmentArea(center, 2.0, p1, p2));</span>
+
+<span class="nc" id="L98">    p1 = new Point2D.Double(0, 3);</span>
+<span class="nc" id="L99">    p2 = new Point2D.Double(3, 0);</span>
+<span class="nc" id="L100">    System.out.println(circularSegmentArea(center, 3.0, p1, p2));</span>
+<span class="nc" id="L101">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

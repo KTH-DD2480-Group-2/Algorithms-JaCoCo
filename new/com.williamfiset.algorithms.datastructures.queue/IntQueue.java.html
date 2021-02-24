@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>IntQueue.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.queue</a> &gt; <span class="el_source">IntQueue.java</span></div><h1>IntQueue.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an implementation of an integer only queue which is extremely quick and
+ * lightweight. In terms of performance it can outperform java.util.ArrayDeque (Java's fastest queue
+ * implementation) by a factor of 40+! See the benchmark test below for proof. However, the downside
+ * is you need to know an upper bound on the number of elements that will be inside the queue at any
+ * given time for this queue to work.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com, liujingkun, liujkon@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.queue;
+
+public class IntQueue implements Queue&lt;Integer&gt; {
+
+  private int[] data;
+  private int front, end;
+  private int size;
+
+  // maxSize is the maximum number of items
+  // that can be in the queue at any given time
+<span class="fc" id="L20">  public IntQueue(int maxSize) {</span>
+<span class="fc" id="L21">    front = end = size = 0;</span>
+<span class="fc" id="L22">    data = new int[maxSize];</span>
+<span class="fc" id="L23">  }</span>
+
+  // Return true/false on whether the queue is empty
+  public boolean isEmpty() {
+<span class="fc bfc" id="L27" title="All 2 branches covered.">    return size == 0;</span>
+  }
+
+  // Return the number of elements inside the queue
+  public int size() {
+<span class="fc" id="L32">    return size;</span>
+  }
+
+  @Override
+  public Integer peek() {
+<span class="pc bpc" id="L37" title="1 of 2 branches missed.">    if (isEmpty()) {</span>
+<span class="nc" id="L38">      throw new RuntimeException(&quot;Queue is empty&quot;);</span>
+    }
+<span class="fc" id="L40">    front = front % data.length;</span>
+<span class="fc" id="L41">    return data[front];</span>
+  }
+
+  public boolean isFull() {
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">    return size == data.length;</span>
+  }
+
+  // Add an element to the queue
+  @Override
+  public void offer(Integer value) {
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">    if (isFull()) {</span>
+<span class="nc" id="L52">      throw new RuntimeException(&quot;Queue too small!&quot;);</span>
+    }
+<span class="fc" id="L54">    data[end++] = value;</span>
+<span class="fc" id="L55">    size++;</span>
+<span class="fc" id="L56">    end = end % data.length;</span>
+<span class="fc" id="L57">  }</span>
+
+  // Make sure you check is the queue is not empty before calling poll!
+  @Override
+  public Integer poll() {
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">    if (size == 0) {</span>
+<span class="nc" id="L63">      throw new RuntimeException(&quot;Queue is empty&quot;);</span>
+    }
+<span class="fc" id="L65">    size--;</span>
+<span class="fc" id="L66">    front = front % data.length;</span>
+<span class="fc" id="L67">    return data[front++];</span>
+  }
+
+  // Example usage
+  public static void main(String[] args) {
+
+<span class="nc" id="L73">    IntQueue q = new IntQueue(5);</span>
+
+<span class="nc" id="L75">    q.offer(1);</span>
+<span class="nc" id="L76">    q.offer(2);</span>
+<span class="nc" id="L77">    q.offer(3);</span>
+<span class="nc" id="L78">    q.offer(4);</span>
+<span class="nc" id="L79">    q.offer(5);</span>
+
+<span class="nc" id="L81">    System.out.println(q.poll()); // 1</span>
+<span class="nc" id="L82">    System.out.println(q.poll()); // 2</span>
+<span class="nc" id="L83">    System.out.println(q.poll()); // 3</span>
+<span class="nc" id="L84">    System.out.println(q.poll()); // 4</span>
+
+<span class="nc" id="L86">    System.out.println(q.isEmpty()); // false</span>
+
+<span class="nc" id="L88">    q.offer(1);</span>
+<span class="nc" id="L89">    q.offer(2);</span>
+<span class="nc" id="L90">    q.offer(3);</span>
+
+<span class="nc" id="L92">    System.out.println(q.poll()); // 5</span>
+<span class="nc" id="L93">    System.out.println(q.poll()); // 1</span>
+<span class="nc" id="L94">    System.out.println(q.poll()); // 2</span>
+<span class="nc" id="L95">    System.out.println(q.poll()); // 3</span>
+
+<span class="nc" id="L97">    System.out.println(q.isEmpty()); // true</span>
+
+    //    benchMarkTest();
+<span class="nc" id="L100">  }</span>
+
+  // BenchMark IntQueue vs ArrayDeque.
+  private static void benchMarkTest() {
+
+<span class="nc" id="L105">    int n = 10000000;</span>
+<span class="nc" id="L106">    IntQueue intQ = new IntQueue(n);</span>
+
+    // IntQueue times at around 0.0324 seconds
+<span class="nc" id="L109">    long start = System.nanoTime();</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) intQ.offer(i);</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) intQ.poll();</span>
+<span class="nc" id="L112">    long end = System.nanoTime();</span>
+<span class="nc" id="L113">    System.out.println(&quot;IntQueue Time: &quot; + (end - start) / 1e9);</span>
+
+    // ArrayDeque times at around 1.438 seconds
+<span class="nc" id="L116">    java.util.ArrayDeque&lt;Integer&gt; arrayDeque = new java.util.ArrayDeque&lt;&gt;();</span>
+    // java.util.ArrayDeque &lt;Integer&gt; arrayDeque = new java.util.ArrayDeque&lt;&gt;(n); // strangely the
+    // ArrayQueue is slower when you give it an initial capacity.
+<span class="nc" id="L119">    start = System.nanoTime();</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) arrayDeque.offer(i);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) arrayDeque.poll();</span>
+<span class="nc" id="L122">    end = System.nanoTime();</span>
+<span class="nc" id="L123">    System.out.println(&quot;ArrayDeque Time: &quot; + (end - start) / 1e9);</span>
+<span class="nc" id="L124">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

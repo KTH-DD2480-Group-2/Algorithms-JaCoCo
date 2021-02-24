@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Knapsack_01.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.dp</a> &gt; <span class="el_source">Knapsack_01.java</span></div><h1>Knapsack_01.java</h1><pre class="source lang-java linenums">/**
+ * This file contains a dynamic programming solutions to the classic 0/1 knapsack problem where are
+ * you are trying to maximize the total profit of items selected without exceeding the capacity of
+ * your knapsack.
+ *
+ * &lt;p&gt;Time Complexity: O(nW) Space Complexity: O(nW)
+ *
+ * &lt;p&gt;Tested code against: https://open.kattis.com/problems/knapsack
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.dp;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L17">public class Knapsack_01 {</span>
+
+  /**
+   * @param capacity - The maximum capacity of the knapsack
+   * @param W - The weights of the items
+   * @param V - The values of the items
+   * @return The maximum achievable profit of selecting a subset of the elements such that the
+   *     capacity of the knapsack is not exceeded
+   */
+  public static int knapsack(int capacity, int[] W, int[] V) {
+
+<span class="nc bnc" id="L28" title="All 8 branches missed.">    if (W == null || V == null || W.length != V.length || capacity &lt; 0)</span>
+<span class="nc" id="L29">      throw new IllegalArgumentException(&quot;Invalid input&quot;);</span>
+
+<span class="nc" id="L31">    final int N = W.length;</span>
+
+    // Initialize a table where individual rows represent items
+    // and columns represent the weight of the knapsack
+<span class="nc" id="L35">    int[][] DP = new int[N + 1][capacity + 1];</span>
+
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    for (int i = 1; i &lt;= N; i++) {</span>
+
+      // Get the value and weight of the item
+<span class="nc" id="L40">      int w = W[i - 1], v = V[i - 1];</span>
+
+<span class="nc bnc" id="L42" title="All 2 branches missed.">      for (int sz = 1; sz &lt;= capacity; sz++) {</span>
+
+        // Consider not picking this element
+<span class="nc" id="L45">        DP[i][sz] = DP[i - 1][sz];</span>
+
+        // Consider including the current element and
+        // see if this would be more profitable
+<span class="nc bnc" id="L49" title="All 4 branches missed.">        if (sz &gt;= w &amp;&amp; DP[i - 1][sz - w] + v &gt; DP[i][sz]) DP[i][sz] = DP[i - 1][sz - w] + v;</span>
+      }
+    }
+
+<span class="nc" id="L53">    int sz = capacity;</span>
+<span class="nc" id="L54">    List&lt;Integer&gt; itemsSelected = new ArrayList&lt;&gt;();</span>
+
+    // Using the information inside the table we can backtrack and determine
+    // which items were selected during the dynamic programming phase. The idea
+    // is that if DP[i][sz] != DP[i-1][sz] then the item was selected
+<span class="nc bnc" id="L59" title="All 2 branches missed.">    for (int i = N; i &gt; 0; i--) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">      if (DP[i][sz] != DP[i - 1][sz]) {</span>
+<span class="nc" id="L61">        int itemIndex = i - 1;</span>
+<span class="nc" id="L62">        itemsSelected.add(itemIndex);</span>
+<span class="nc" id="L63">        sz -= W[itemIndex];</span>
+      }
+    }
+
+    // Return the items that were selected
+    // java.util.Collections.reverse(itemsSelected);
+    // return itemsSelected;
+
+    // Return the maximum profit
+<span class="nc" id="L72">    return DP[N][capacity];</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L77">    int capacity = 10;</span>
+<span class="nc" id="L78">    int[] V = {1, 4, 8, 5};</span>
+<span class="nc" id="L79">    int[] W = {3, 3, 5, 6};</span>
+<span class="nc" id="L80">    System.out.println(knapsack(capacity, W, V));</span>
+
+<span class="nc" id="L82">    capacity = 7;</span>
+<span class="nc" id="L83">    V = new int[] {2, 2, 4, 5, 3};</span>
+<span class="nc" id="L84">    W = new int[] {3, 1, 3, 4, 2};</span>
+<span class="nc" id="L85">    System.out.println(knapsack(capacity, W, V));</span>
+<span class="nc" id="L86">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

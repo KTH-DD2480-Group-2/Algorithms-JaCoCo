@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MaximumCardinalityBipartiteMatchingAugmentingPathAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">MaximumCardinalityBipartiteMatchingAugmentingPathAdjacencyList.java</span></div><h1>MaximumCardinalityBipartiteMatchingAugmentingPathAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * This is an implementation of the augmenting path algorithm to find the Maximum Cardinality
+ * Bipartite Matching (MCBM) on a bipartite graph. To summarize, this means that given a bipartite
+ * graph we are able to find the matching between two groups which yields the most number of edges
+ * used.
+ *
+ * &lt;p&gt;Code tested against: https://open.kattis.com/problems/gopher2
+ *
+ * &lt;p&gt;Time Complexity: O(VE)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import java.util.*;
+
+<span class="nc" id="L17">public class MaximumCardinalityBipartiteMatchingAugmentingPathAdjacencyList {</span>
+
+  static final int FREE = -1;
+<span class="nc" id="L20">  static int visitToken = 1;</span>
+
+  /**
+   * This function counts what the Maximum Cardinality Bipartite Matching (MCBM) is a bipartite
+   * graph where the nodes [0,n) are in the left set and [n, n+m) in right set
+   *
+   * @param graph - An adjacency list representing an undirected bipartite graph.
+   */
+  public static int mcbm(List&lt;List&lt;Integer&gt;&gt; graph, int n, int m) {
+
+<span class="nc" id="L30">    int N = n + m, matches = 0;</span>
+
+<span class="nc" id="L32">    int[] visited = new int[n];</span>
+<span class="nc" id="L33">    int[] next = new int[N];</span>
+<span class="nc" id="L34">    Arrays.fill(next, FREE);</span>
+
+<span class="nc bnc" id="L36" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L37">      matches += augment(graph, visited, next, i);</span>
+<span class="nc" id="L38">      visitToken++;</span>
+    }
+
+<span class="nc" id="L41">    return matches;</span>
+  }
+
+  private static int augment(List&lt;List&lt;Integer&gt;&gt; graph, int[] visited, int[] next, int at) {
+
+    // Node already visited in this augmenting path
+<span class="nc bnc" id="L47" title="All 2 branches missed.">    if (visited[at] == visitToken) return 0;</span>
+<span class="nc" id="L48">    visited[at] = visitToken;</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">    for (int node : graph.get(at)) {</span>
+      // If the value of oppositeNode is FREE then it has not yet been
+      // matched, otherwise the value refers to the index of the node
+      // used to reach the oppositeNode.
+<span class="nc" id="L54">      int oppositeNode = next[node];</span>
+
+<span class="nc bnc" id="L56" title="All 2 branches missed.">      if (oppositeNode == FREE) {</span>
+        // Record which node we came from and return
+        // 1 to indicate a path was found
+<span class="nc" id="L59">        next[node] = at;</span>
+<span class="nc" id="L60">        return 1;</span>
+      }
+
+      // We were able to find an alternating path
+<span class="nc bnc" id="L64" title="All 2 branches missed.">      if (augment(graph, visited, next, oppositeNode) != 0) {</span>
+
+        // Record which node we came from and return
+        // 1 to indicate a path was found
+<span class="nc" id="L68">        next[node] = at;</span>
+<span class="nc" id="L69">        return 1;</span>
+      }
+<span class="nc" id="L71">    }</span>
+
+    // No path found :/
+<span class="nc" id="L74">    return 0;</span>
+  }
+
+  private static List&lt;List&lt;Integer&gt;&gt; createEmptyGraph(int n) {
+<span class="nc" id="L78">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L80">    return graph;</span>
+  }
+
+  private static void addEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="nc" id="L84">    graph.get(from).add(to);</span>
+<span class="nc" id="L85">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L88">    int n = 8;</span>
+<span class="nc" id="L89">    List&lt;List&lt;Integer&gt;&gt; graph = createEmptyGraph(n);</span>
+
+    // Left set includes {0,1,2,3} and right set {4,5,6,7}
+<span class="nc" id="L92">    addEdge(graph, 0, 4);</span>
+<span class="nc" id="L93">    addEdge(graph, 1, 5);</span>
+<span class="nc" id="L94">    addEdge(graph, 2, 7);</span>
+<span class="nc" id="L95">    addEdge(graph, 3, 6);</span>
+<span class="nc" id="L96">    addEdge(graph, 4, 1);</span>
+<span class="nc" id="L97">    addEdge(graph, 5, 1);</span>
+<span class="nc" id="L98">    addEdge(graph, 6, 1);</span>
+
+    // Prints '4' because that's the maximum matching.
+<span class="nc" id="L101">    System.out.println(mcbm(graph, 4, 4));</span>
+<span class="nc" id="L102">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

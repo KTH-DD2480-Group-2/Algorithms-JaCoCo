@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LazyPrimsAdjacencyMatrix.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">LazyPrimsAdjacencyMatrix.java</span></div><h1>LazyPrimsAdjacencyMatrix.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the lazy Prim's algorithm with an adjacency matrix which upon visiting a new
+ * node adds all the edges to the min priority queue and also removes already seen edges when
+ * polling.
+ *
+ * &lt;p&gt;Time Complexity: O(V^2)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+
+<span class="nc" id="L14">public class LazyPrimsAdjacencyMatrix {</span>
+
+  static class Edge implements Comparable&lt;Edge&gt; {
+    int to, cost;
+
+<span class="nc" id="L19">    public Edge(int to, int cost) {</span>
+<span class="nc" id="L20">      this.to = to;</span>
+<span class="nc" id="L21">      this.cost = cost;</span>
+<span class="nc" id="L22">    }</span>
+
+    @Override
+    public int compareTo(Edge other) {
+<span class="nc" id="L26">      return cost - other.cost;</span>
+    }
+  }
+
+  // Given an N*N undirected adjacency matrix, that is a
+  // graph with matrix[i][j] = matrix[j][i] for all i,j this method
+  // finds the minimum spanning tree cost using Prim's algorithm
+  public static Long prims(Integer[][] graph) {
+
+<span class="nc" id="L35">    int n = graph.length;</span>
+<span class="nc" id="L36">    long sum = 0, visitedNodes = 1;</span>
+<span class="nc" id="L37">    PriorityQueue&lt;Edge&gt; pq = new PriorityQueue&lt;&gt;();</span>
+
+<span class="nc" id="L39">    boolean[] connected = new boolean[n];</span>
+<span class="nc" id="L40">    connected[0] = true;</span>
+
+<span class="nc bnc" id="L42" title="All 4 branches missed.">    for (int i = 1; i &lt; n; i++) if (graph[0][i] != null) pq.offer(new Edge(i, graph[0][i]));</span>
+
+    // Loop while the MST is not complete
+<span class="nc bnc" id="L45" title="All 4 branches missed.">    while (visitedNodes != n &amp;&amp; !pq.isEmpty()) {</span>
+
+<span class="nc" id="L47">      Edge edge = pq.poll();</span>
+
+<span class="nc bnc" id="L49" title="All 2 branches missed.">      if (!connected[edge.to]) {</span>
+
+        // Update minimum distances
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        for (int i = 0; i &lt; n; i++)</span>
+<span class="nc bnc" id="L53" title="All 4 branches missed.">          if (!connected[i] &amp;&amp; graph[edge.to][i] != null) pq.offer(new Edge(i, graph[edge.to][i]));</span>
+
+<span class="nc" id="L55">        connected[edge.to] = true;</span>
+<span class="nc" id="L56">        sum += edge.cost;</span>
+<span class="nc" id="L57">        visitedNodes++;</span>
+      }
+<span class="nc" id="L59">    }</span>
+
+    // Make sure MST spans the whole graph
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    if (visitedNodes != n) return null;</span>
+<span class="nc" id="L63">    return sum;</span>
+  }
+
+  // Example usage
+  public static void main(String[] args) {
+
+<span class="nc" id="L69">    final int NUM_NODES = 10;</span>
+<span class="nc" id="L70">    Integer[][] graph = new Integer[NUM_NODES][NUM_NODES];</span>
+
+    // Make an undirected graph
+<span class="nc" id="L73">    graph[0][1] = graph[1][0] = 1;</span>
+<span class="nc" id="L74">    graph[0][3] = graph[3][0] = 4;</span>
+<span class="nc" id="L75">    graph[0][4] = graph[4][0] = 5;</span>
+<span class="nc" id="L76">    graph[1][3] = graph[3][1] = 2;</span>
+<span class="nc" id="L77">    graph[1][2] = graph[2][1] = 1;</span>
+<span class="nc" id="L78">    graph[2][3] = graph[3][2] = 5;</span>
+<span class="nc" id="L79">    graph[2][5] = graph[5][2] = 7;</span>
+<span class="nc" id="L80">    graph[3][4] = graph[4][3] = 2;</span>
+<span class="nc" id="L81">    graph[3][6] = graph[6][3] = 2;</span>
+<span class="nc" id="L82">    graph[3][5] = graph[5][3] = 11;</span>
+<span class="nc" id="L83">    graph[4][7] = graph[7][4] = 4;</span>
+<span class="nc" id="L84">    graph[5][6] = graph[6][5] = 1;</span>
+<span class="nc" id="L85">    graph[5][8] = graph[8][5] = 4;</span>
+<span class="nc" id="L86">    graph[6][7] = graph[7][6] = 4;</span>
+<span class="nc" id="L87">    graph[6][8] = graph[8][6] = 6;</span>
+<span class="nc" id="L88">    graph[7][8] = graph[8][7] = 1;</span>
+<span class="nc" id="L89">    graph[7][9] = graph[9][7] = 2;</span>
+<span class="nc" id="L90">    graph[8][9] = graph[9][8] = 0;</span>
+
+<span class="nc" id="L92">    Long mstCost = prims(graph);</span>
+<span class="nc" id="L93">    System.out.println(&quot;MST cost: &quot; + mstCost);</span>
+<span class="nc" id="L94">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

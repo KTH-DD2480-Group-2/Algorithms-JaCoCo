@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>StringSet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.bloomfilter</a> &gt; <span class="el_source">StringSet.java</span></div><h1>StringSet.java</h1><pre class="source lang-java linenums">/**
+ * The StringSet is a probabilistic string set data structure implemented using a bloom filter and
+ * positional rolling hashing techniques. This data structure can be very fast (outperforming Java
+ * HashSet) if you're doing queries involving all substrings of a particular string. Despite being
+ * probabilistic, this DS is very safe to use because the probability of a false positive can be set
+ * to as low as you wish it to be.
+ *
+ * @author William Alexandre Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.bloomfilter;
+
+public class StringSet {
+
+  // Our alphabet size is 95 because there are only 95 printable ASCII characters
+  // which are in the range between [32, 127). We also need to add +1 to our alphabet
+  // size because we're going to redefine the first ASCII character (the space character)
+  // to be 1 instead of 0 to avoid collisions where the string ' ' hashes to the
+  // same value as '   ' since 0*95^0 = 0*95^0 + 0*95^1 + 0*95^2
+  private static final int ALPHABET_SZ = 95 + 1;
+<span class="fc" id="L20">  private static final int[] ALPHABET = new int[127];</span>
+
+  private final int N_HASHES;
+  private final long POWERS[][];
+  private final int[] MODS, MOD_INVERSES;
+  private final long[] rollingHashes;
+  private final BloomFilter bloomFilter;
+
+  // More primes: 1009, 1013, 1019, 10007, 10009, 10037, 100003, 100019, 100043, 1000003, 1000033,
+  // 1000037,
+  // 10000019, 10000079, 10000103, 100000007, 100000009, 100000023, 1000000007, 1000000009,
+  // 1000000021, 1000000033
+<span class="fc" id="L32">  private static final int[] DEFAULT_MODS = {10009, 100003, 1000003};</span>
+
+  // Assign a mapping from the printable ASCII characters to the natural numbers
+  static {
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    for (int i = 32, n = 1; i &lt; ALPHABET.length; i++, n++) {</span>
+<span class="fc" id="L37">      ALPHABET[i] = n;</span>
+    }
+<span class="fc" id="L39">  }</span>
+
+  public StringSet(int maxLen) {
+<span class="fc" id="L42">    this(DEFAULT_MODS, maxLen);</span>
+<span class="fc" id="L43">  }</span>
+
+  // mods - The mod values to use for the bloom filter, they should probably be prime numbers
+  // maxLen - The maximum length string we will need to deal with
+<span class="fc" id="L47">  public StringSet(int[] mods, int maxLen) {</span>
+
+<span class="fc" id="L49">    MODS = mods.clone();</span>
+<span class="fc" id="L50">    N_HASHES = mods.length;</span>
+<span class="fc" id="L51">    MOD_INVERSES = new int[N_HASHES];</span>
+<span class="fc" id="L52">    POWERS = new long[N_HASHES][maxLen];</span>
+<span class="fc" id="L53">    rollingHashes = new long[N_HASHES];</span>
+<span class="fc" id="L54">    bloomFilter = new BloomFilter(mods);</span>
+
+<span class="fc" id="L56">    java.math.BigInteger bigAlpha = new java.math.BigInteger(String.valueOf(ALPHABET_SZ));</span>
+
+    // Assuming all mods are primes each mod value will have a modular inverse
+<span class="fc bfc" id="L59" title="All 2 branches covered.">    for (int i = 0; i &lt; N_HASHES; i++) {</span>
+<span class="fc" id="L60">      java.math.BigInteger mod = new java.math.BigInteger(String.valueOf(MODS[i]));</span>
+<span class="fc" id="L61">      MOD_INVERSES[i] = bigAlpha.modInverse(mod).intValue();</span>
+    }
+
+    // Precompute powers of the alphabet size mod all the mod values
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    for (int i = 0; i &lt; N_HASHES; i++) {</span>
+<span class="fc" id="L66">      POWERS[i][0] = 1L;</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">      for (int j = 1; j &lt; maxLen; j++) {</span>
+<span class="fc" id="L68">        POWERS[i][j] = (POWERS[i][j - 1] * ALPHABET_SZ) % mods[i];</span>
+      }
+    }
+<span class="fc" id="L71">  }</span>
+
+  // Returns a shallow copy of the current rolling hash value.
+  // Make sure you clone the array if you want to cache it.
+  public long[] computeHash(String str) {
+
+<span class="fc" id="L77">    java.util.Arrays.fill(rollingHashes, 0L);</span>
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">    for (int i = 0; i &lt; str.length(); i++) {</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">      for (int k = 0; k &lt; N_HASHES; k++) {</span>
+<span class="fc" id="L81">        int rightChar = ALPHABET[str.charAt(i)];</span>
+<span class="fc" id="L82">        rollingHashes[k] = addRight(rollingHashes[k], rightChar, k);</span>
+      }
+    }
+
+<span class="fc" id="L86">    return rollingHashes; // rollingHashes.clone();</span>
+  }
+
+  // This method adds a string to the bloom filter set. If you're adding a lot
+  // of similar strings of the same length use the overloaded version
+  // of this method to take advantage of rolling hashes, or if you're
+  // simply adding all substrings call 'addAllSubstrings' to also take
+  // advantage of rolling hashing technique.
+  public void add(String str) {
+<span class="fc" id="L95">    bloomFilter.add(computeHash(str));</span>
+<span class="fc" id="L96">  }</span>
+
+  // Add all sequences of length 'sz' to the bloom filter
+  public void add(String str, int sz) {
+
+<span class="nc" id="L101">    add(str);</span>
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">    for (int i = sz; i &lt; str.length() - sz; i++) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">      for (int k = 0; k &lt; N_HASHES; k++) {</span>
+
+<span class="nc" id="L106">        int rightChar = ALPHABET[str.charAt(i)];</span>
+<span class="nc" id="L107">        int leftChar = ALPHABET[str.charAt(i - sz)];</span>
+
+        // Add the right character
+<span class="nc" id="L110">        rollingHashes[k] = addRight(rollingHashes[k], rightChar, k);</span>
+
+        // Remove the leftmost character
+<span class="nc" id="L113">        rollingHashes[k] = removeLeft(rollingHashes[k], leftChar, k, sz);</span>
+      }
+<span class="nc" id="L115">      bloomFilter.add(rollingHashes);</span>
+    }
+<span class="nc" id="L117">  }</span>
+
+  // Adds all the substrings of 'data' into the
+  // bloom filter using positional hashing
+  public void addAllSubstrings(String str) {
+
+<span class="fc" id="L123">    int N = str.length();</span>
+<span class="fc" id="L124">    int[] values = new int[N];</span>
+
+<span class="fc bfc" id="L126" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) values[i] = ALPHABET[str.charAt(i)];</span>
+
+<span class="fc bfc" id="L128" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) {</span>
+
+      // Reset all rolling hashes
+<span class="fc" id="L131">      java.util.Arrays.fill(rollingHashes, 0L);</span>
+
+<span class="fc bfc" id="L133" title="All 2 branches covered.">      for (int j = i; j &lt; N; j++) {</span>
+
+        // Compute the next rolling hash value for each hash
+        // function with a different modulus value
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        for (int k = 0; k &lt; N_HASHES; k++) {</span>
+<span class="fc" id="L138">          rollingHashes[k] = addRight(rollingHashes[k], values[j], k);</span>
+        }
+
+        // Add this substring to the bloom filter
+<span class="fc" id="L142">        bloomFilter.add(rollingHashes);</span>
+      }
+    }
+<span class="fc" id="L145">  }</span>
+
+  // This function adds a character to the end of the rolling hash
+  public long addRight(long rollingHash, int lastValue, int modIndex) {
+<span class="fc" id="L149">    rollingHash = (rollingHash * ALPHABET_SZ + lastValue) % MODS[modIndex];</span>
+<span class="fc" id="L150">    return (rollingHash + MODS[modIndex]) % MODS[modIndex];</span>
+  }
+
+  public long addRight(long rollingHash, char lastValue, int modIndex) {
+<span class="nc" id="L154">    return addRight(rollingHash, ALPHABET[lastValue], modIndex);</span>
+  }
+
+  // This function adds a character to the beginning of the rolling hash
+  public long addLeft(long rollingHash, int firstValue, int modIndex, int len) {
+<span class="nc" id="L159">    rollingHash = (firstValue * POWERS[modIndex][len] + rollingHash) % MODS[modIndex];</span>
+<span class="nc" id="L160">    return (rollingHash + MODS[modIndex]) % MODS[modIndex];</span>
+  }
+
+  public long addLeft(long rollingHash, char firstValue, int modIndex, int len) {
+<span class="nc" id="L164">    return addLeft(rollingHash, ALPHABET[firstValue], modIndex, len);</span>
+  }
+
+  // Given a rolling hash x_n*A^n + x_n-1*A^(n-1) + ... + x_2*A^2 + x_1*A^1 + x_0*A^0
+  // where x_i is a string character value and 'A' is the alphabet size we
+  // want to remove the first term 'x_n*A^n' from our rolling hash.
+  //
+  // firstValue - This is x_n, the first character of this string
+  public long removeLeft(long rollingHash, int firstValue, int modIndex, int len) {
+<span class="nc" id="L173">    rollingHash = (rollingHash - firstValue * POWERS[modIndex][len - 1]) % MODS[modIndex];</span>
+<span class="nc" id="L174">    return (rollingHash + MODS[modIndex]) % MODS[modIndex];</span>
+  }
+
+  public long removeLeft(long rollingHash, char firstValue, int modIndex, int len) {
+<span class="nc" id="L178">    return removeLeft(rollingHash, ALPHABET[firstValue], modIndex, len);</span>
+  }
+
+  public long removeRight(long rollingHash, int lastValue, int modIndex) {
+<span class="nc" id="L182">    rollingHash = (((rollingHash - lastValue) % MODS[modIndex]) + MODS[modIndex]) % MODS[modIndex];</span>
+<span class="nc" id="L183">    return (rollingHash * MOD_INVERSES[modIndex]) % MODS[modIndex];</span>
+  }
+
+  public long removeRight(long rollingHash, char lastValue, int modIndex) {
+<span class="nc" id="L187">    return removeRight(rollingHash, ALPHABET[lastValue], modIndex);</span>
+  }
+
+  // Given the hash of a string this method returns whether or not
+  // that string is found within the bloom filter.
+  public boolean contains(long[] hashes) {
+<span class="nc" id="L193">    return bloomFilter.contains(hashes);</span>
+  }
+
+  // Dynamically compute this string's hash value and check containment
+  public boolean contains(String str) {
+<span class="fc" id="L198">    return bloomFilter.contains(computeHash(str));</span>
+  }
+
+  @Override
+  public String toString() {
+<span class="nc" id="L203">    return bloomFilter.toString();</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

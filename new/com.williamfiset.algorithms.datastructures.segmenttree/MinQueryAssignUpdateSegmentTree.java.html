@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinQueryAssignUpdateSegmentTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.segmenttree</a> &gt; <span class="el_source">MinQueryAssignUpdateSegmentTree.java</span></div><h1>MinQueryAssignUpdateSegmentTree.java</h1><pre class="source lang-java linenums">/**
+ * Run with: ./gradlew run -Palgorithm=datastructures.segmenttree.MinQueryAssignUpdateSegmentTree
+ *
+ * &lt;p&gt;Several thanks to cp-algorithms for their great article on segment trees:
+ * https://cp-algorithms.com/data_structures/segment_tree.html
+ *
+ * &lt;p&gt;NOTE: This file is still a WIP
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.segmenttree;
+
+public class MinQueryAssignUpdateSegmentTree {
+
+  // The number of elements in the original input values array.
+  private int n;
+
+  // The segment tree represented as a binary tree of ranges where t[0] is the
+  // root node and the left and right children of node i are i*2+1 and i*2+2.
+  private Long[] t;
+
+  // The delta values associates with each segment. Used for lazy propagation
+  // when doing range updates.
+  private Long[] lazy;
+
+  private Long minFunction(Long a, Long b) {
+<span class="pc bpc" id="L27" title="1 of 4 branches missed.">    if (a == null &amp;&amp; b == null) return null;</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">    if (a == null) return b;</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">    if (b == null) return a;</span>
+<span class="fc" id="L30">    return Math.min(a, b);</span>
+  }
+
+<span class="fc" id="L33">  public MinQueryAssignUpdateSegmentTree(long[] values) {</span>
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">    if (values == null) {</span>
+<span class="nc" id="L35">      throw new IllegalArgumentException(&quot;Segment tree values cannot be null.&quot;);</span>
+    }
+
+<span class="fc" id="L38">    n = values.length;</span>
+
+    // The size of the segment tree `t`
+    //
+    // TODO(william): Investigate to reduce this space. There are only 2n-1 segments, so we should
+    // be able to reduce the space, but may need to reorganize the tree/queries. One idea is to use
+    // the Eulerian tour structure of the tree to densely pack the segments.
+<span class="fc" id="L45">    int N = 4 * n;</span>
+
+<span class="fc" id="L47">    t = new Long[N];</span>
+<span class="fc" id="L48">    lazy = new Long[N];</span>
+
+<span class="fc" id="L50">    buildSegmentTree(0, 0, n - 1, values);</span>
+<span class="fc" id="L51">  }</span>
+
+  /**
+   * Builds a segment tree by starting with the leaf nodes and combining segment values on callback.
+   *
+   * @param i the index of the segment in the segment tree
+   * @param tl the left index (inclusive) of the segment range
+   * @param tr the right index (inclusive) of the segment range
+   * @param values the initial values array
+   */
+  private void buildSegmentTree(int i, int tl, int tr, long[] values) {
+<span class="fc bfc" id="L62" title="All 2 branches covered.">    if (tl == tr) {</span>
+<span class="fc" id="L63">      t[i] = values[tl];</span>
+<span class="fc" id="L64">      return;</span>
+    }
+<span class="fc" id="L66">    int tm = (tl + tr) / 2;</span>
+<span class="fc" id="L67">    buildSegmentTree(2 * i + 1, tl, tm, values);</span>
+<span class="fc" id="L68">    buildSegmentTree(2 * i + 2, tm + 1, tr, values);</span>
+
+<span class="fc" id="L70">    t[i] = minFunction(t[2 * i + 1], t[2 * i + 2]);</span>
+<span class="fc" id="L71">  }</span>
+
+  /**
+   * Returns the query of the range [l, r] on the original `values` array (+ any updates made to it)
+   *
+   * @param l the left endpoint of the range query (inclusive)
+   * @param r the right endpoint of the range query (inclusive)
+   */
+  public long rangeQuery1(int l, int r) {
+<span class="fc" id="L80">    return rangeQuery1(0, 0, n - 1, l, r);</span>
+  }
+
+  /**
+   * Returns the range query value of the range [l, r]
+   *
+   * @param i the index of the current segment in the tree
+   * @param tl the left endpoint (inclusive) of the current segment
+   * @param tr the right endpoint (inclusive) of the current segment
+   * @param l the target left endpoint (inclusive) for the range query
+   * @param r the target right endpoint (inclusive) for the range query
+   */
+  private Long rangeQuery1(int i, int tl, int tr, int l, int r) {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">    if (l &gt; r) {</span>
+<span class="fc" id="L94">      return null;</span>
+    }
+<span class="fc" id="L96">    propagate1(i, tl, tr);</span>
+<span class="fc bfc" id="L97" title="All 4 branches covered.">    if (tl == l &amp;&amp; tr == r) {</span>
+<span class="fc" id="L98">      return t[i];</span>
+    }
+<span class="fc" id="L100">    int tm = (tl + tr) / 2;</span>
+    // Instead of checking if [tl, tm] overlaps [l, r] and [tm+1, tr] overlaps
+    // [l, r], simply recurse on both segments and let the base case return the
+    // default value for invalid intervals.
+<span class="fc" id="L104">    return minFunction(</span>
+<span class="fc" id="L105">        rangeQuery1(2 * i + 1, tl, tm, l, Math.min(tm, r)),</span>
+<span class="fc" id="L106">        rangeQuery1(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r));</span>
+  }
+
+  public void rangeUpdate1(int l, int r, long x) {
+<span class="fc" id="L110">    rangeUpdate1(0, 0, n - 1, l, r, x);</span>
+<span class="fc" id="L111">  }</span>
+
+  // TODO(william): cleanup this function
+  private Long assignFunction(Long a, Long b) {
+<span class="fc" id="L115">    return b;</span>
+  }
+
+  private void propagateLazy(int i, int tl, int tr, long val) {
+    // Ignore leaf segments
+<span class="fc bfc" id="L120" title="All 2 branches covered.">    if (tl == tr) return;</span>
+<span class="fc" id="L121">    lazy[2 * i + 1] = assignFunction(/*unused*/ 0L, val);</span>
+<span class="fc" id="L122">    lazy[2 * i + 2] = assignFunction(/*unused*/ 0L, val);</span>
+<span class="fc" id="L123">  }</span>
+
+  private void propagate1(int i, int tl, int tr) {
+    // Check for default value because you don't want to assign to the lazy
+    // value if it's the default value.
+<span class="fc bfc" id="L128" title="All 2 branches covered.">    if (lazy[i] != null) {</span>
+<span class="fc" id="L129">      t[i] = lazy[i];</span>
+      // Push delta to left/right segments for non-leaf nodes
+<span class="fc" id="L131">      propagateLazy(i, tl, tr, lazy[i]);</span>
+<span class="fc" id="L132">      lazy[i] = null;</span>
+    }
+<span class="fc" id="L134">  }</span>
+
+  private void rangeUpdate1(int i, int tl, int tr, int l, int r, long x) {
+<span class="fc" id="L137">    propagate1(i, tl, tr);</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">    if (l &gt; r) {</span>
+<span class="fc" id="L139">      return;</span>
+    }
+
+<span class="fc bfc" id="L142" title="All 4 branches covered.">    if (tl == l &amp;&amp; tr == r) {</span>
+<span class="fc" id="L143">      t[i] = x;</span>
+<span class="fc" id="L144">      propagateLazy(i, tl, tr, x);</span>
+      // TODO(william): confirm if this is needed if we already propagated?
+<span class="fc" id="L146">      lazy[i] = null;</span>
+    } else {
+<span class="fc" id="L148">      int tm = (tl + tr) / 2;</span>
+      // Instead of checking if [tl, tm] overlaps [l, r] and [tm+1, tr] overlaps
+      // [l, r], simply recurse on both segments and let the base case disregard
+      // invalid intervals.
+<span class="fc" id="L152">      rangeUpdate1(2 * i + 1, tl, tm, l, Math.min(tm, r), x);</span>
+<span class="fc" id="L153">      rangeUpdate1(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r, x);</span>
+
+<span class="fc" id="L155">      t[i] = minFunction(t[2 * i + 1], t[2 * i + 2]);</span>
+    }
+<span class="fc" id="L157">  }</span>
+
+  // /**
+  //  * Returns the query of the range [l, r] on the original `values` array (+ any updates made to
+  // it)
+  //  *
+  //  * @param l the left endpoint of the range query (inclusive)
+  //  * @param r the right endpoint of the range query (inclusive)
+  //  */
+  // public long rangeQuery2(int l, int r) {
+  //   return rangeQuery2(0, 0, n - 1, l, r);
+  // }
+
+  // /**
+  //  * Returns the range query value of the range [l, r]
+  //  *
+  //  * &lt;p&gt;An alternative implementation of the range query function that intelligently only digs
+  // into
+  //  * the branches of the segment tree which overlap with the query [l, r].
+  //  *
+  //  * &lt;p&gt;This version of the range query implementation has the advantage that it doesn't need to
+  //  * know the explicit base case value for each range query type.
+  //  *
+  //  * @param i the index of the current segment in the tree
+  //  * @param tl the left endpoint (inclusive) of the current segment
+  //  * @param tr the right endpoint (inclusive) of the current segment
+  //  * @param l the target left endpoint (inclusive) for the range query
+  //  * @param r the target right endpoint (inclusive) for the range query
+  //  */
+  // private Long rangeQuery2(int i, int tl, int tr, int l, int r) {
+  //   if (tl == l &amp;&amp; tr == r) {
+  //     return t[i];
+  //   }
+  //   propagate2(i, tl, tr);
+  //   int tm = (tl + tr) / 2;
+  //   // Test how the left and right segments of the interval [tl, tr] overlap with the query [l,
+  // r]
+  //   boolean overlapsLeftSegment = (l &lt;= tm);
+  //   boolean overlapsRightSegment = (r &gt; tm);
+  //   if (overlapsLeftSegment &amp;&amp; overlapsRightSegment) {
+  //     return minFunction(
+  //         rangeQuery2(2 * i + 1, tl, tm, l, Math.min(tm, r)),
+  //         rangeQuery2(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r));
+  //   } else if (overlapsLeftSegment) {
+  //     return rangeQuery2(2 * i + 1, tl, tm, l, Math.min(tm, r));
+  //   } else {
+  //     return rangeQuery2(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r);
+  //   }
+  // }
+
+  // Alternative range update impl that propagates a little differently.
+  // public void rangeUpdate2(int l, int r, long x) {
+  //   rangeUpdate2(0, 0, n - 1, l, r, x);
+  // }
+
+  // // Propagates ahead so that when you lookup a value of a node it's already pre-propagated
+  // // in a sense. Cleans up the code a bit. You don't want to call this method on the leaf nodes.
+  // private void propagate2(int i, int tl, int tr) {
+  //   // Check for default value because you don't want to assign to the lazy
+  //   // value if it's the default value.
+  //   if (lazy[i] != null) {
+  //     t[2 * i + 1] = lazy[i];
+  //     lazy[2 * i + 1] = lazy[i];
+  //     t[2 * i + 2] = lazy[i];
+  //     lazy[2 * i + 2] = lazy[i];
+  //     lazy[i] = null;
+  //   }
+  // }
+
+  // private void rangeUpdate2(int i, int tl, int tr, int l, int r, long x) {
+  //   if (l &gt; r) {
+  //     return;
+  //   }
+
+  //   if (tl == l &amp;&amp; tr == r) {
+  //     t[i] = x;
+  //     lazy[i] = x;
+  //   } else {
+  //     propagate2(i, tl, tr);
+  //     int tm = (tl + tr) / 2;
+  //     // Instead of checking if [tl, tm] overlaps [l, r] and [tm+1, tr] overlaps
+  //     // [l, r], simply recurse on both segments and let the base case disregard
+  //     // invalid intervals.
+  //     rangeUpdate2(2 * i + 1, tl, tm, l, Math.min(tm, r), x);
+  //     rangeUpdate2(2 * i + 2, tm + 1, tr, Math.max(l, tm + 1), r, x);
+
+  //     t[i] = minFunction(t[2 * i + 1], t[2 * i + 2]);
+  //   }
+  // }
+
+  public void printDebugInfo() {
+<span class="nc" id="L248">    printDebugInfo(0, 0, n - 1);</span>
+<span class="nc" id="L249">    System.out.println();</span>
+<span class="nc" id="L250">  }</span>
+
+  private void printDebugInfo(int i, int tl, int tr) {
+<span class="nc" id="L253">    System.out.printf(&quot;[%d, %d], t[i] = %d, lazy[i] = %d\n&quot;, tl, tr, t[i], lazy[i]);</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">    if (tl == tr) {</span>
+<span class="nc" id="L255">      return;</span>
+    }
+<span class="nc" id="L257">    int tm = (tl + tr) / 2;</span>
+<span class="nc" id="L258">    printDebugInfo(2 * i + 1, tl, tm);</span>
+<span class="nc" id="L259">    printDebugInfo(2 * i + 2, tm + 1, tr);</span>
+<span class="nc" id="L260">  }</span>
+
+  ////////////////////////////////////////////////////
+  //              Example usage:                    //
+  ////////////////////////////////////////////////////
+
+  public static void main(String[] args) {
+    //          0, 1, 2, 3,  4
+<span class="nc" id="L268">    long[] v = {2, 1, 3, 4, -1};</span>
+<span class="nc" id="L269">    MinQueryAssignUpdateSegmentTree st = new MinQueryAssignUpdateSegmentTree(v);</span>
+<span class="nc" id="L270">    st.printDebugInfo();</span>
+<span class="nc" id="L271">    System.out.println(st.rangeQuery1(0, 4)); // -1</span>
+<span class="nc" id="L272">    System.out.println(st.rangeQuery1(3, 3)); // 4</span>
+<span class="nc" id="L273">    System.out.println(st.rangeQuery1(4, 4)); // -1</span>
+<span class="nc" id="L274">    System.out.println(st.rangeQuery1(3, 4)); // -1</span>
+<span class="nc" id="L275">    System.out.println();</span>
+
+    //          0, 1, 2, 3, 4
+    //     v = {2, 1, 3, 2, 2};
+<span class="nc" id="L279">    st.rangeUpdate1(3, 4, 2);</span>
+
+<span class="nc" id="L281">    System.out.println(st.rangeQuery1(0, 4)); // 1</span>
+<span class="nc" id="L282">    System.out.println(st.rangeQuery1(3, 4)); // 2</span>
+<span class="nc" id="L283">    System.out.println(st.rangeQuery1(3, 3)); // 2</span>
+<span class="nc" id="L284">    System.out.println(st.rangeQuery1(4, 4)); // 2</span>
+
+    //          0, 1, 2, 3, 4
+    //     v = {2, 4, 4, 4, 2};
+<span class="nc" id="L288">    st.printDebugInfo();</span>
+<span class="nc" id="L289">    st.rangeUpdate1(1, 3, 4);</span>
+<span class="nc" id="L290">    st.printDebugInfo();</span>
+
+<span class="nc" id="L292">    System.out.println(st.rangeQuery1(0, 4)); // 2</span>
+<span class="nc" id="L293">    System.out.println(st.rangeQuery1(0, 1)); // 2</span>
+<span class="nc" id="L294">    System.out.println(st.rangeQuery1(3, 4)); // 2</span>
+<span class="nc" id="L295">    System.out.println(st.rangeQuery1(1, 1)); // 4</span>
+<span class="nc" id="L296">    System.out.println(st.rangeQuery1(2, 2)); // 4</span>
+<span class="nc" id="L297">    System.out.println(st.rangeQuery1(3, 3)); // 4</span>
+<span class="nc" id="L298">    System.out.println(st.rangeQuery1(1, 3)); // 4</span>
+<span class="nc" id="L299">    System.out.println(st.rangeQuery1(2, 3)); // 4</span>
+<span class="nc" id="L300">    System.out.println(st.rangeQuery1(1, 2)); // 4</span>
+<span class="nc" id="L301">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

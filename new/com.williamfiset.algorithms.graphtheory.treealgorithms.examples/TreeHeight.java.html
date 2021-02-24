@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeHeight.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms.examples</a> &gt; <span class="el_source">TreeHeight.java</span></div><h1>TreeHeight.java</h1><pre class="source lang-java linenums">/**
+ * Tree height example
+ *
+ * &lt;p&gt;Download the code: &lt;br&gt;
+ * $ git clone https://github.com/williamfiset/Algorithms
+ *
+ * &lt;p&gt;Run: &lt;br&gt;
+ * $ ./gradlew run -Palgorithm=graphtheory.treealgorithms.examples.TreeHeight
+ *
+ * &lt;p&gt;Time Complexity: O(n)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms.examples;
+
+<span class="nc" id="L16">public class TreeHeight {</span>
+
+  public static class TreeNode {
+    int value;
+    TreeNode left, right;
+
+<span class="nc" id="L22">    public TreeNode(int value) {</span>
+<span class="nc" id="L23">      this.value = value;</span>
+<span class="nc" id="L24">    }</span>
+
+    public int getValue() {
+<span class="nc" id="L27">      return value;</span>
+    }
+  }
+
+  // Returns the height of the binary tree which is the number of edges from the
+  // root to the deepest leaf node, or -1 if the input is an empty tree.
+  public static int treeHeight1(TreeNode node) {
+<span class="nc bnc" id="L34" title="All 2 branches missed.">    if (node == null) return -1;</span>
+<span class="nc" id="L35">    return Math.max(treeHeight1(node.left), treeHeight1(node.right)) + 1;</span>
+  }
+
+  // Returns the height of the binary tree which is the number of edges from the
+  // root to the deepest leaf node, or -1 if the input is an empty tree.
+  public static int treeHeight2(TreeNode node) {
+    // Handle empty tree edge case.
+<span class="nc bnc" id="L42" title="All 2 branches missed.">    if (node == null) return -1;</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">    if (isLeafNode(node)) return 0;</span>
+<span class="nc" id="L44">    return Math.max(treeHeight2(node.left), treeHeight2(node.right)) + 1;</span>
+  }
+
+  private static boolean isLeafNode(TreeNode node) {
+<span class="nc bnc" id="L48" title="All 4 branches missed.">    return node.left == null &amp;&amp; node.right == null;</span>
+  }
+
+  /* Examples */
+
+  public static void main(String[] args) {
+<span class="nc" id="L54">    testTreeHeight1();</span>
+<span class="nc" id="L55">    testTreeHeight2();</span>
+<span class="nc" id="L56">  }</span>
+
+  private static void testTreeHeight1() {
+<span class="nc" id="L59">    System.out.printf(&quot;Empty tree: %d\n&quot;, treeHeight1(null));</span>
+<span class="nc" id="L60">    System.out.printf(&quot;Singleton height: %d\n&quot;, treeHeight1(new TreeNode(0)));</span>
+<span class="nc" id="L61">    TreeNode root = makeTree();</span>
+<span class="nc" id="L62">    System.out.printf(&quot;Tree height: %d\n&quot;, treeHeight1(root));</span>
+
+    // Prints:
+    // Empty tree: -1
+    // Singleton height: 0
+    // Tree height: 3
+<span class="nc" id="L68">  }</span>
+
+  private static void testTreeHeight2() {
+<span class="nc" id="L71">    System.out.printf(&quot;Empty tree: %d\n&quot;, treeHeight2(null));</span>
+<span class="nc" id="L72">    System.out.printf(&quot;Singleton height: %d\n&quot;, treeHeight2(new TreeNode(0)));</span>
+<span class="nc" id="L73">    TreeNode root = makeTree();</span>
+<span class="nc" id="L74">    System.out.printf(&quot;Tree height: %d\n&quot;, treeHeight2(root));</span>
+
+    // Prints:
+    // Empty tree: -1
+    // Singleton height: 0
+    // Tree height: 3
+<span class="nc" id="L80">  }</span>
+
+  //        0
+  //       / \
+  //      1   2
+  //     / \ / \
+  //    3  4 5  6
+  //   / \
+  //  7   8
+  private static TreeNode makeTree() {
+<span class="nc" id="L90">    TreeNode node0 = new TreeNode(0);</span>
+
+<span class="nc" id="L92">    TreeNode node1 = new TreeNode(1);</span>
+<span class="nc" id="L93">    TreeNode node2 = new TreeNode(2);</span>
+<span class="nc" id="L94">    node0.left = node1;</span>
+<span class="nc" id="L95">    node0.right = node2;</span>
+
+<span class="nc" id="L97">    TreeNode node3 = new TreeNode(3);</span>
+<span class="nc" id="L98">    TreeNode node4 = new TreeNode(4);</span>
+<span class="nc" id="L99">    node1.left = node3;</span>
+<span class="nc" id="L100">    node1.right = node4;</span>
+
+<span class="nc" id="L102">    TreeNode node5 = new TreeNode(5);</span>
+<span class="nc" id="L103">    TreeNode node6 = new TreeNode(6);</span>
+<span class="nc" id="L104">    node2.left = node5;</span>
+<span class="nc" id="L105">    node2.right = node6;</span>
+
+<span class="nc" id="L107">    TreeNode node7 = new TreeNode(7);</span>
+<span class="nc" id="L108">    TreeNode node8 = new TreeNode(8);</span>
+<span class="nc" id="L109">    node3.left = node7;</span>
+<span class="nc" id="L110">    node3.right = node8;</span>
+
+<span class="nc" id="L112">    return node0;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

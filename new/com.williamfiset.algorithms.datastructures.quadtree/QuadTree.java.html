@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuadTree.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.quadtree</a> &gt; <span class="el_source">QuadTree.java</span></div><h1>QuadTree.java</h1><pre class="source lang-java linenums">/**
+ * A QuadTree implementation with integer coordinates.
+ *
+ * &lt;p&gt;NOTE: THIS FILE IS STILL UNDER DEVELOPMENT!
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.quadtree;
+
+import static java.lang.Double.POSITIVE_INFINITY;
+
+import java.util.*;
+
+public class QuadTree {
+
+<span class="fc" id="L16">  private static int NORTH_EAST = 1;</span>
+<span class="fc" id="L17">  private static int NORTH_WEST = 2;</span>
+<span class="fc" id="L18">  private static int SOUTH_EAST = 3;</span>
+<span class="fc" id="L19">  private static int SOUTH_WEST = 4;</span>
+
+  private static boolean isNorth(int dir) {
+<span class="pc bpc" id="L22" title="1 of 4 branches missed.">    return dir == NORTH_EAST || dir == NORTH_WEST;</span>
+  }
+
+  class Pt {
+    long x, y;
+
+<span class="fc" id="L28">    public Pt(long xx, long yy) {</span>
+<span class="fc" id="L29">      y = yy;</span>
+<span class="fc" id="L30">      x = xx;</span>
+<span class="fc" id="L31">    }</span>
+
+    @Override
+    public String toString() {
+<span class="fc" id="L35">      return &quot;(&quot; + x + &quot;,&quot; + y + &quot;)&quot;;</span>
+    }
+  }
+
+  static class SortedPt implements Comparable&lt;SortedPt&gt; {
+    Pt pt;
+    double dist;
+
+<span class="fc" id="L43">    public SortedPt(double dist, Pt pt) {</span>
+<span class="fc" id="L44">      this.dist = dist;</span>
+<span class="fc" id="L45">      this.pt = pt;</span>
+<span class="fc" id="L46">    }</span>
+
+    @Override
+    public int compareTo(SortedPt other) {
+<span class="fc" id="L50">      return Double.compare(dist, other.dist);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="fc" id="L55">      return dist + &quot; - &quot; + pt;</span>
+    }
+  }
+
+  // Node that represents a regions with points inside this region.
+  class Node {
+
+    // Keeps track of how many points are currently
+    // contained within this quad tree node.
+<span class="fc" id="L64">    private int ptCount = 0;</span>
+
+    // Tracks the (x,y) coordinates of points within this quad tree node.
+    private long[] X, Y;
+
+    // Define four Quad Tree nodes to subdivide the region we're
+    // considering into four parts: north west (nw), north east (ne),
+    // south west(sw) and south east(se).
+    private Node nw, ne, sw, se;
+
+    // The region this node encompasses
+    private Rect region;
+
+    // Construct a quad tree for a particular region.
+<span class="fc" id="L78">    public Node(Rect region) {</span>
+<span class="pc bpc" id="L79" title="1 of 2 branches missed.">      if (region == null) throw new IllegalArgumentException(&quot;Illegal argument&quot;);</span>
+<span class="fc" id="L80">      this.region = region;</span>
+<span class="fc" id="L81">      X = new long[NUM_POINTS];</span>
+<span class="fc" id="L82">      Y = new long[NUM_POINTS];</span>
+<span class="fc" id="L83">    }</span>
+
+    // Try adding a point to the current region and if the
+    // region is already full subdivide and recurse until
+    // you are able to place the point inside a smaller region
+    private boolean add(long x, long y) {
+
+      // Point is not within this region.
+<span class="fc bfc" id="L91" title="All 2 branches covered.">      if (!region.contains(x, y)) return false;</span>
+
+      // The point is within this region and there is room for it.
+<span class="fc bfc" id="L94" title="All 2 branches covered.">      if (ptCount &lt; NUM_POINTS) {</span>
+
+<span class="fc" id="L96">        X[ptCount] = x;</span>
+<span class="fc" id="L97">        Y[ptCount] = y;</span>
+<span class="fc" id="L98">        ptCount++;</span>
+
+<span class="fc" id="L100">        return true;</span>
+
+        // This region is full, so subdivide the region into four
+        // quadrants and try adding the point to these new regions
+      } else {
+
+        // Find the center of this region at (cx, cy)
+<span class="fc" id="L107">        long cx = (region.x1 + region.x2) / 2;</span>
+<span class="fc" id="L108">        long cy = (region.y1 + region.y2) / 2;</span>
+
+        // Lazily subdivide each of the regions into four parts
+        // one by one as needed to save memory.
+
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (sw == null) sw = new Node(new Rect(region.x1, region.y1, cx, cy));</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (sw.add(x, y)) return true;</span>
+
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        if (nw == null) nw = new Node(new Rect(region.x1, cy, cx, region.y2));</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        if (nw.add(x, y)) return true;</span>
+
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (ne == null) ne = new Node(new Rect(cx, cy, region.x2, region.y2));</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (ne.add(x, y)) return true;</span>
+
+<span class="fc bfc" id="L122" title="All 2 branches covered.">        if (se == null) se = new Node(new Rect(cx, region.y1, region.x2, cy));</span>
+<span class="fc" id="L123">        return se.add(x, y);</span>
+      }
+    }
+
+    // Count how many points are found within a certain rectangular region
+    private int count(Rect area) {
+
+<span class="pc bpc" id="L130" title="1 of 4 branches missed.">      if (area == null || !region.intersects(area)) return 0;</span>
+
+<span class="fc" id="L132">      int count = 0;</span>
+
+      // The area we're considering fully contains
+      // the region of this node, so simply add the
+      // number of points within this region to the count
+<span class="fc bfc" id="L137" title="All 2 branches covered.">      if (area.contains(region)) {</span>
+<span class="fc" id="L138">        count = ptCount;</span>
+
+        // Our regions overlap, so some points in this
+        // region may intersect with the area we're considering
+      } else {
+<span class="fc bfc" id="L143" title="All 4 branches covered.">        for (int i = 0; i &lt; ptCount; i++) if (area.contains(X[i], Y[i])) count++;</span>
+      }
+
+      // Dig into each of the quadrants and count all points
+      // which overlap with the area and sum their count
+<span class="fc bfc" id="L148" title="All 2 branches covered.">      if (nw != null) count += nw.count(area);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">      if (ne != null) count += ne.count(area);</span>
+<span class="fc bfc" id="L150" title="All 2 branches covered.">      if (sw != null) count += sw.count(area);</span>
+<span class="fc bfc" id="L151" title="All 2 branches covered.">      if (se != null) count += se.count(area);</span>
+
+<span class="fc" id="L153">      return count;</span>
+    }
+
+    private List&lt;Pt&gt; kNearestNeighbors(int k, long x, long y) {
+<span class="fc" id="L157">      PriorityQueue&lt;SortedPt&gt; heap = new PriorityQueue&lt;&gt;(k, Collections.reverseOrder());</span>
+<span class="fc" id="L158">      knn(k, x, y, heap);</span>
+
+<span class="fc" id="L160">      List&lt;Pt&gt; neighbors = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">      for (SortedPt n : heap) neighbors.add(n.pt);</span>
+<span class="fc" id="L162">      return neighbors;</span>
+    }
+
+    // Find the k-nearest neighbors.
+    private void knn(int k, long x, long y, PriorityQueue&lt;SortedPt&gt; heap) {
+
+<span class="fc bfc" id="L168" title="All 2 branches covered.">      for (int i = 0; i &lt; ptCount; i++) {</span>
+<span class="fc" id="L169">        long xx = X[i], yy = Y[i];</span>
+
+        // Get largest radius.
+<span class="fc bfc" id="L172" title="All 2 branches covered.">        double radius = heap.isEmpty() ? POSITIVE_INFINITY : heap.peek().dist;</span>
+
+        // Get distance from point to this point.
+<span class="fc" id="L175">        double distance = Math.sqrt((xx - x) * (xx - x) + (yy - y) * (yy - y));</span>
+
+        // Add node to heap.
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        if (heap.size() &lt; k) {</span>
+<span class="fc" id="L179">          heap.add(new SortedPt(distance, new Pt(xx, yy)));</span>
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        } else if (distance &lt; radius) {</span>
+<span class="fc" id="L181">          heap.poll();</span>
+          // System.out.println(&quot;POLLED: &quot; + heap.poll());
+<span class="fc" id="L183">          heap.add(new SortedPt(distance, new Pt(xx, yy)));</span>
+        }
+      }
+
+<span class="fc" id="L187">      int pointQuadrant = 0;</span>
+
+      // Dig to find the quadrant (x, y) belongs to.
+<span class="fc bfc" id="L190" title="All 4 branches covered.">      if (nw != null &amp;&amp; region.contains(x, y)) {</span>
+<span class="fc" id="L191">        nw.knn(k, x, y, heap);</span>
+<span class="fc" id="L192">        pointQuadrant = NORTH_WEST;</span>
+<span class="pc bpc" id="L193" title="1 of 4 branches missed.">      } else if (ne != null &amp;&amp; region.contains(x, y)) {</span>
+<span class="nc" id="L194">        ne.knn(k, x, y, heap);</span>
+<span class="nc" id="L195">        pointQuadrant = NORTH_EAST;</span>
+<span class="fc bfc" id="L196" title="All 4 branches covered.">      } else if (sw != null &amp;&amp; region.contains(x, y)) {</span>
+<span class="fc" id="L197">        sw.knn(k, x, y, heap);</span>
+<span class="fc" id="L198">        pointQuadrant = SOUTH_WEST;</span>
+<span class="pc bpc" id="L199" title="3 of 4 branches missed.">      } else if (se != null &amp;&amp; region.contains(x, y)) { // Use else clause?</span>
+<span class="nc" id="L200">        se.knn(k, x, y, heap);</span>
+<span class="nc" id="L201">        pointQuadrant = SOUTH_EAST;</span>
+      }
+
+<span class="fc bfc" id="L204" title="All 2 branches covered.">      if (pointQuadrant == 0) {</span>
+        // System.out.println(&quot;UNDEFINED QUADRANT?&quot;);
+        // return;
+      }
+
+      // Get largest radius.
+<span class="fc bfc" id="L210" title="All 2 branches covered.">      double radius = heap.isEmpty() ? POSITIVE_INFINITY : heap.peek().dist;</span>
+
+      // Find the center of this region at (cx, cy)
+<span class="fc" id="L213">      long cx = (region.x1 + region.x2) / 2;</span>
+<span class="fc" id="L214">      long cy = (region.y1 + region.y2) / 2;</span>
+
+      // Compute the horizontal (dx) and vertical (dy) distance from the
+      // point (x, y) to the nearest cell.
+<span class="fc" id="L218">      long dx = Math.abs(x - cx);</span>
+<span class="fc" id="L219">      long dy = Math.abs(y - cy);</span>
+
+<span class="fc bfc" id="L221" title="All 2 branches covered.">      boolean checkHorizontalCell = radius &gt;= dx;</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">      boolean checkVerticalCell = radius &gt;= dy;</span>
+<span class="fc bfc" id="L223" title="All 4 branches covered.">      boolean checkDiagonalCell = checkHorizontalCell &amp;&amp; checkVerticalCell;</span>
+
+      // TODO(williamfiset): Refactor.
+      // Clearly there is a code repetition here which needs to be solved.
+      // This part of the code handles the case when the heap is full but there are still unexamined
+      // points
+      // that can be closer. This can be moved to a separate function called findCloserPoints().
+      // This will
+      // eliminate the code duplication, but also will reduce the functions cyclomatic complexity
+      // since many
+      // nested decisions exist in this part.
+<span class="fc bfc" id="L234" title="All 2 branches covered.">      if (heap.size() == k) {</span>
+<span class="fc" id="L235">        findCloserPoints(</span>
+            pointQuadrant, checkHorizontalCell, checkVerticalCell, checkDiagonalCell, x, y, heap);
+
+        // Still need to find k - heap.size() nodes!
+      } else {
+
+        // explore all quadrants ?
+        // Do it lazy? Inspect return val after each call?
+
+<span class="fc bfc" id="L244" title="All 2 branches covered.">        for (int quadrant = 1; quadrant &lt;= 4; quadrant++) {</span>
+
+<span class="fc bfc" id="L246" title="All 2 branches covered.">          if (quadrant == pointQuadrant) continue;</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">          radius = heap.isEmpty() ? POSITIVE_INFINITY : heap.peek().dist;</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">          checkHorizontalCell = radius &gt;= dx;</span>
+<span class="fc bfc" id="L249" title="All 2 branches covered.">          checkVerticalCell = radius &gt;= dy;</span>
+<span class="pc bpc" id="L250" title="1 of 4 branches missed.">          checkDiagonalCell = checkHorizontalCell &amp;&amp; checkVerticalCell;</span>
+
+          // No validation
+<span class="fc bfc" id="L253" title="All 2 branches covered.">          if (heap.size() != k) {</span>
+<span class="fc bfc" id="L254" title="All 2 branches covered.">            if (isNorth(pointQuadrant)) {</span>
+<span class="pc bpc" id="L255" title="1 of 2 branches missed.">              if (pointQuadrant == NORTH_WEST) {</span>
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">                if (ne != null) ne.knn(k, x, y, heap);</span>
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">                if (sw != null) sw.knn(k, x, y, heap);</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">                if (se != null) se.knn(k, x, y, heap);</span>
+              } else {
+<span class="nc bnc" id="L260" title="All 2 branches missed.">                if (nw != null) nw.knn(k, x, y, heap);</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">                if (se != null) se.knn(k, x, y, heap);</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">                if (nw != null) nw.knn(k, x, y, heap);</span>
+              }
+            } else {
+<span class="pc bpc" id="L265" title="1 of 2 branches missed.">              if (pointQuadrant == SOUTH_WEST) {</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">                if (se != null) se.knn(k, x, y, heap);</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">                if (nw != null) nw.knn(k, x, y, heap);</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">                if (ne != null) ne.knn(k, x, y, heap);</span>
+              } else {
+<span class="fc bfc" id="L270" title="All 2 branches covered.">                if (sw != null) sw.knn(k, x, y, heap);</span>
+<span class="pc bpc" id="L271" title="1 of 2 branches missed.">                if (ne != null) ne.knn(k, x, y, heap);</span>
+<span class="fc bfc" id="L272" title="All 2 branches covered.">                if (nw != null) nw.knn(k, x, y, heap);</span>
+              }
+            }
+
+            // must intersect
+          } else {
+<span class="fc" id="L278">            findCloserPoints(</span>
+                pointQuadrant,
+                checkHorizontalCell,
+                checkVerticalCell,
+                checkDiagonalCell,
+                x,
+                y,
+                heap);
+          }
+        } // for
+      } // if
+<span class="fc" id="L289">    } // method</span>
+
+    /**
+     * This Function will search for points closer than those found in the heap.
+     *
+     * @param pointQuadrant Number of points in a quadrant
+     * @param checkHorizontalCell True if there are points in the horizontal adjacent cell
+     * @param checkVerticalCell True if there are points in the vertical adjacent cell
+     * @param checkDiagonalCell True if there are points in the diagonal adjacent cell
+     * @param x The x coordinate of the reference point
+     * @param y The y coordinate of the reference point
+     * @param heap The heap that will contain the nearest points.
+     */
+    private void findCloserPoints(
+        int pointQuadrant,
+        boolean checkHorizontalCell,
+        boolean checkVerticalCell,
+        boolean checkDiagonalCell,
+        long x,
+        long y,
+        PriorityQueue&lt;SortedPt&gt; heap) {
+<span class="fc bfc" id="L310" title="All 2 branches covered.">      if (isNorth(pointQuadrant)) {</span>
+<span class="pc bpc" id="L311" title="1 of 2 branches missed.">        if (pointQuadrant == NORTH_WEST) {</span>
+<span class="pc bpc" id="L312" title="1 of 4 branches missed.">          if (checkHorizontalCell) if (ne != null) ne.knn(heap.size(), x, y, heap);</span>
+<span class="pc bpc" id="L313" title="1 of 4 branches missed.">          if (checkVerticalCell) if (sw != null) sw.knn(heap.size(), x, y, heap);</span>
+<span class="fc bfc" id="L314" title="All 4 branches covered.">          if (checkDiagonalCell) if (se != null) se.knn(heap.size(), x, y, heap);</span>
+        } else {
+<span class="nc bnc" id="L316" title="All 4 branches missed.">          if (checkHorizontalCell) if (nw != null) nw.knn(heap.size(), x, y, heap);</span>
+<span class="nc bnc" id="L317" title="All 4 branches missed.">          if (checkVerticalCell) if (se != null) se.knn(heap.size(), x, y, heap);</span>
+<span class="nc bnc" id="L318" title="All 4 branches missed.">          if (checkDiagonalCell) if (nw != null) nw.knn(heap.size(), x, y, heap);</span>
+        }
+      } else {
+<span class="fc bfc" id="L321" title="All 2 branches covered.">        if (pointQuadrant == SOUTH_WEST) {</span>
+<span class="pc bpc" id="L322" title="2 of 4 branches missed.">          if (checkHorizontalCell) if (se != null) se.knn(heap.size(), x, y, heap);</span>
+<span class="pc bpc" id="L323" title="2 of 4 branches missed.">          if (checkVerticalCell) if (nw != null) nw.knn(heap.size(), x, y, heap);</span>
+<span class="pc bpc" id="L324" title="2 of 4 branches missed.">          if (checkDiagonalCell) if (ne != null) ne.knn(heap.size(), x, y, heap);</span>
+        } else {
+<span class="fc bfc" id="L326" title="All 4 branches covered.">          if (checkHorizontalCell) if (sw != null) sw.knn(heap.size(), x, y, heap);</span>
+<span class="fc bfc" id="L327" title="All 4 branches covered.">          if (checkVerticalCell) if (ne != null) ne.knn(heap.size(), x, y, heap);</span>
+<span class="fc bfc" id="L328" title="All 4 branches covered.">          if (checkDiagonalCell) if (nw != null) nw.knn(heap.size(), x, y, heap);</span>
+        }
+      }
+<span class="fc" id="L331">    }</span>
+  } // node
+
+  public static class Rect {
+
+    long x1, y1, x2, y2;
+
+    // Define a rectangle as a pair of points (x1, y1) in the bottom left corner
+    // and (x2, y2) in the top right corner of the rectangle.
+<span class="fc" id="L340">    public Rect(long x1, long y1, long x2, long y2) {</span>
+<span class="pc bpc" id="L341" title="2 of 4 branches missed.">      if (x1 &gt; x2 || y1 &gt; y2) throw new IllegalArgumentException(&quot;Illegal rectangle coordinates&quot;);</span>
+<span class="fc" id="L342">      this.x1 = x1;</span>
+<span class="fc" id="L343">      this.y1 = y1;</span>
+<span class="fc" id="L344">      this.x2 = x2;</span>
+<span class="fc" id="L345">      this.y2 = y2;</span>
+<span class="fc" id="L346">    }</span>
+
+    // Check for an intersection between two rectangles. The easiest way to do this is to
+    // check if the two rectangles do not intersect and negate the logic afterwards.
+    public boolean intersects(Rect r) {
+<span class="pc bpc" id="L351" title="1 of 10 branches missed.">      return r != null &amp;&amp; !(r.x2 &lt; x1 || r.x1 &gt; x2 || r.y1 &gt; y2 || r.y2 &lt; y1);</span>
+    }
+
+    // Check if a point (x, y) is within this rectangle, this
+    // includes the boundary of the rectangle.
+    public boolean contains(long x, long y) {
+<span class="fc bfc" id="L357" title="All 8 branches covered.">      return (x1 &lt;= x &amp;&amp; x &lt;= x2) &amp;&amp; (y1 &lt;= y &amp;&amp; y &lt;= y2);</span>
+    }
+
+    // Check if another rectangle is strictly contained within this rectangle.
+    public boolean contains(Rect r) {
+<span class="pc bpc" id="L362" title="1 of 6 branches missed.">      return r != null &amp;&amp; contains(r.x1, r.y1) &amp;&amp; contains(r.x2, r.y2);</span>
+    }
+  }
+
+  // This is the maximum number of points each quad tree node can
+  // sustain before it has to subdivide into four more regions.
+  // This variable can have a significant impact on performance.
+  final int NUM_POINTS;
+
+  public static final int DEFAULT_NUM_POINTS = 16;
+
+  // Root node of the quad tree. Public for testing.
+  public Node root;
+
+<span class="fc" id="L376">  public QuadTree(Rect region) {</span>
+<span class="fc" id="L377">    this.NUM_POINTS = DEFAULT_NUM_POINTS;</span>
+<span class="fc" id="L378">    root = new Node(region);</span>
+<span class="fc" id="L379">  }</span>
+
+<span class="fc" id="L381">  public QuadTree(Rect region, int pointsPerNode) {</span>
+<span class="fc" id="L382">    this.NUM_POINTS = pointsPerNode;</span>
+<span class="fc" id="L383">    root = new Node(region);</span>
+<span class="fc" id="L384">  }</span>
+
+  public boolean add(long x, long y) {
+<span class="fc" id="L387">    return root.add(x, y);</span>
+  }
+
+  public int count(Rect region) {
+<span class="fc" id="L391">    return root.count(region);</span>
+  }
+
+  public List&lt;Pt&gt; kNearestNeighbors(int k, long x, long y) {
+<span class="fc" id="L395">    return root.kNearestNeighbors(k, x, y);</span>
+  }
+
+  public List&lt;Pt&gt; getPoints() {
+<span class="fc" id="L399">    List&lt;Pt&gt; points = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L400">    getPoints(root, points);</span>
+<span class="fc" id="L401">    return points;</span>
+  }
+
+  private void getPoints(Node node, List&lt;Pt&gt; points) {
+<span class="fc bfc" id="L405" title="All 2 branches covered.">    if (node == null) return;</span>
+<span class="fc bfc" id="L406" title="All 2 branches covered.">    for (int i = 0; i &lt; node.ptCount; i++) points.add(new Pt(node.X[i], node.Y[i]));</span>
+<span class="fc" id="L407">    getPoints(node.nw, points);</span>
+<span class="fc" id="L408">    getPoints(node.ne, points);</span>
+<span class="fc" id="L409">    getPoints(node.sw, points);</span>
+<span class="fc" id="L410">    getPoints(node.se, points);</span>
+<span class="fc" id="L411">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

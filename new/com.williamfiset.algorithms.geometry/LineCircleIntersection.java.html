@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LineCircleIntersection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">LineCircleIntersection.java</span></div><h1>LineCircleIntersection.java</h1><pre class="source lang-java linenums">/**
+ * Find the intersection of a line in general form with a circle See live demo:
+ * http://www.williamfiset.com/circlelineintersection
+ *
+ * &lt;p&gt;Time Complexity: O(1)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.geometry;
+
+import static java.lang.Math.*;
+
+import java.awt.geom.Point2D;
+
+<span class="nc" id="L15">public class LineCircleIntersection {</span>
+
+  private static final double EPS = 1e-9;
+
+  // Given a line in the form ax + by = c (NOTE: this is not ax + by + c = 0)
+  // Given a circle with a center at (x,y) of radius r
+  // This method finds the intersection of this line and this circle
+  public static Point2D[] lineCircleIntersection(
+      double a, double b, double c, double x, double y, double r) {
+
+    // Set ax + by = c equal to (x - X)^2 + (y - Y)^2 = r^2 and expand:
+    // (a^2 + b^2)x^2 + (2abY - 2ac + - 2b^2X)x + b^2X^2 + b^2Y^2 - 2bcY + c^2 - b^2r^2 = 0
+    // Then use quadratic formula X = (-b +- sqrt(a^2 - 4ac))/2a to find the
+    // roots of the equation (if they exist).
+
+    // Ax^2 + Bx + C = 0;
+<span class="nc" id="L31">    double A = a * a + b * b;</span>
+<span class="nc" id="L32">    double B = 2 * a * b * y - 2 * a * c - 2 * b * b * x;</span>
+<span class="nc" id="L33">    double C = b * b * x * x + b * b * y * y - 2 * b * c * y + c * c - b * b * r * r;</span>
+
+<span class="nc" id="L35">    double D = B * B - 4 * A * C;</span>
+    double x1, y1, x2, y2;
+
+    // Vertical line case :0
+<span class="nc bnc" id="L39" title="All 2 branches missed.">    if (abs(b) &lt; EPS) {</span>
+
+      // ax + by = c, but b = 0, so x = c/a
+<span class="nc" id="L42">      double vx = c / a;</span>
+
+      // No intersection
+<span class="nc bnc" id="L45" title="All 2 branches missed.">      if (abs(x - vx) &gt; r) return new Point2D[] {};</span>
+
+      // Vertical line is tangent to circle
+<span class="nc bnc" id="L48" title="All 4 branches missed.">      if (abs((vx - r) - x) &lt; EPS || abs((vx + r) - x) &lt; EPS)</span>
+<span class="nc" id="L49">        return new Point2D[] {new Point2D.Double(vx, y)};</span>
+
+<span class="nc" id="L51">      double dx = abs(vx - x);</span>
+<span class="nc" id="L52">      double dy = sqrt(r * r - dx * dx);</span>
+
+<span class="nc" id="L54">      return new Point2D[] {new Point2D.Double(vx, y + dy), new Point2D.Double(vx, y - dy)};</span>
+
+      // Line is tangent to circle
+<span class="nc bnc" id="L57" title="All 2 branches missed.">    } else if (abs(D) &lt; EPS) {</span>
+
+<span class="nc" id="L59">      x1 = -B / (2 * A);</span>
+<span class="nc" id="L60">      y1 = (c - a * x1) / b;</span>
+
+<span class="nc" id="L62">      return new Point2D[] {new Point2D.Double(x1, y1)};</span>
+
+      // No intersection point
+<span class="nc bnc" id="L65" title="All 2 branches missed.">    } else if (D &lt; 0) {</span>
+<span class="nc" id="L66">      return new Point2D[] {};</span>
+
+      // Two unique intersection points
+    } else {
+
+<span class="nc" id="L71">      D = sqrt(D);</span>
+
+<span class="nc" id="L73">      x1 = (-B + D) / (2 * A);</span>
+<span class="nc" id="L74">      y1 = (c - a * x1) / b;</span>
+
+<span class="nc" id="L76">      x2 = (-B - D) / (2 * A);</span>
+<span class="nc" id="L77">      y2 = (c - a * x2) / b;</span>
+
+<span class="nc" id="L79">      return new Point2D[] {new Point2D.Double(x1, y1), new Point2D.Double(x2, y2)};</span>
+    }
+  }
+
+  public static void main(String[] args) {
+
+    // Vertical Line on passing through (1,0)
+<span class="nc" id="L86">    display(lineCircleIntersection(1, 0, 1, 0, 0, 1));</span>
+
+    // Horizontal line passing through (0,1)
+<span class="nc" id="L89">    display(lineCircleIntersection(0, 1, 1, 0, 0, 1));</span>
+
+    // Vertical line passing through (-1,0)
+<span class="nc" id="L92">    display(lineCircleIntersection(1, 0, -1, 0, 0, 1));</span>
+<span class="nc" id="L93">  }</span>
+
+  private static void display(Point2D[] pts) {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">    if (pts == null) System.out.println(&quot;null&quot;);</span>
+    else {
+<span class="nc bnc" id="L98" title="All 2 branches missed.">      if (pts.length == 0) System.out.println(&quot;[]&quot;);</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">      else for (Point2D p : pts) System.out.println(p);</span>
+    }
+<span class="nc" id="L101">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

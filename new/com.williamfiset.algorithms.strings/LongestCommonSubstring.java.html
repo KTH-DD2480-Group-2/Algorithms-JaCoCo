@@ -1,0 +1,588 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LongestCommonSubstring.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.strings</a> &gt; <span class="el_source">LongestCommonSubstring.java</span></div><h1>LongestCommonSubstring.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the k Longest Common Substring problem.
+ *
+ * &lt;p&gt;Video: https://youtu.be/Ic80xQFWevc Time complexity: O(nlog^2(n))
+ *
+ * &lt;p&gt;Run on command line:
+ *
+ * &lt;p&gt;Compile: $ javac -d src/main/java
+ * src/main/java/com/williamfiset/algorithms/strings/LongestCommonSubstring.java
+ *
+ * &lt;p&gt;Run: $ java -cp src/main/java com/williamfiset/algorithms/strings/LongestCommonSubstring
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.strings;
+
+import java.util.*;
+
+<span class="nc" id="L19">public class LongestCommonSubstring {</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L22">    String[] strings = new String[] {&quot;abcde&quot;, &quot;habcab&quot;, &quot;ghabcdf&quot;};</span>
+
+    // Display suffix array
+<span class="nc" id="L25">    List&lt;Integer&gt; sentinelIndexes = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L26">    String t = addSentinels(strings, sentinelIndexes);</span>
+<span class="nc" id="L27">    SuffixArray sa = new SuffixArrayImpl(t);</span>
+<span class="nc" id="L28">    sa.toString(sentinelIndexes);</span>
+
+    // LcsSolver example.
+<span class="nc" id="L31">    int k = 2;</span>
+<span class="nc" id="L32">    LcsSolver solver = new LcsSolver(strings);</span>
+<span class="nc" id="L33">    System.out.println(&quot;Longest common substrings: &quot; + solver.getLongestCommonSubstrings(k));</span>
+<span class="nc" id="L34">  }</span>
+
+  // Method to add unique sentinels. Works for low number of strings. Only used for debugging.
+  private static String addSentinels(String[] s, List&lt;Integer&gt; sentinelIndexes) {
+<span class="nc" id="L38">    int token = 35; // starts at '#'</span>
+<span class="nc" id="L39">    String t = &quot;&quot;;</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">    for (String string : s) {</span>
+<span class="nc" id="L41">      t += string;</span>
+<span class="nc" id="L42">      t += (char) token;</span>
+<span class="nc" id="L43">      token++;</span>
+<span class="nc bnc" id="L44" title="All 2 branches missed.">      if (sentinelIndexes != null) sentinelIndexes.add(t.length());</span>
+    }
+<span class="nc" id="L46">    return t;</span>
+  }
+
+  public abstract static class SuffixArray {
+
+    // Length of the suffix array
+    protected final int N;
+
+    // T is the text
+    protected int[] T;
+
+    // The sorted suffix array values.
+    protected int[] sa;
+
+    // Longest Common Prefix array
+    protected int[] lcp;
+
+<span class="fc" id="L63">    private boolean constructedSa = false;</span>
+<span class="fc" id="L64">    private boolean constructedLcpArray = false;</span>
+
+<span class="fc" id="L66">    public SuffixArray(int[] text) {</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">      if (text == null) throw new IllegalArgumentException(&quot;Text cannot be null.&quot;);</span>
+<span class="fc" id="L68">      this.T = text;</span>
+<span class="fc" id="L69">      this.N = text.length;</span>
+<span class="fc" id="L70">    }</span>
+
+    public int getTextLength() {
+<span class="nc" id="L73">      return T.length;</span>
+    }
+
+    // Returns the suffix array.
+    public int[] getSa() {
+<span class="fc" id="L78">      buildSuffixArray();</span>
+<span class="fc" id="L79">      return sa;</span>
+    }
+
+    // Returns the LCP array.
+    public int[] getLcpArray() {
+<span class="fc" id="L84">      buildLcpArray();</span>
+<span class="fc" id="L85">      return lcp;</span>
+    }
+
+    // Builds the suffix array by calling the construct() method.
+    protected void buildSuffixArray() {
+<span class="fc bfc" id="L90" title="All 2 branches covered.">      if (constructedSa) return;</span>
+<span class="fc" id="L91">      construct();</span>
+<span class="fc" id="L92">      constructedSa = true;</span>
+<span class="fc" id="L93">    }</span>
+
+    // Builds the LCP array by first creating the SA and then running the kasai algorithm.
+    protected void buildLcpArray() {
+<span class="pc bpc" id="L97" title="1 of 2 branches missed.">      if (constructedLcpArray) return;</span>
+<span class="fc" id="L98">      buildSuffixArray();</span>
+<span class="fc" id="L99">      kasai();</span>
+<span class="fc" id="L100">      constructedLcpArray = true;</span>
+<span class="fc" id="L101">    }</span>
+
+    protected static int[] toIntArray(String s) {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">      if (s == null) return null;</span>
+<span class="nc" id="L105">      int[] t = new int[s.length()];</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">      for (int i = 0; i &lt; s.length(); i++) t[i] = s.charAt(i);</span>
+<span class="nc" id="L107">      return t;</span>
+    }
+
+    // The suffix array construction algorithm is left undefined
+    // as there are multiple ways to do this.
+    protected abstract void construct();
+
+    // Use Kasai algorithm to build LCP array
+    // http://www.mi.fu-berlin.de/wiki/pub/ABI/RnaSeqP4/suffix-array.pdf
+    private void kasai() {
+<span class="fc" id="L117">      lcp = new int[N];</span>
+<span class="fc" id="L118">      int[] inv = new int[N];</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">      for (int i = 0; i &lt; N; i++) inv[sa[i]] = i;</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">      for (int i = 0, len = 0; i &lt; N; i++) {</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (inv[i] &gt; 0) {</span>
+<span class="fc" id="L122">          int k = sa[inv[i] - 1];</span>
+<span class="pc bpc" id="L123" title="2 of 6 branches missed.">          while ((i + len &lt; N) &amp;&amp; (k + len &lt; N) &amp;&amp; T[i + len] == T[k + len]) len++;</span>
+<span class="fc" id="L124">          lcp[inv[i]] = len;</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">          if (len &gt; 0) len--;</span>
+        }
+      }
+<span class="fc" id="L128">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L132">      StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L133">      sb.append(&quot;------i------SA------LCP--------Suffix\n&quot;);</span>
+
+<span class="nc bnc" id="L135" title="All 2 branches missed.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="nc" id="L136">        int suffixLen = N - sa[i];</span>
+<span class="nc" id="L137">        char[] string = new char[suffixLen];</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">        for (int j = sa[i], k = 0; j &lt; N; j++, k++) string[k] = (char) (T[j]);</span>
+<span class="nc" id="L139">        String suffix = new String(string);</span>
+<span class="nc" id="L140">        String formattedStr = String.format(&quot;% 7d % 7d % 7d %s\n&quot;, i, sa[i], lcp[i], suffix);</span>
+<span class="nc" id="L141">        sb.append(formattedStr);</span>
+      }
+<span class="nc" id="L143">      return sb.toString();</span>
+    }
+
+    // Lazy way of finding color of suffix is by comparing against all sentinel positions
+    private static Color findColorFromPos(int pos, List&lt;Integer&gt; sentinelIndexes) {
+<span class="nc" id="L148">      Color[] colors = {</span>
+        Color.GREEN,
+        Color.RED,
+        Color.BLUE,
+        Color.YELLOW,
+        Color.MAGENTA,
+        Color.CYAN,
+        Color.WHITE,
+        Color.BLACK_BACKGROUND_BRIGHT
+      };
+<span class="nc" id="L158">      int colorIndex = 0;</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">      for (int tokenIndex : sentinelIndexes) {</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">        if (tokenIndex &lt;= pos) colorIndex++;</span>
+<span class="nc" id="L161">      }</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">      if (colorIndex &gt;= colors.length) {</span>
+<span class="nc" id="L163">        throw new IllegalStateException(&quot;Too many strings, not enough terminal colors :/&quot;);</span>
+      }
+<span class="nc" id="L165">      return colors[colorIndex];</span>
+    }
+
+    // Display an augmented colored SA for debugging LCS problem.
+    public void toString(List&lt;Integer&gt; sentinelIndexes) {
+<span class="nc" id="L170">      System.out.println(&quot;------i------SA------LCP--------Suffix&quot;);</span>
+<span class="nc" id="L171">      buildLcpArray();</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="nc" id="L173">        int suffixLen = N - sa[i];</span>
+<span class="nc" id="L174">        char[] string = new char[suffixLen];</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">        for (int j = sa[i], k = 0; j &lt; N; j++, k++) string[k] = (char) (T[j]);</span>
+<span class="nc" id="L176">        String suffix = new String(string);</span>
+
+<span class="nc" id="L178">        System.out.print(findColorFromPos(sa[i], sentinelIndexes));</span>
+<span class="nc" id="L179">        String formattedStr = String.format(&quot;% 7d % 7d % 7d %s&quot;, i, sa[i], lcp[i], suffix);</span>
+<span class="nc" id="L180">        System.out.println(formattedStr + Color.RESET);</span>
+      }
+<span class="nc" id="L182">    }</span>
+
+    // https://stackoverflow.com/questions/5762491/how-to-print-color-in-console-using-system-out-println
+    //
+    // Usage:
+    // System.out.println(Color.CYAN + &quot;Hello World&quot; + Color.RESET);
+<span class="nc" id="L188">    private enum Color {</span>
+<span class="nc" id="L189">      RESET(&quot;\033[0m&quot;),</span>
+
+<span class="nc" id="L191">      BLACK(&quot;\033[0;30m&quot;),</span>
+<span class="nc" id="L192">      RED(&quot;\033[0;31m&quot;),</span>
+<span class="nc" id="L193">      GREEN(&quot;\033[0;32m&quot;),</span>
+<span class="nc" id="L194">      YELLOW(&quot;\033[0;33m&quot;),</span>
+<span class="nc" id="L195">      BLUE(&quot;\033[0;34m&quot;),</span>
+<span class="nc" id="L196">      MAGENTA(&quot;\033[0;35m&quot;),</span>
+<span class="nc" id="L197">      CYAN(&quot;\033[0;36m&quot;),</span>
+<span class="nc" id="L198">      WHITE(&quot;\033[0;37m&quot;),</span>
+<span class="nc" id="L199">      BLACK_BACKGROUND_BRIGHT(&quot;\033[0;100m&quot;);</span>
+
+      private final String code;
+
+<span class="nc" id="L203">      Color(String code) {</span>
+<span class="nc" id="L204">        this.code = code;</span>
+<span class="nc" id="L205">      }</span>
+
+      @Override
+      public String toString() {
+<span class="nc" id="L209">        return code;</span>
+      }
+    }
+  }
+
+  static class SuffixArrayImpl extends SuffixArray {
+
+    // Wrapper class to help sort suffix ranks
+<span class="fc" id="L217">    static class SuffixRankTuple implements Comparable&lt;SuffixRankTuple&gt; {</span>
+      int firstHalf, secondHalf, originalIndex;
+
+      // Sort Suffix ranks first on the first half then the second half
+      @Override
+      public int compareTo(SuffixRankTuple other) {
+<span class="fc" id="L223">        int cmp = Integer.compare(firstHalf, other.firstHalf);</span>
+<span class="fc bfc" id="L224" title="All 2 branches covered.">        if (cmp == 0) return Integer.compare(secondHalf, other.secondHalf);</span>
+<span class="fc" id="L225">        return cmp;</span>
+      }
+    }
+
+    public SuffixArrayImpl(String text) {
+<span class="nc" id="L230">      super(toIntArray(text));</span>
+<span class="nc" id="L231">    }</span>
+
+    public SuffixArrayImpl(int[] text) {
+<span class="fc" id="L234">      super(text);</span>
+<span class="fc" id="L235">    }</span>
+
+    // Construct a suffix array in O(nlog^2(n))
+    @Override
+    protected void construct() {
+<span class="fc" id="L240">      sa = new int[N];</span>
+
+      // Maintain suffix ranks in both a matrix with two rows containing the
+      // current and last rank information as well as some sortable rank objects
+<span class="fc" id="L244">      int[][] suffixRanks = new int[2][N];</span>
+<span class="fc" id="L245">      SuffixRankTuple[] ranks = new SuffixRankTuple[N];</span>
+
+      // Assign a numerical value to each character in the text
+<span class="fc bfc" id="L248" title="All 2 branches covered.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L249">        suffixRanks[0][i] = T[i];</span>
+<span class="fc" id="L250">        ranks[i] = new SuffixRankTuple();</span>
+      }
+
+      // O(log(n))
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">      for (int pos = 1; pos &lt; N; pos *= 2) {</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">        for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L256">          SuffixRankTuple suffixRank = ranks[i];</span>
+<span class="fc" id="L257">          suffixRank.firstHalf = suffixRanks[0][i];</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">          suffixRank.secondHalf = i + pos &lt; N ? suffixRanks[0][i + pos] : -1;</span>
+<span class="fc" id="L259">          suffixRank.originalIndex = i;</span>
+        }
+
+        // O(nlog(n))
+<span class="fc" id="L263">        java.util.Arrays.sort(ranks);</span>
+
+<span class="fc" id="L265">        int newRank = 0;</span>
+<span class="fc" id="L266">        suffixRanks[1][ranks[0].originalIndex] = 0;</span>
+
+<span class="fc bfc" id="L268" title="All 2 branches covered.">        for (int i = 1; i &lt; N; i++) {</span>
+<span class="fc" id="L269">          SuffixRankTuple lastSuffixRank = ranks[i - 1];</span>
+<span class="fc" id="L270">          SuffixRankTuple currSuffixRank = ranks[i];</span>
+
+          // If the first half differs from the second half
+<span class="fc bfc" id="L273" title="All 4 branches covered.">          if (currSuffixRank.firstHalf != lastSuffixRank.firstHalf</span>
+<span class="fc" id="L274">              || currSuffixRank.secondHalf != lastSuffixRank.secondHalf) newRank++;</span>
+
+<span class="fc" id="L276">          suffixRanks[1][currSuffixRank.originalIndex] = newRank;</span>
+        }
+
+        // Place top row (current row) to be the last row
+<span class="fc" id="L280">        suffixRanks[0] = suffixRanks[1];</span>
+
+        // Optimization to stop early
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        if (newRank == N - 1) break;</span>
+      }
+
+      // Fill suffix array
+<span class="fc bfc" id="L287" title="All 2 branches covered.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L288">        sa[i] = ranks[i].originalIndex;</span>
+<span class="fc" id="L289">        ranks[i] = null;</span>
+      }
+
+      // Cleanup
+<span class="fc" id="L293">      suffixRanks[0] = suffixRanks[1] = null;</span>
+<span class="fc" id="L294">      suffixRanks = null;</span>
+<span class="fc" id="L295">      ranks = null;</span>
+<span class="fc" id="L296">    }</span>
+  }
+
+  public static class LcsSolver {
+
+    // Inputs
+    int k, numSentinels, textLength;
+    String[] strings;
+
+    // Internal
+    int shift, lcsLen;
+    int lowestAsciiValue;
+    int highestAsciiValue;
+    int[] imap, text, sa, lcp;
+
+    // Output
+    TreeSet&lt;String&gt; lcss;
+
+    private static final boolean DEBUG_MODE = false;
+
+    // TODO(williamfiset): support LCS with strings as int arrays for larger alphabet sizes.
+<span class="fc" id="L317">    public LcsSolver(String[] strings) {</span>
+<span class="pc bpc" id="L318" title="2 of 4 branches missed.">      if (strings == null || strings.length &lt;= 1)</span>
+<span class="nc" id="L319">        throw new IllegalArgumentException(&quot;Invalid strings array provided.&quot;);</span>
+<span class="fc" id="L320">      this.strings = strings;</span>
+<span class="fc" id="L321">    }</span>
+
+    private void init() {
+<span class="fc" id="L324">      shift = lcsLen = 0;</span>
+<span class="fc" id="L325">      lowestAsciiValue = Integer.MAX_VALUE;</span>
+<span class="fc" id="L326">      highestAsciiValue = Integer.MIN_VALUE;</span>
+<span class="fc" id="L327">      numSentinels = strings.length;</span>
+<span class="fc" id="L328">      lcss = new TreeSet&lt;&gt;();</span>
+<span class="fc" id="L329">      imap = text = sa = lcp = null;</span>
+
+<span class="fc" id="L331">      computeTextLength(strings);</span>
+<span class="fc" id="L332">      buildReverseColorMapping();</span>
+<span class="fc" id="L333">      computeShift();</span>
+<span class="fc" id="L334">      buildText();</span>
+<span class="fc" id="L335">    }</span>
+
+    private void computeTextLength(String[] strings) {
+<span class="fc" id="L338">      textLength = 0;</span>
+<span class="fc bfc" id="L339" title="All 2 branches covered.">      for (String str : strings) textLength += str.length();</span>
+<span class="fc" id="L340">      textLength += numSentinels;</span>
+<span class="fc" id="L341">    }</span>
+
+    // Builds a reverse color index map. The reverse color map tells you which
+    // color a character is at a given index in the new text.
+    private void buildReverseColorMapping() {
+<span class="fc" id="L346">      imap = new int[textLength];</span>
+<span class="fc bfc" id="L347" title="All 2 branches covered.">      for (int i = 0, k = 0; i &lt; strings.length; i++) {</span>
+<span class="fc" id="L348">        String str = strings[i];</span>
+<span class="fc bfc" id="L349" title="All 2 branches covered.">        for (int j = 0; j &lt; str.length(); j++) {</span>
+<span class="fc" id="L350">          int asciiVal = str.charAt(j);</span>
+<span class="fc bfc" id="L351" title="All 2 branches covered.">          if (asciiVal &lt; lowestAsciiValue) lowestAsciiValue = asciiVal;</span>
+<span class="fc bfc" id="L352" title="All 2 branches covered.">          if (asciiVal &gt; highestAsciiValue) highestAsciiValue = asciiVal;</span>
+<span class="fc" id="L353">          imap[k++] = i;</span>
+        }
+        // Record that the sentinel belongs to string i
+<span class="fc" id="L356">        imap[k++] = i;</span>
+      }
+<span class="fc" id="L358">    }</span>
+
+    private void verifyMinAndMaxAsciiValues() {
+<span class="pc bpc" id="L361" title="2 of 4 branches missed.">      if (lowestAsciiValue == Integer.MAX_VALUE || highestAsciiValue == Integer.MIN_VALUE)</span>
+<span class="nc" id="L362">        throw new IllegalStateException(&quot;Must set min/max ascii values!&quot;);</span>
+<span class="fc" id="L363">    }</span>
+
+    private void computeShift() {
+<span class="fc" id="L366">      verifyMinAndMaxAsciiValues();</span>
+<span class="fc" id="L367">      shift = numSentinels - lowestAsciiValue;</span>
+<span class="fc" id="L368">    }</span>
+
+    // Build text containing sentinels. Must have computed lowest and highest ascii values
+    // beforehand.
+    // All sentinels values will be in the range [0, numSentinels)
+    // All text values will be in the range [numSentinels, numSentinels + highestAsciiValue -
+    // lowestAsciiValue]
+    private void buildText() {
+<span class="fc" id="L376">      verifyMinAndMaxAsciiValues();</span>
+<span class="fc" id="L377">      text = new int[textLength];</span>
+<span class="fc" id="L378">      int sentinel = 0;</span>
+      // Construct the new text with the shifted values and the sentinels
+<span class="fc bfc" id="L380" title="All 2 branches covered.">      for (int i = 0, k = 0; i &lt; strings.length; i++) {</span>
+<span class="fc" id="L381">        String str = strings[i];</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        for (int j = 0; j &lt; str.length(); j++) {</span>
+<span class="fc" id="L383">          text[k++] = ((int) str.charAt(j)) + shift;</span>
+<span class="pc bpc" id="L384" title="2 of 4 branches missed.">          if (!(numSentinels &lt;= text[k - 1]</span>
+              &amp;&amp; text[k - 1] &lt;= (numSentinels + highestAsciiValue - lowestAsciiValue))) {
+<span class="nc" id="L386">            throw new IllegalStateException(</span>
+<span class="nc" id="L387">                String.format(</span>
+                    &quot;Unexpected character range. Was: %d, wanted between [%d, %d]&quot;,
+<span class="nc" id="L389">                    text[k - 1],</span>
+<span class="nc" id="L390">                    numSentinels,</span>
+<span class="nc" id="L391">                    (numSentinels + highestAsciiValue - lowestAsciiValue)));</span>
+          }
+        }
+<span class="fc" id="L394">        text[k++] = sentinel++;</span>
+<span class="pc bpc" id="L395" title="2 of 4 branches missed.">        if (!(0 &lt;= text[k - 1] &amp;&amp; text[k - 1] &lt; numSentinels)) {</span>
+<span class="nc" id="L396">          throw new IllegalStateException(</span>
+<span class="nc" id="L397">              String.format(</span>
+                  &quot;Unexpected character range. Was: %d, wanted between [%d, %d)&quot;,
+<span class="nc" id="L399">                  text[k - 1], 0, numSentinels));</span>
+        }
+      }
+<span class="fc" id="L402">    }</span>
+
+    // Counts the number of suffixes of different colors between [lo, hi] and determines
+    // if there is enough variety for a LCS candidate.
+    private boolean enoughUniqueColorsInWindow(int lo, int hi) {
+      // TODO(williamfiset): Avoid initializing a new hash set to count colors every method call.
+<span class="fc" id="L408">      Set&lt;Integer&gt; set = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">      for (int i = lo; i &lt;= hi; i++) {</span>
+<span class="fc" id="L410">        set.add(imap[sa[i]]);</span>
+      }
+      // TODO(williamfiset): Investigate if == can become &gt;=
+<span class="fc bfc" id="L413" title="All 2 branches covered.">      return set.size() == k;</span>
+    }
+
+    // Retrieves a string from the suffix array given a position and a length.
+    private String retrieveString(int i, int len) {
+<span class="fc" id="L418">      char[] s = new char[len];</span>
+<span class="fc bfc" id="L419" title="All 2 branches covered.">      for (int j = 0; j &lt; len; j++) s[j] = (char) (text[i + j] - shift);</span>
+<span class="fc" id="L420">      return new String(s);</span>
+    }
+
+    private void log(String s) {
+      if (DEBUG_MODE) {
+        System.out.println(s);
+      }
+<span class="fc" id="L427">    }</span>
+
+    private void addLcs(int lo, int hi, int windowLcp) {
+<span class="fc bfc" id="L430" title="All 2 branches covered.">      if (hi - lo + 1 &lt; k) {</span>
+<span class="fc" id="L431">        log(</span>
+<span class="fc" id="L432">            String.format(</span>
+                &quot;lo: %d, hi: %d. Too small range. lo: %d, hi: %d, k: %d, hi - lo + 1 &lt; k&quot;,
+<span class="fc" id="L434">                lo, hi, lo, hi, k));</span>
+<span class="fc" id="L435">        return;</span>
+      }
+<span class="fc bfc" id="L437" title="All 2 branches covered.">      if (windowLcp == 0) {</span>
+<span class="fc" id="L438">        log(&quot;LCP is 0&quot;);</span>
+<span class="fc" id="L439">        return;</span>
+      }
+<span class="fc bfc" id="L441" title="All 2 branches covered.">      if (!enoughUniqueColorsInWindow(lo, hi)) {</span>
+<span class="fc" id="L442">        log(</span>
+<span class="fc" id="L443">            String.format(</span>
+<span class="fc" id="L444">                &quot;lo: %d, hi: %d. Not enough unique colors in range [%d, %d]&quot;, lo, hi, lo, hi));</span>
+<span class="fc" id="L445">        return;</span>
+      }
+<span class="fc bfc" id="L447" title="All 2 branches covered.">      if (windowLcp &gt; lcsLen) {</span>
+<span class="fc" id="L448">        lcsLen = windowLcp;</span>
+<span class="fc" id="L449">        lcss.clear();</span>
+      }
+<span class="fc bfc" id="L451" title="All 2 branches covered.">      if (windowLcp == lcsLen) {</span>
+<span class="fc" id="L452">        lcss.add(retrieveString(sa[lo], windowLcp));</span>
+      }
+<span class="fc" id="L454">    }</span>
+
+    public TreeSet&lt;String&gt; getLongestCommonSubstrings(int k) {
+<span class="pc bpc" id="L457" title="1 of 2 branches missed.">      if (k &lt; 2) throw new IllegalArgumentException(&quot;k must be greater than or equal to 2&quot;);</span>
+<span class="fc" id="L458">      this.k = k;</span>
+<span class="fc" id="L459">      solve();</span>
+<span class="fc" id="L460">      return lcss;</span>
+    }
+
+    private void solve() {
+<span class="fc" id="L464">      init();</span>
+
+<span class="fc" id="L466">      SuffixArray suffixArray = new SuffixArrayImpl(text);</span>
+<span class="fc" id="L467">      sa = suffixArray.getSa();</span>
+<span class="fc" id="L468">      lcp = suffixArray.getLcpArray();</span>
+
+      // TODO(williamfiset): Replace with SlidingWindowMinimum for speed.
+<span class="fc" id="L471">      CompactMinSegmentTree tree = new CompactMinSegmentTree(lcp);</span>
+
+<span class="fc" id="L473">      int lo = numSentinels;</span>
+<span class="fc" id="L474">      int hi = numSentinels;</span>
+
+      while (true) {
+        // Shrink the window (by increasing lo) if the current interval has enough
+        // of the correct suffix colors or hi has reached the end.
+<span class="fc bfc" id="L479" title="All 2 branches covered.">        boolean shrinkWindow = (hi == textLength - 1) ? true : enoughUniqueColorsInWindow(lo, hi);</span>
+
+<span class="fc bfc" id="L481" title="All 2 branches covered.">        if (shrinkWindow) {</span>
+<span class="fc" id="L482">          lo++;</span>
+        } else {
+<span class="fc" id="L484">          hi++;</span>
+        }
+
+<span class="fc bfc" id="L487" title="All 2 branches covered.">        if (lo == textLength - 1) break;</span>
+
+        // Segment tree queries are right endpoint exclusive: [l, r)
+        // so we must be careful to avoid the empty interval case.
+<span class="fc bfc" id="L491" title="All 2 branches covered.">        if (lo == hi) continue;</span>
+
+<span class="fc" id="L493">        int windowLcp = tree.query(lo + 1, hi + 1);</span>
+<span class="fc" id="L494">        addLcs(lo, hi, windowLcp);</span>
+<span class="fc" id="L495">      }</span>
+<span class="fc" id="L496">    }</span>
+  }
+
+  static class SlidingWindowMinimum {
+    int[] values;
+    int N, lo, hi;
+
+<span class="nc" id="L503">    Deque&lt;Integer&gt; deque = new ArrayDeque&lt;&gt;();</span>
+
+<span class="nc" id="L505">    public SlidingWindowMinimum(int[] values) {</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">      if (values == null) throw new IllegalArgumentException();</span>
+<span class="nc" id="L507">      this.values = values;</span>
+<span class="nc" id="L508">      N = values.length;</span>
+<span class="nc" id="L509">    }</span>
+
+    // Advances the front of the window by one unit
+    public void advance() {
+      // Remove all the worse values in the back of the deque
+<span class="nc bnc" id="L514" title="All 4 branches missed.">      while (!deque.isEmpty() &amp;&amp; values[deque.peekLast()] &gt; values[hi]) deque.removeLast();</span>
+
+      // Add the next index to the back of the deque
+<span class="nc" id="L517">      deque.addLast(hi);</span>
+
+      // Increase the window size
+<span class="nc" id="L520">      hi++;</span>
+<span class="nc" id="L521">    }</span>
+
+    // Retracks the back of the window by one unit
+    public void shrink() {
+      // Decrease window size by pushing it forward
+<span class="nc" id="L526">      lo++;</span>
+
+      // Remove elements in the front of the queue whom are no longer
+      // valid in the reduced window.
+<span class="nc bnc" id="L530" title="All 4 branches missed.">      while (!deque.isEmpty() &amp;&amp; deque.peekFirst() &lt; lo) deque.removeFirst();</span>
+<span class="nc" id="L531">    }</span>
+
+    // Query the current minimum value in the window
+    public int getMin() {
+<span class="nc bnc" id="L535" title="All 2 branches missed.">      if (lo &gt;= hi) throw new IllegalStateException(&quot;Make sure lo &lt; hi&quot;);</span>
+<span class="nc" id="L536">      return values[deque.peekFirst()];</span>
+    }
+  }
+
+  static class CompactMinSegmentTree {
+    private int n;
+
+    // Let UNIQUE be a value which does NOT and will NOT appear in the segment tree.
+<span class="fc" id="L544">    private int UNIQUE = 93136074;</span>
+
+    // Segment tree values
+    private int[] tree;
+
+<span class="fc" id="L549">    public CompactMinSegmentTree(int size) {</span>
+<span class="fc" id="L550">      tree = new int[2 * (n = size)];</span>
+<span class="fc" id="L551">      java.util.Arrays.fill(tree, UNIQUE);</span>
+<span class="fc" id="L552">    }</span>
+
+    public CompactMinSegmentTree(int[] values) {
+<span class="fc" id="L555">      this(values.length);</span>
+<span class="fc bfc" id="L556" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++) modify(i, values[i]);</span>
+<span class="fc" id="L557">    }</span>
+
+    // The segment tree function used for queries.
+    private int function(int a, int b) {
+<span class="fc bfc" id="L561" title="All 2 branches covered.">      if (a == UNIQUE) return b;</span>
+<span class="fc bfc" id="L562" title="All 2 branches covered.">      else if (b == UNIQUE) return a;</span>
+<span class="fc bfc" id="L563" title="All 2 branches covered.">      return (a &lt; b) ? a : b; // minimum value over a range</span>
+    }
+
+    // Adjust point i by a value, O(log(n))
+    public void modify(int i, int value) {
+<span class="fc" id="L568">      tree[i + n] = function(tree[i + n], value);</span>
+<span class="fc bfc" id="L569" title="All 2 branches covered.">      for (i += n; i &gt; 1; i &gt;&gt;= 1) {</span>
+<span class="fc" id="L570">        tree[i &gt;&gt; 1] = function(tree[i], tree[i ^ 1]);</span>
+      }
+<span class="fc" id="L572">    }</span>
+
+    // Query interval [l, r), O(log(n))
+    public int query(int l, int r) {
+<span class="fc" id="L576">      int res = UNIQUE;</span>
+<span class="fc bfc" id="L577" title="All 2 branches covered.">      for (l += n, r += n; l &lt; r; l &gt;&gt;= 1, r &gt;&gt;= 1) {</span>
+<span class="fc bfc" id="L578" title="All 2 branches covered.">        if ((l &amp; 1) != 0) res = function(res, tree[l++]);</span>
+<span class="fc bfc" id="L579" title="All 2 branches covered.">        if ((r &amp; 1) != 0) res = function(res, tree[--r]);</span>
+      }
+<span class="pc bpc" id="L581" title="1 of 2 branches missed.">      if (res == UNIQUE) {</span>
+<span class="nc" id="L582">        throw new IllegalStateException(&quot;UNIQUE should not be the return value.&quot;);</span>
+      }
+<span class="fc" id="L584">      return res;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

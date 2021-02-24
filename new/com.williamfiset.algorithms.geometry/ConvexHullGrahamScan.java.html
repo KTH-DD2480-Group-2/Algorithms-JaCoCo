@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConvexHullGrahamScan.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">ConvexHullGrahamScan.java</span></div><h1>ConvexHullGrahamScan.java</h1><pre class="source lang-java linenums">/**
+ * A working implementation of the GrahamScan convex hull algorithm
+ *
+ * &lt;p&gt;Time Complexity: O(nlogn)
+ *
+ * @author Micah Stairs, William Fiset
+ */
+package com.williamfiset.algorithms.geometry;
+
+import java.awt.geom.Point2D;
+import java.util.*;
+
+<span class="nc" id="L13">public class ConvexHullGrahamScan {</span>
+
+  // Construct a convex hull and return it as a stack of points
+  public static Stack&lt;Point2D&gt; createConvexHull(Point2D[] pts) {
+<span class="nc" id="L17">    int k1, k2, N = pts.length;</span>
+<span class="nc" id="L18">    Stack&lt;Point2D&gt; hull = new Stack&lt;Point2D&gt;();</span>
+<span class="nc" id="L19">    Arrays.sort(pts, new PointOrder());</span>
+<span class="nc" id="L20">    Arrays.sort(pts, 1, N, new PolarOrder(pts[0]));</span>
+<span class="nc" id="L21">    hull.push(pts[0]);</span>
+<span class="nc bnc" id="L22" title="All 2 branches missed.">    for (k1 = 1; k1 &lt; N; k1++) {</span>
+<span class="nc bnc" id="L23" title="All 2 branches missed.">      if (!pts[0].equals(pts[k1])) {</span>
+<span class="nc" id="L24">        break;</span>
+      }
+    }
+<span class="nc bnc" id="L27" title="All 2 branches missed.">    if (k1 == N) return null;</span>
+<span class="nc bnc" id="L28" title="All 2 branches missed.">    for (k2 = k1 + 1; k2 &lt; N; k2++) {</span>
+<span class="nc bnc" id="L29" title="All 2 branches missed.">      if (collinear(pts[0], pts[k1], pts[k2]) != 0) {</span>
+<span class="nc" id="L30">        break;</span>
+      }
+    }
+<span class="nc" id="L33">    hull.push(pts[k2 - 1]);</span>
+<span class="nc bnc" id="L34" title="All 2 branches missed.">    for (int i = k2; i &lt; N; i++) {</span>
+<span class="nc" id="L35">      Point2D top = hull.pop();</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">      while (collinear(hull.peek(), top, pts[i]) &lt;= 0) {</span>
+<span class="nc" id="L37">        top = hull.pop();</span>
+      }
+<span class="nc" id="L39">      hull.push(top);</span>
+<span class="nc" id="L40">      hull.push(pts[i]);</span>
+    }
+<span class="nc" id="L42">    return hull;</span>
+  }
+
+  // Compare other points relative to polar angle (between 0 and 2*PI) they make with this point
+  private static class PolarOrder implements Comparator&lt;Point2D&gt; {
+    Point2D pt;
+
+<span class="nc" id="L49">    public PolarOrder(Point2D pt) {</span>
+<span class="nc" id="L50">      this.pt = pt;</span>
+<span class="nc" id="L51">    }</span>
+
+    @Override
+    public int compare(Point2D q1, Point2D q2) {
+<span class="nc" id="L55">      double dx1 = q1.getX() - pt.getX(), dy1 = q1.getY() - pt.getY();</span>
+<span class="nc" id="L56">      double dx2 = q2.getX() - pt.getX(), dy2 = q2.getY() - pt.getY();</span>
+<span class="nc bnc" id="L57" title="All 4 branches missed.">      if (dy1 &gt;= 0 &amp;&amp; dy2 &lt; 0) return -1;</span>
+<span class="nc bnc" id="L58" title="All 4 branches missed.">      else if (dy2 &gt;= 0 &amp;&amp; dy1 &lt; 0) return +1;</span>
+<span class="nc bnc" id="L59" title="All 4 branches missed.">      else if (dy1 == 0 &amp;&amp; dy2 == 0) {</span>
+<span class="nc bnc" id="L60" title="All 4 branches missed.">        if (dx1 &gt;= 0 &amp;&amp; dx2 &lt; 0) return -1;</span>
+<span class="nc bnc" id="L61" title="All 4 branches missed.">        else if (dx2 &gt;= 0 &amp;&amp; dx1 &lt; 0) return +1;</span>
+<span class="nc" id="L62">        else return 0;</span>
+<span class="nc" id="L63">      } else return -collinear(pt, q1, q2);</span>
+    }
+  }
+
+  // Put lower Y co-ordinates first, with a lower X value in the case of ties
+  private static class PointOrder implements Comparator&lt;Point2D&gt; {
+    @Override
+    public int compare(Point2D q1, Point2D q2) {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">      if (q1.getY() &lt; q2.getY()) return -1;</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">      if (q1.getY() == q2.getY()) {</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">        if (q1.getX() &lt; q2.getX()) return -1;</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        else if (q1.getX() &gt; q2.getX()) return 1;</span>
+<span class="nc" id="L75">        else return 0;</span>
+      }
+<span class="nc" id="L77">      return 1;</span>
+    }
+  }
+
+  // Check to see whether the points are ordered clockwise or counter-clockwise (0 indicates that
+  // they are collinear)
+  private static int collinear(Point2D a, Point2D b, Point2D c) {
+<span class="nc" id="L84">    double area =</span>
+<span class="nc" id="L85">        (b.getX() - a.getX()) * (c.getY() - a.getY())</span>
+<span class="nc" id="L86">            - (b.getY() - a.getY()) * (c.getX() - a.getX());</span>
+<span class="nc" id="L87">    return (int) Math.signum(area);</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L92">    Point2D[] pts = new Point2D[13];</span>
+
+<span class="nc" id="L94">    pts[0] = new Point2D.Double(0, 5);</span>
+<span class="nc" id="L95">    pts[1] = new Point2D.Double(-1, 1);</span>
+<span class="nc" id="L96">    pts[2] = new Point2D.Double(0, 1);</span>
+<span class="nc" id="L97">    pts[3] = new Point2D.Double(1, 1);</span>
+<span class="nc" id="L98">    pts[4] = new Point2D.Double(-5, 0);</span>
+<span class="nc" id="L99">    pts[5] = new Point2D.Double(-1, 0);</span>
+<span class="nc" id="L100">    pts[6] = new Point2D.Double(0, 0);</span>
+<span class="nc" id="L101">    pts[7] = new Point2D.Double(1, 0);</span>
+<span class="nc" id="L102">    pts[8] = new Point2D.Double(5, 0);</span>
+<span class="nc" id="L103">    pts[9] = new Point2D.Double(-1, -1);</span>
+<span class="nc" id="L104">    pts[10] = new Point2D.Double(0, -1);</span>
+<span class="nc" id="L105">    pts[11] = new Point2D.Double(1, -1);</span>
+<span class="nc" id="L106">    pts[12] = new Point2D.Double(0, -5);</span>
+
+<span class="nc" id="L108">    Stack&lt;Point2D&gt; hull = createConvexHull(pts);</span>
+
+    // Print the points in the hull
+<span class="nc bnc" id="L111" title="All 2 branches missed.">    while (!hull.isEmpty()) System.out.println(hull.pop());</span>
+<span class="nc" id="L112">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

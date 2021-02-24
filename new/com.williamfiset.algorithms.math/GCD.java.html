@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GCD.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.math</a> &gt; <span class="el_source">GCD.java</span></div><h1>GCD.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of finding the GCD of two numbers
+ *
+ * &lt;p&gt;Time Complexity ~O(log(a + b))
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.math;
+
+<span class="nc" id="L10">public class GCD {</span>
+
+  // Computes the Greatest Common Divisor (GCD) of a &amp; b
+  // This method ensures that the value returned is non negative
+  public static long gcd(long a, long b) {
+<span class="nc bnc" id="L15" title="All 4 branches missed.">    return b == 0 ? (a &lt; 0 ? -a : a) : gcd(b, a % b);</span>
+  }
+
+  public static void main(String[] args) {
+<span class="nc" id="L19">    System.out.println(gcd(12, 18)); // 6</span>
+<span class="nc" id="L20">    System.out.println(gcd(-12, 18)); // 6</span>
+<span class="nc" id="L21">    System.out.println(gcd(12, -18)); // 6</span>
+<span class="nc" id="L22">    System.out.println(gcd(-12, -18)); // 6</span>
+
+<span class="nc" id="L24">    System.out.println(gcd(5, 0)); // 5</span>
+<span class="nc" id="L25">    System.out.println(gcd(0, 5)); // 5</span>
+<span class="nc" id="L26">    System.out.println(gcd(-5, 0)); // 5</span>
+<span class="nc" id="L27">    System.out.println(gcd(0, -5)); // 5</span>
+<span class="nc" id="L28">    System.out.println(gcd(0, 0)); // 0</span>
+<span class="nc" id="L29">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

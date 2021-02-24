@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LongestCommonPrefixArray.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.strings</a> &gt; <span class="el_source">LongestCommonPrefixArray.java</span></div><h1>LongestCommonPrefixArray.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to use a suffix array to construct the Longest Common Prefix (LCP) array
+ * using the kasai algorithm.
+ *
+ * &lt;p&gt;Time complexity: O(nlogn) for suffix array construct and O(n) for longest common prefix array
+ * construction, so O(nlogn) overall
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.strings;
+
+import java.util.*;
+
+// Example usage
+<span class="nc" id="L15">public class LongestCommonPrefixArray {</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L19">    String str = &quot;abcbbccaabcaabc&quot;;</span>
+<span class="nc" id="L20">    SuffixArray sa = new SuffixArray(str);</span>
+<span class="nc" id="L21">    sa.display();</span>
+<span class="nc" id="L22">    System.out.println(&quot;The LCP array is: &quot; + Arrays.toString(sa.lcp));</span>
+<span class="nc" id="L23">  }</span>
+
+  public static class SuffixArray {
+
+    // ALPHABET_SZ is the default alphabet size, this may need to be much
+    // larger if you're using the LCS method with multiple sentinels
+<span class="nc" id="L29">    int ALPHABET_SZ = 256, N;</span>
+    int[] T, lcp, sa, sa2, rank, tmp, c;
+
+    public SuffixArray(String str) {
+<span class="nc" id="L33">      this(toIntArray(str));</span>
+<span class="nc" id="L34">    }</span>
+
+    private static int[] toIntArray(String s) {
+<span class="nc" id="L37">      int[] text = new int[s.length()];</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">      for (int i = 0; i &lt; s.length(); i++) text[i] = s.charAt(i);</span>
+<span class="nc" id="L39">      return text;</span>
+    }
+
+    // Designated constructor
+<span class="nc" id="L43">    public SuffixArray(int[] text) {</span>
+<span class="nc" id="L44">      T = text;</span>
+<span class="nc" id="L45">      N = text.length;</span>
+<span class="nc" id="L46">      sa = new int[N];</span>
+<span class="nc" id="L47">      sa2 = new int[N];</span>
+<span class="nc" id="L48">      rank = new int[N];</span>
+<span class="nc" id="L49">      c = new int[Math.max(ALPHABET_SZ, N)];</span>
+<span class="nc" id="L50">      construct();</span>
+<span class="nc" id="L51">      kasai();</span>
+<span class="nc" id="L52">    }</span>
+
+    private void construct() {
+      int i, p, r;
+<span class="nc bnc" id="L56" title="All 2 branches missed.">      for (i = 0; i &lt; N; ++i) c[rank[i] = T[i]]++;</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">      for (i = 1; i &lt; ALPHABET_SZ; ++i) c[i] += c[i - 1];</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">      for (i = N - 1; i &gt;= 0; --i) sa[--c[T[i]]] = i;</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">      for (p = 1; p &lt; N; p &lt;&lt;= 1) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">        for (r = 0, i = N - p; i &lt; N; ++i) sa2[r++] = i;</span>
+<span class="nc bnc" id="L61" title="All 4 branches missed.">        for (i = 0; i &lt; N; ++i) if (sa[i] &gt;= p) sa2[r++] = sa[i] - p;</span>
+<span class="nc" id="L62">        Arrays.fill(c, 0, ALPHABET_SZ, 0);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">        for (i = 0; i &lt; N; ++i) c[rank[i]]++;</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">        for (i = 1; i &lt; ALPHABET_SZ; ++i) c[i] += c[i - 1];</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        for (i = N - 1; i &gt;= 0; --i) sa[--c[rank[sa2[i]]]] = sa2[i];</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        for (sa2[sa[0]] = r = 0, i = 1; i &lt; N; ++i) {</span>
+<span class="nc bnc" id="L67" title="All 8 branches missed.">          if (!(rank[sa[i - 1]] == rank[sa[i]]</span>
+              &amp;&amp; sa[i - 1] + p &lt; N
+              &amp;&amp; sa[i] + p &lt; N
+<span class="nc" id="L70">              &amp;&amp; rank[sa[i - 1] + p] == rank[sa[i] + p])) r++;</span>
+<span class="nc" id="L71">          sa2[sa[i]] = r;</span>
+        }
+<span class="nc" id="L73">        tmp = rank;</span>
+<span class="nc" id="L74">        rank = sa2;</span>
+<span class="nc" id="L75">        sa2 = tmp;</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">        if (r == N - 1) break;</span>
+<span class="nc" id="L77">        ALPHABET_SZ = r + 1;</span>
+      }
+<span class="nc" id="L79">    }</span>
+
+    // Use Kasai algorithm to build LCP array
+    private void kasai() {
+<span class="nc" id="L83">      lcp = new int[N];</span>
+<span class="nc" id="L84">      int[] inv = new int[N];</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">      for (int i = 0; i &lt; N; i++) inv[sa[i]] = i;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">      for (int i = 0, len = 0; i &lt; N; i++) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (inv[i] &gt; 0) {</span>
+<span class="nc" id="L88">          int k = sa[inv[i] - 1];</span>
+<span class="nc bnc" id="L89" title="All 6 branches missed.">          while ((i + len &lt; N) &amp;&amp; (k + len &lt; N) &amp;&amp; T[i + len] == T[k + len]) len++;</span>
+<span class="nc" id="L90">          lcp[inv[i] - 1] = len;</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">          if (len &gt; 0) len--;</span>
+        }
+      }
+<span class="nc" id="L94">    }</span>
+
+    public void display() {
+<span class="nc" id="L97">      System.out.printf(&quot;-----i-----SA-----LCP---Suffix\n&quot;);</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="nc" id="L99">        int suffixLen = N - sa[i];</span>
+<span class="nc" id="L100">        String suffix = new String(T, sa[i], suffixLen);</span>
+<span class="nc" id="L101">        System.out.printf(&quot;% 7d % 7d % 7d %s\n&quot;, i, sa[i], lcp[i], suffix);</span>
+      }
+<span class="nc" id="L103">    }</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>QuickSort3.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.sorting</a> &gt; <span class="el_source">QuickSort3.java</span></div><h1>QuickSort3.java</h1><pre class="source lang-java linenums">/**
+ * QuickSort3 or Dutch National Flag algorithm is similar to the QuickSort algorithm but has an
+ * improved partitioning algorithm. QuickSort is quite slow in the case where very few unique
+ * elements exist in the array so the QuickSort3 algorithm is used at that time.
+ *
+ * &lt;p&gt;Run with:
+ *
+ * &lt;p&gt;$ ./gradlew run -Palgorithm=sorting.QuickSort3
+ *
+ * @author Atharva Thorve, aaathorve@gmail.com
+ */
+package com.williamfiset.algorithms.sorting;
+
+import java.util.Random;
+
+<span class="fc" id="L16">public class QuickSort3 implements InplaceSort {</span>
+<span class="fc" id="L17">  private static Random random = new Random();</span>
+
+  @Override
+  public void sort(int[] values) {
+<span class="fc" id="L21">    QuickSort3.quickSort3(values);</span>
+<span class="fc" id="L22">  }</span>
+
+  public static void quickSort3(int[] ar) {
+<span class="pc bpc" id="L25" title="1 of 2 branches missed.">    if (ar == null) return;</span>
+<span class="fc" id="L26">    QuickSort3.randomizedQuickSort(ar, 0, ar.length - 1);</span>
+<span class="fc" id="L27">  }</span>
+
+  // partiton array in such a way that all the elements whose value is equal to
+  // pivot are grouped together
+  private static int[] partition3(int[] a, int l, int r) {
+    int j, k;
+<span class="fc bfc" id="L33" title="All 2 branches covered.">    if (r - l &lt;= 1) {</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">      if (a[r] &lt; a[l]) {</span>
+<span class="fc" id="L35">        swap(a, l, r);</span>
+      }
+<span class="fc" id="L37">      j = l;</span>
+<span class="fc" id="L38">      k = r;</span>
+<span class="fc" id="L39">      int[] m = {j, k};</span>
+<span class="fc" id="L40">      return m;</span>
+    }
+<span class="fc" id="L42">    int mid = l;</span>
+<span class="fc" id="L43">    int p = a[r];</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">    while (mid &lt;= r) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">      if (a[mid] &lt; p) {</span>
+<span class="fc" id="L46">        swap(a, l, mid);</span>
+<span class="fc" id="L47">        l++;</span>
+<span class="fc" id="L48">        mid++;</span>
+<span class="fc bfc" id="L49" title="All 2 branches covered.">      } else if (a[mid] == p) {</span>
+<span class="fc" id="L50">        mid++;</span>
+      } else {
+<span class="fc" id="L52">        swap(a, mid, r);</span>
+<span class="fc" id="L53">        r--;</span>
+      }
+    }
+<span class="fc" id="L56">    j = l - 1;</span>
+<span class="fc" id="L57">    k = mid;</span>
+<span class="fc" id="L58">    int[] m = {j, k};</span>
+<span class="fc" id="L59">    return m;</span>
+  }
+
+  // Sort interval [lo, hi] inplace recursively
+  // This chooses random pivot value thus improving time complexity
+  private static void randomizedQuickSort(int[] a, int l, int r) {
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    if (l &gt;= r) {</span>
+<span class="fc" id="L66">      return;</span>
+    }
+<span class="fc" id="L68">    int k = random.nextInt(r - l + 1) + l;</span>
+<span class="fc" id="L69">    int t = a[l];</span>
+<span class="fc" id="L70">    a[l] = a[k];</span>
+<span class="fc" id="L71">    a[k] = t;</span>
+    // use partition3
+<span class="fc" id="L73">    int[] m = partition3(a, l, r);</span>
+<span class="fc" id="L74">    randomizedQuickSort(a, l, m[0]);</span>
+<span class="fc" id="L75">    randomizedQuickSort(a, m[1], r);</span>
+<span class="fc" id="L76">  }</span>
+
+  // Swap two elements
+  private static void swap(int[] ar, int i, int j) {
+<span class="fc" id="L80">    int tmp = ar[i];</span>
+<span class="fc" id="L81">    ar[i] = ar[j];</span>
+<span class="fc" id="L82">    ar[j] = tmp;</span>
+<span class="fc" id="L83">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L86">    InplaceSort sorter = new QuickSort3();</span>
+<span class="nc" id="L87">    int[] array = {10, 4, 6, 4, 8, -13, 2, 3};</span>
+<span class="nc" id="L88">    sorter.sort(array);</span>
+    // Prints:
+    // [-13, 2, 3, 4, 4, 6, 8, 10]
+<span class="nc" id="L91">    System.out.println(java.util.Arrays.toString(array));</span>
+<span class="nc" id="L92">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

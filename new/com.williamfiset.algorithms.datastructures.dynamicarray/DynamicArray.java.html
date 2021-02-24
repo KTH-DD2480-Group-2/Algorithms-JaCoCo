@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DynamicArray.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.dynamicarray</a> &gt; <span class="el_source">DynamicArray.java</span></div><h1>DynamicArray.java</h1><pre class="source lang-java linenums">/**
+ * A generic dynamic array implementation
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.dynamicarray;
+
+@SuppressWarnings(&quot;unchecked&quot;)
+public class DynamicArray&lt;T&gt; implements Iterable&lt;T&gt; {
+
+  private T[] arr;
+<span class="fc" id="L12">  private int len = 0; // length user thinks array is</span>
+<span class="fc" id="L13">  private int capacity = 0; // Actual array size</span>
+
+  public DynamicArray() {
+<span class="fc" id="L16">    this(16);</span>
+<span class="fc" id="L17">  }</span>
+
+<span class="fc" id="L19">  public DynamicArray(int capacity) {</span>
+<span class="pc bpc" id="L20" title="1 of 2 branches missed.">    if (capacity &lt; 0) throw new IllegalArgumentException(&quot;Illegal Capacity: &quot; + capacity);</span>
+<span class="fc" id="L21">    this.capacity = capacity;</span>
+<span class="fc" id="L22">    arr = (T[]) new Object[capacity];</span>
+<span class="fc" id="L23">  }</span>
+
+  public int size() {
+<span class="fc" id="L26">    return len;</span>
+  }
+
+  public boolean isEmpty() {
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">    return size() == 0;</span>
+  }
+
+  public T get(int index) {
+<span class="fc bfc" id="L34" title="All 4 branches covered.">    if (index &gt;= len || index &lt; 0) throw new IndexOutOfBoundsException();</span>
+<span class="fc" id="L35">    return arr[index];</span>
+  }
+
+  public void set(int index, T elem) {
+<span class="fc bfc" id="L39" title="All 4 branches covered.">    if (index &gt;= len || index &lt; 0) throw new IndexOutOfBoundsException();</span>
+<span class="fc" id="L40">    arr[index] = elem;</span>
+<span class="fc" id="L41">  }</span>
+
+  public void clear() {
+<span class="nc bnc" id="L44" title="All 2 branches missed.">    for (int i = 0; i &lt; len; i++) arr[i] = null;</span>
+<span class="nc" id="L45">    len = 0;</span>
+<span class="nc" id="L46">  }</span>
+
+  public void add(T elem) {
+
+    // Time to resize!
+<span class="fc bfc" id="L51" title="All 2 branches covered.">    if (len + 1 &gt;= capacity) {</span>
+<span class="fc bfc" id="L52" title="All 2 branches covered.">      if (capacity == 0) capacity = 1;</span>
+<span class="fc" id="L53">      else capacity *= 2; // double the size</span>
+<span class="fc" id="L54">      T[] new_arr = (T[]) new Object[capacity];</span>
+<span class="fc bfc" id="L55" title="All 2 branches covered.">      for (int i = 0; i &lt; len; i++) new_arr[i] = arr[i];</span>
+<span class="fc" id="L56">      arr = new_arr; // arr has extra nulls padded</span>
+    }
+
+<span class="fc" id="L59">    arr[len++] = elem;</span>
+<span class="fc" id="L60">  }</span>
+
+  // Removes an element at the specified index in this array.
+  public T removeAt(int rm_index) {
+<span class="fc bfc" id="L64" title="All 4 branches covered.">    if (rm_index &gt;= len || rm_index &lt; 0) throw new IndexOutOfBoundsException();</span>
+<span class="fc" id="L65">    T data = arr[rm_index];</span>
+<span class="fc" id="L66">    T[] new_arr = (T[]) new Object[len - 1];</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">    for (int i = 0, j = 0; i &lt; len; i++, j++)</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">      if (i == rm_index) j--; // Skip over rm_index by fixing j temporarily</span>
+<span class="fc" id="L69">      else new_arr[j] = arr[i];</span>
+<span class="fc" id="L70">    arr = new_arr;</span>
+<span class="fc" id="L71">    capacity = --len;</span>
+<span class="fc" id="L72">    return data;</span>
+  }
+
+  public boolean remove(Object obj) {
+<span class="fc" id="L76">    int index = indexOf(obj);</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">    if (index == -1) return false;</span>
+<span class="fc" id="L78">    removeAt(index);</span>
+<span class="fc" id="L79">    return true;</span>
+  }
+
+  public int indexOf(Object obj) {
+<span class="fc bfc" id="L83" title="All 2 branches covered.">    for (int i = 0; i &lt; len; i++) {</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">      if (obj == null) {</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">        if (arr[i] == null) return i;</span>
+      } else {
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (obj.equals(arr[i])) return i;</span>
+      }
+    }
+<span class="fc" id="L90">    return -1;</span>
+  }
+
+  public boolean contains(Object obj) {
+<span class="nc bnc" id="L94" title="All 2 branches missed.">    return indexOf(obj) != -1;</span>
+  }
+
+  // Iterator is still fast but not as fast as iterative for loop
+  @Override
+  public java.util.Iterator&lt;T&gt; iterator() {
+<span class="nc" id="L100">    return new java.util.Iterator&lt;T&gt;() {</span>
+<span class="nc" id="L101">      int index = 0;</span>
+
+      @Override
+      public boolean hasNext() {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        return index &lt; len;</span>
+      }
+
+      @Override
+      public T next() {
+<span class="nc" id="L110">        return arr[index++];</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L115">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+
+  @Override
+  public String toString() {
+<span class="nc bnc" id="L122" title="All 2 branches missed.">    if (len == 0) return &quot;[]&quot;;</span>
+    else {
+<span class="nc" id="L124">      StringBuilder sb = new StringBuilder(len).append(&quot;[&quot;);</span>
+<span class="nc bnc" id="L125" title="All 2 branches missed.">      for (int i = 0; i &lt; len - 1; i++) sb.append(arr[i] + &quot;, &quot;);</span>
+<span class="nc" id="L126">      return sb.append(arr[len - 1] + &quot;]&quot;).toString();</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

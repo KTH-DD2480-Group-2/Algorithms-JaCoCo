@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TreeCenter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.treealgorithms</a> &gt; <span class="el_source">TreeCenter.java</span></div><h1>TreeCenter.java</h1><pre class="source lang-java linenums">/**
+ * This algorithm finds the center(s) of a tree.
+ *
+ * &lt;p&gt;Time complexity: O(V+E)
+ *
+ * @author Original author: Jeffrey Xiao, https://github.com/jeffrey-xiao
+ * @author Modifications by: William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.treealgorithms;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+<span class="nc" id="L15">public class TreeCenter {</span>
+
+  public static List&lt;Integer&gt; findTreeCenters(List&lt;List&lt;Integer&gt;&gt; tree) {
+<span class="fc" id="L18">    final int n = tree.size();</span>
+<span class="fc" id="L19">    int[] degree = new int[n];</span>
+
+    // Find all leaf nodes
+<span class="fc" id="L22">    List&lt;Integer&gt; leaves = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L23" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc" id="L24">      List&lt;Integer&gt; edges = tree.get(i);</span>
+<span class="fc" id="L25">      degree[i] = edges.size();</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">      if (degree[i] &lt;= 1) {</span>
+<span class="fc" id="L27">        leaves.add(i);</span>
+<span class="fc" id="L28">        degree[i] = 0;</span>
+      }
+    }
+
+<span class="fc" id="L32">    int processedLeafs = leaves.size();</span>
+
+    // Remove leaf nodes and decrease the degree of each node adding new leaf nodes progressively
+    // until only the centers remain.
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    while (processedLeafs &lt; n) {</span>
+<span class="fc" id="L37">      List&lt;Integer&gt; newLeaves = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L38" title="All 2 branches covered.">      for (int node : leaves) {</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        for (int neighbor : tree.get(node)) {</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">          if (--degree[neighbor] == 1) {</span>
+<span class="fc" id="L41">            newLeaves.add(neighbor);</span>
+          }
+<span class="fc" id="L43">        }</span>
+<span class="fc" id="L44">        degree[node] = 0;</span>
+<span class="fc" id="L45">      }</span>
+<span class="fc" id="L46">      processedLeafs += newLeaves.size();</span>
+<span class="fc" id="L47">      leaves = newLeaves;</span>
+<span class="fc" id="L48">    }</span>
+
+<span class="fc" id="L50">    return leaves;</span>
+  }
+
+  /** ********** TESTING ********* */
+
+  // Create an empty tree as a adjacency list.
+  public static List&lt;List&lt;Integer&gt;&gt; createEmptyTree(int n) {
+<span class="fc" id="L57">    List&lt;List&lt;Integer&gt;&gt; tree = new ArrayList&lt;&gt;(n);</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) tree.add(new LinkedList&lt;&gt;());</span>
+<span class="fc" id="L59">    return tree;</span>
+  }
+
+  public static void addUndirectedEdge(List&lt;List&lt;Integer&gt;&gt; tree, int from, int to) {
+<span class="fc" id="L63">    tree.get(from).add(to);</span>
+<span class="fc" id="L64">    tree.get(to).add(from);</span>
+<span class="fc" id="L65">  }</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L69">    List&lt;List&lt;Integer&gt;&gt; graph = createEmptyTree(9);</span>
+<span class="nc" id="L70">    addUndirectedEdge(graph, 0, 1);</span>
+<span class="nc" id="L71">    addUndirectedEdge(graph, 2, 1);</span>
+<span class="nc" id="L72">    addUndirectedEdge(graph, 2, 3);</span>
+<span class="nc" id="L73">    addUndirectedEdge(graph, 3, 4);</span>
+<span class="nc" id="L74">    addUndirectedEdge(graph, 5, 3);</span>
+<span class="nc" id="L75">    addUndirectedEdge(graph, 2, 6);</span>
+<span class="nc" id="L76">    addUndirectedEdge(graph, 6, 7);</span>
+<span class="nc" id="L77">    addUndirectedEdge(graph, 6, 8);</span>
+
+    // Centers are 2
+<span class="nc" id="L80">    System.out.println(findTreeCenters(graph));</span>
+
+    // Centers are 0
+<span class="nc" id="L83">    List&lt;List&lt;Integer&gt;&gt; graph2 = createEmptyTree(1);</span>
+<span class="nc" id="L84">    System.out.println(findTreeCenters(graph2));</span>
+
+    // Centers are 0,1
+<span class="nc" id="L87">    List&lt;List&lt;Integer&gt;&gt; graph3 = createEmptyTree(2);</span>
+<span class="nc" id="L88">    addUndirectedEdge(graph3, 0, 1);</span>
+<span class="nc" id="L89">    System.out.println(findTreeCenters(graph3));</span>
+
+    // Centers are 1
+<span class="nc" id="L92">    List&lt;List&lt;Integer&gt;&gt; graph4 = createEmptyTree(3);</span>
+<span class="nc" id="L93">    addUndirectedEdge(graph4, 0, 1);</span>
+<span class="nc" id="L94">    addUndirectedEdge(graph4, 1, 2);</span>
+<span class="nc" id="L95">    System.out.println(findTreeCenters(graph4));</span>
+
+    // Centers are 1,2
+<span class="nc" id="L98">    List&lt;List&lt;Integer&gt;&gt; graph5 = createEmptyTree(4);</span>
+<span class="nc" id="L99">    addUndirectedEdge(graph5, 0, 1);</span>
+<span class="nc" id="L100">    addUndirectedEdge(graph5, 1, 2);</span>
+<span class="nc" id="L101">    addUndirectedEdge(graph5, 2, 3);</span>
+<span class="nc" id="L102">    System.out.println(findTreeCenters(graph5));</span>
+
+    // Centers are 2,3
+<span class="nc" id="L105">    List&lt;List&lt;Integer&gt;&gt; graph6 = createEmptyTree(7);</span>
+<span class="nc" id="L106">    addUndirectedEdge(graph6, 0, 1);</span>
+<span class="nc" id="L107">    addUndirectedEdge(graph6, 1, 2);</span>
+<span class="nc" id="L108">    addUndirectedEdge(graph6, 2, 3);</span>
+<span class="nc" id="L109">    addUndirectedEdge(graph6, 3, 4);</span>
+<span class="nc" id="L110">    addUndirectedEdge(graph6, 4, 5);</span>
+<span class="nc" id="L111">    addUndirectedEdge(graph6, 4, 6);</span>
+<span class="nc" id="L112">    System.out.println(findTreeCenters(graph6));</span>
+<span class="nc" id="L113">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

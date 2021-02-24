@@ -1,0 +1,624 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PrimsGraphRepresentationAnaylsis.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.analysis</a> &gt; <span class="el_source">PrimsGraphRepresentationAnaylsis.java</span></div><h1>PrimsGraphRepresentationAnaylsis.java</h1><pre class="source lang-java linenums">/*
+Performs density analysis to figure out whether an adjacency list or an
+adjacency matrix is better for prims MST algorithm.
+
+Results seem to indicate that the adjacency matrix is better starting at
+around ~33% edge percentage density:
+
+Percentage full: ~0%, Edges included: 0
+List:   1168811 nanos
+Matrix: 300204 nanos
+
+Percentage full: ~5%, Edges included: 1249282
+List:   78032794 nanos
+Matrix: 160413885 nanos
+
+Percentage full: ~10%, Edges included: 2499128
+List:   53444885 nanos
+Matrix: 136684636 nanos
+
+Percentage full: ~15%, Edges included: 3747556
+List:   84818677 nanos
+Matrix: 154946744 nanos
+
+Percentage full: ~20%, Edges included: 4996636
+List:   105822314 nanos
+Matrix: 167086118 nanos
+
+Percentage full: ~25%, Edges included: 6246068
+List:   117237558 nanos
+Matrix: 190984980 nanos
+
+Percentage full: ~30%, Edges included: 7497476
+List:   249309754 nanos
+Matrix: 233969389 nanos
+
+Percentage full: ~35%, Edges included: 8748710
+List:   265593928 nanos
+Matrix: 235897178 nanos
+
+Percentage full: ~40%, Edges included: 10000808
+List:   317905981 nanos
+Matrix: 255262713 nanos
+
+Percentage full: ~45%, Edges included: 11245712
+List:   428115402 nanos
+Matrix: 244939994 nanos
+
+Percentage full: ~50%, Edges included: 12495078
+List:   485647021 nanos
+Matrix: 241433180 nanos
+
+Percentage full: ~55%, Edges included: 13744132
+List:   523930222 nanos
+Matrix: 240345667 nanos
+
+Percentage full: ~60%, Edges included: 14991078
+List:   565671594 nanos
+Matrix: 250618728 nanos
+
+Percentage full: ~65%, Edges included: 16249278
+List:   635804318 nanos
+Matrix: 247628418 nanos
+
+Percentage full: ~70%, Edges included: 17492252
+List:   448590410 nanos
+Matrix: 218092040 nanos
+
+Percentage full: ~75%, Edges included: 18748276
+List:   365672497 nanos
+Matrix: 209152347 nanos
+
+Percentage full: ~80%, Edges included: 19997560
+List:   389878221 nanos
+Matrix: 197766511 nanos
+
+Percentage full: ~85%, Edges included: 21243518
+List:   360389630 nanos
+Matrix: 181542371 nanos
+
+Percentage full: ~90%, Edges included: 22496480
+List:   486827671 nanos
+Matrix: 182686235 nanos
+
+Percentage full: ~95%, Edges included: 23747794
+List:   423884430 nanos
+Matrix: 159974003 nanos
+
+Percentage full: ~100%, Edges included: 24995000
+List:   436565071 nanos
+Matrix: 154691124 nanos
+
+*/
+
+package com.williamfiset.algorithms.graphtheory.analysis;
+
+import static java.lang.Math.*;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+
+<span class="nc" id="L103">public class PrimsGraphRepresentationAnaylsis {</span>
+
+  private static class Edge implements Comparable&lt;Edge&gt; {
+    int from, to, cost;
+
+<span class="nc" id="L108">    public Edge(int from, int to, int cost) {</span>
+<span class="nc" id="L109">      this.from = from;</span>
+<span class="nc" id="L110">      this.to = to;</span>
+<span class="nc" id="L111">      this.cost = cost;</span>
+<span class="nc" id="L112">    }</span>
+
+    @Override
+    public int compareTo(Edge other) {
+<span class="nc" id="L116">      return cost - other.cost;</span>
+    }
+  }
+
+  private static class PrimsAdjList {
+
+    // Inputs
+    private final int n;
+    private final List&lt;List&lt;Edge&gt;&gt; graph;
+
+    // Internal
+    private boolean solved;
+    private boolean mstExists;
+    private boolean[] visited;
+    private MinIndexedDHeap&lt;Edge&gt; ipq;
+
+    // Outputs
+    private long minCostSum;
+    private Edge[] mstEdges;
+
+<span class="nc" id="L136">    public PrimsAdjList(List&lt;List&lt;Edge&gt;&gt; graph) {</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">      if (graph == null || graph.isEmpty()) throw new IllegalArgumentException();</span>
+<span class="nc" id="L138">      this.n = graph.size();</span>
+<span class="nc" id="L139">      this.graph = graph;</span>
+<span class="nc" id="L140">    }</span>
+
+    // Returns the edges used in finding the minimum spanning tree,
+    // or returns null if no MST exists.
+    public Edge[] getMst() {
+<span class="nc" id="L145">      solve();</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">      return mstExists ? mstEdges : null;</span>
+    }
+
+    public Long getMstCost() {
+<span class="nc" id="L150">      solve();</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">      return mstExists ? minCostSum : null;</span>
+    }
+
+    private void relaxEdgesAtNode(int currentNodeIndex) {
+<span class="nc" id="L155">      visited[currentNodeIndex] = true;</span>
+
+      // edges will never be null if the createEmptyGraph method was used to build the graph.
+<span class="nc" id="L158">      List&lt;Edge&gt; edges = graph.get(currentNodeIndex);</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">      for (Edge edge : edges) {</span>
+<span class="nc" id="L161">        int destNodeIndex = edge.to;</span>
+
+        // Skip edges pointing to already visited nodes.
+<span class="nc bnc" id="L164" title="All 2 branches missed.">        if (visited[destNodeIndex]) continue;</span>
+
+<span class="nc bnc" id="L166" title="All 2 branches missed.">        if (ipq.contains(destNodeIndex)) {</span>
+          // Try and improve the cheapest edge at destNodeIndex with the current edge in the IPQ.
+<span class="nc" id="L168">          ipq.decrease(destNodeIndex, edge);</span>
+        } else {
+          // Insert edge for the first time.
+<span class="nc" id="L171">          ipq.insert(destNodeIndex, edge);</span>
+        }
+<span class="nc" id="L173">      }</span>
+<span class="nc" id="L174">    }</span>
+
+    // Computes the minimum spanning tree and minimum spanning tree cost.
+    private void solve() {
+<span class="nc bnc" id="L178" title="All 2 branches missed.">      if (solved) return;</span>
+<span class="nc" id="L179">      solved = true;</span>
+
+<span class="nc" id="L181">      int m = n - 1, edgeCount = 0;</span>
+<span class="nc" id="L182">      visited = new boolean[n];</span>
+<span class="nc" id="L183">      mstEdges = new Edge[m];</span>
+
+      // The degree of the d-ary heap supporting the IPQ can greatly impact performance, especially
+      // on dense graphs. The base 2 logarithm of n is a decent value based on my quick experiments
+      // (even better than E/V in many cases).
+<span class="nc" id="L188">      int degree = (int) Math.ceil(Math.log(n) / Math.log(2));</span>
+<span class="nc" id="L189">      ipq = new MinIndexedDHeap&lt;&gt;(max(2, degree), n);</span>
+
+      // Add initial set of edges to the priority queue starting at node 0.
+<span class="nc" id="L192">      relaxEdgesAtNode(0);</span>
+
+<span class="nc bnc" id="L194" title="All 4 branches missed.">      while (!ipq.isEmpty() &amp;&amp; edgeCount != m) {</span>
+<span class="nc" id="L195">        int destNodeIndex = ipq.peekMinKeyIndex(); // equivalently: edge.to</span>
+<span class="nc" id="L196">        Edge edge = ipq.pollMinValue();</span>
+
+<span class="nc" id="L198">        mstEdges[edgeCount++] = edge;</span>
+<span class="nc" id="L199">        minCostSum += edge.cost;</span>
+
+<span class="nc" id="L201">        relaxEdgesAtNode(destNodeIndex);</span>
+<span class="nc" id="L202">      }</span>
+
+      // Verify MST spans entire graph.
+<span class="nc bnc" id="L205" title="All 2 branches missed.">      mstExists = (edgeCount == m);</span>
+<span class="nc" id="L206">    }</span>
+
+    /* Graph construction helpers. */
+
+    // Creates an empty adjacency list graph with n nodes.
+    static List&lt;List&lt;Edge&gt;&gt; createEmptyGraph(int n) {
+<span class="nc" id="L212">      List&lt;List&lt;Edge&gt;&gt; g = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++) g.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L214">      return g;</span>
+    }
+
+    static void addDirectedEdge(List&lt;List&lt;Edge&gt;&gt; g, int from, int to, int cost) {
+<span class="nc" id="L218">      g.get(from).add(new Edge(from, to, cost));</span>
+<span class="nc" id="L219">    }</span>
+
+    static void addUndirectedEdge(List&lt;List&lt;Edge&gt;&gt; g, int from, int to, int cost) {
+<span class="nc" id="L222">      addDirectedEdge(g, from, to, cost);</span>
+<span class="nc" id="L223">      addDirectedEdge(g, to, from, cost);</span>
+<span class="nc" id="L224">    }</span>
+  }
+
+  private static class PrimsAdjMatrix {
+
+    // Inputs
+    private final int n;
+    private final Integer[][] graph;
+
+    // Internal
+    private boolean solved;
+    private boolean mstExists;
+    private boolean[] visited;
+    private MinIndexedDHeap&lt;Integer&gt; ipq;
+
+    // Outputs
+    private long minCostSum;
+    private Edge[] mstEdges;
+
+<span class="nc" id="L243">    public PrimsAdjMatrix(Integer[][] graph) {</span>
+<span class="nc bnc" id="L244" title="All 6 branches missed.">      if (graph == null || graph.length == 0 || graph[0].length != graph.length)</span>
+<span class="nc" id="L245">        throw new IllegalArgumentException();</span>
+<span class="nc" id="L246">      this.n = graph.length;</span>
+<span class="nc" id="L247">      this.graph = graph;</span>
+<span class="nc" id="L248">    }</span>
+
+    // Returns the edges used in finding the minimum spanning tree,
+    // or returns null if no MST exists.
+    public Edge[] getMst() {
+      // Unimplemented.
+<span class="nc" id="L254">      return null;</span>
+    }
+
+    public Long getMstCost() {
+<span class="nc" id="L258">      solve();</span>
+<span class="nc bnc" id="L259" title="All 2 branches missed.">      return mstExists ? minCostSum : null;</span>
+    }
+
+    private void relaxEdgesAtNode(int currentNodeIndex) {
+<span class="nc" id="L263">      visited[currentNodeIndex] = true;</span>
+
+<span class="nc bnc" id="L265" title="All 2 branches missed.">      for (int to = 0; to &lt; n; to++) {</span>
+<span class="nc" id="L266">        Integer cost = graph[currentNodeIndex][to];</span>
+        // Edge doesn't exist.
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        if (cost == null) continue;</span>
+
+        // Skip edges pointing to already visited nodes.
+<span class="nc bnc" id="L271" title="All 2 branches missed.">        if (visited[to]) continue;</span>
+
+<span class="nc bnc" id="L273" title="All 2 branches missed.">        if (ipq.contains(to)) {</span>
+          // Try and improve the cheapest edge at to with the current edge in the IPQ.
+<span class="nc" id="L275">          ipq.decrease(to, cost);</span>
+        } else {
+          // Insert edge for the first time.
+<span class="nc" id="L278">          ipq.insert(to, cost);</span>
+        }
+      }
+<span class="nc" id="L281">    }</span>
+
+    // Computes the minimum spanning tree and minimum spanning tree cost.
+    private void solve() {
+<span class="nc bnc" id="L285" title="All 2 branches missed.">      if (solved) return;</span>
+<span class="nc" id="L286">      solved = true;</span>
+
+<span class="nc" id="L288">      int m = n - 1, edgeCount = 0;</span>
+<span class="nc" id="L289">      visited = new boolean[n];</span>
+
+      // The degree of the d-ary heap supporting the IPQ can greatly impact performance, especially
+      // on dense graphs. The base 2 logarithm of n is a decent value based on my quick experiments
+      // (even better than E/V in many cases).
+<span class="nc" id="L294">      int degree = (int) Math.ceil(Math.log(n) / Math.log(2));</span>
+<span class="nc" id="L295">      ipq = new MinIndexedDHeap&lt;&gt;(max(2, degree), n);</span>
+
+      // Add initial set of edges to the priority queue starting at node 0.
+<span class="nc" id="L298">      relaxEdgesAtNode(0);</span>
+
+<span class="nc bnc" id="L300" title="All 4 branches missed.">      while (!ipq.isEmpty() &amp;&amp; edgeCount != m) {</span>
+<span class="nc" id="L301">        int destNodeIndex = ipq.peekMinKeyIndex();</span>
+<span class="nc" id="L302">        int edgeCost = ipq.pollMinValue();</span>
+
+<span class="nc" id="L304">        minCostSum += edgeCost;</span>
+<span class="nc" id="L305">        edgeCount++;</span>
+
+<span class="nc" id="L307">        relaxEdgesAtNode(destNodeIndex);</span>
+<span class="nc" id="L308">      }</span>
+
+      // Verify MST spans entire graph.
+<span class="nc bnc" id="L311" title="All 2 branches missed.">      mstExists = (edgeCount == m);</span>
+<span class="nc" id="L312">    }</span>
+
+    /* Graph construction helpers. */
+
+    // Creates an empty adjacency matrix graph with n nodes.
+    static Integer[][] createEmptyGraph(int n) {
+<span class="nc" id="L318">      return new Integer[n][n];</span>
+    }
+
+    static void addDirectedEdge(Integer[][] g, int from, int to, int cost) {
+<span class="nc" id="L322">      g[from][to] = cost;</span>
+<span class="nc" id="L323">    }</span>
+
+    static void addUndirectedEdge(Integer[][] g, int from, int to, int cost) {
+<span class="nc" id="L326">      addDirectedEdge(g, from, to, cost);</span>
+<span class="nc" id="L327">      addDirectedEdge(g, to, from, cost);</span>
+<span class="nc" id="L328">    }</span>
+  }
+
+  /* Example usage. */
+
+  public static void main(String[] args) throws InterruptedException {
+<span class="nc" id="L334">    densityTest();</span>
+<span class="nc" id="L335">  }</span>
+
+<span class="nc" id="L337">  static Random random = new Random();</span>
+
+  private static void densityTest() throws InterruptedException {
+<span class="nc" id="L340">    String rows = &quot;&quot;, header = &quot;edge density percentage, adj list, adj matrix\n&quot;;</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">    for (int percentage = 5; percentage &lt;= 100; percentage += 5) {</span>
+
+      // Calling GC seems to give more consistent results?
+<span class="nc" id="L344">      System.gc();</span>
+<span class="nc" id="L345">      TimeUnit.SECONDS.sleep(2);</span>
+
+<span class="nc" id="L347">      int n = 5000;</span>
+<span class="nc" id="L348">      List&lt;List&lt;Edge&gt;&gt; g1 = PrimsAdjList.createEmptyGraph(n);</span>
+<span class="nc" id="L349">      Integer[][] g2 = PrimsAdjMatrix.createEmptyGraph(n);</span>
+
+<span class="nc" id="L351">      int numEdgesIncluded = 0;</span>
+<span class="nc bnc" id="L352" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L353" title="All 2 branches missed.">        for (int j = i + 1; j &lt; n; j++) {</span>
+<span class="nc" id="L354">          int r = Math.abs(random.nextInt()) % 100;</span>
+<span class="nc bnc" id="L355" title="All 2 branches missed.">          if (r &gt;= percentage) continue;</span>
+<span class="nc" id="L356">          PrimsAdjList.addUndirectedEdge(g1, i, j, r);</span>
+<span class="nc" id="L357">          PrimsAdjMatrix.addUndirectedEdge(g2, i, j, r);</span>
+<span class="nc" id="L358">          numEdgesIncluded += 2;</span>
+        }
+      }
+
+<span class="nc" id="L362">      PrimsAdjList adjListSolver = new PrimsAdjList(g1);</span>
+<span class="nc" id="L363">      PrimsAdjMatrix matrixSolver = new PrimsAdjMatrix(g2);</span>
+
+<span class="nc" id="L365">      System.out.println(</span>
+          &quot;\nPercentage full: ~&quot; + percentage + &quot;%, Edges included: &quot; + numEdgesIncluded);
+
+<span class="nc" id="L368">      Instant start = Instant.now();</span>
+<span class="nc" id="L369">      Long listCost = adjListSolver.getMstCost();</span>
+<span class="nc" id="L370">      Instant end = Instant.now();</span>
+<span class="nc" id="L371">      long listTimeMs = Duration.between(start, end).toMillis();</span>
+<span class="nc" id="L372">      System.out.println(&quot;List:   &quot; + listTimeMs + &quot; millis&quot;);</span>
+
+<span class="nc" id="L374">      start = Instant.now();</span>
+<span class="nc" id="L375">      Long matrixCost = matrixSolver.getMstCost();</span>
+<span class="nc" id="L376">      end = Instant.now();</span>
+<span class="nc" id="L377">      long matrixTimeMs = Duration.between(start, end).toMillis();</span>
+<span class="nc" id="L378">      System.out.println(&quot;Matrix: &quot; + matrixTimeMs + &quot; millis&quot;);</span>
+
+<span class="nc bnc" id="L380" title="All 4 branches missed.">      if (listCost != null &amp;&amp; listCost.longValue() != matrixCost.longValue()) {</span>
+<span class="nc" id="L381">        System.out.println(&quot;Oh dear. &quot; + listCost + &quot; != &quot; + matrixCost);</span>
+      }
+
+<span class="nc" id="L384">      rows += String.format(&quot;%d%%,%d,%d\n&quot;, percentage, listTimeMs, matrixTimeMs);</span>
+    }
+<span class="nc" id="L386">    System.out.println(&quot;CSV printout:\n\n&quot; + header + rows);</span>
+<span class="nc" id="L387">  }</span>
+
+  /* Supporting indexed priority queue implementation. */
+
+  private static class MinIndexedDHeap&lt;T extends Comparable&lt;T&gt;&gt; {
+
+    // Current number of elements in the heap.
+    private int sz;
+
+    // Maximum number of elements in the heap.
+    private final int N;
+
+    // The degree of every node in the heap.
+    private final int D;
+
+    // Lookup arrays to track the child/parent indexes of each node.
+    private final int[] child, parent;
+
+    // The Position Map (pm) maps Key Indexes (ki) to where the position of that
+    // key is represented in the priority queue in the domain [0, sz).
+    public final int[] pm;
+
+    // The Inverse Map (im) stores the indexes of the keys in the range
+    // [0, sz) which make up the priority queue. It should be noted that
+    // 'im' and 'pm' are inverses of each other, so: pm[im[i]] = im[pm[i]] = i
+    public final int[] im;
+
+    // The values associated with the keys. It is very important  to note
+    // that this array is indexed by the key indexes (aka 'ki').
+    public final Object[] values;
+
+    // Initializes a D-ary heap with a maximum capacity of maxSize.
+<span class="nc" id="L419">    public MinIndexedDHeap(int degree, int maxSize) {</span>
+<span class="nc bnc" id="L420" title="All 2 branches missed.">      if (maxSize &lt;= 0) throw new IllegalArgumentException(&quot;maxSize &lt;= 0&quot;);</span>
+
+<span class="nc" id="L422">      D = max(2, degree);</span>
+<span class="nc" id="L423">      N = max(D + 1, maxSize);</span>
+
+<span class="nc" id="L425">      im = new int[N];</span>
+<span class="nc" id="L426">      pm = new int[N];</span>
+<span class="nc" id="L427">      child = new int[N];</span>
+<span class="nc" id="L428">      parent = new int[N];</span>
+<span class="nc" id="L429">      values = new Object[N];</span>
+
+<span class="nc bnc" id="L431" title="All 2 branches missed.">      for (int i = 0; i &lt; N; i++) {</span>
+<span class="nc" id="L432">        parent[i] = (i - 1) / D;</span>
+<span class="nc" id="L433">        child[i] = i * D + 1;</span>
+<span class="nc" id="L434">        pm[i] = im[i] = -1;</span>
+      }
+<span class="nc" id="L436">    }</span>
+
+    public int size() {
+<span class="nc" id="L439">      return sz;</span>
+    }
+
+    public boolean isEmpty() {
+<span class="nc bnc" id="L443" title="All 2 branches missed.">      return sz == 0;</span>
+    }
+
+    public boolean contains(int ki) {
+<span class="nc" id="L447">      keyInBoundsOrThrow(ki);</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">      return pm[ki] != -1;</span>
+    }
+
+    public int peekMinKeyIndex() {
+<span class="nc" id="L452">      isNotEmptyOrThrow();</span>
+<span class="nc" id="L453">      return im[0];</span>
+    }
+
+    public int pollMinKeyIndex() {
+<span class="nc" id="L457">      int minki = peekMinKeyIndex();</span>
+<span class="nc" id="L458">      delete(minki);</span>
+<span class="nc" id="L459">      return minki;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public T peekMinValue() {
+<span class="nc" id="L464">      isNotEmptyOrThrow();</span>
+<span class="nc" id="L465">      return (T) values[im[0]];</span>
+    }
+
+    public T pollMinValue() {
+<span class="nc" id="L469">      T minValue = peekMinValue();</span>
+<span class="nc" id="L470">      delete(peekMinKeyIndex());</span>
+<span class="nc" id="L471">      return minValue;</span>
+    }
+
+    public void insert(int ki, T value) {
+<span class="nc bnc" id="L475" title="All 2 branches missed.">      if (contains(ki)) throw new IllegalArgumentException(&quot;index already exists; received: &quot; + ki);</span>
+<span class="nc" id="L476">      valueNotNullOrThrow(value);</span>
+<span class="nc" id="L477">      pm[ki] = sz;</span>
+<span class="nc" id="L478">      im[sz] = ki;</span>
+<span class="nc" id="L479">      values[ki] = value;</span>
+<span class="nc" id="L480">      swim(sz++);</span>
+<span class="nc" id="L481">    }</span>
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public T valueOf(int ki) {
+<span class="nc" id="L485">      keyExistsOrThrow(ki);</span>
+<span class="nc" id="L486">      return (T) values[ki];</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public T delete(int ki) {
+<span class="nc" id="L491">      keyExistsOrThrow(ki);</span>
+<span class="nc" id="L492">      final int i = pm[ki];</span>
+<span class="nc" id="L493">      swap(i, --sz);</span>
+<span class="nc" id="L494">      sink(i);</span>
+<span class="nc" id="L495">      swim(i);</span>
+<span class="nc" id="L496">      T value = (T) values[ki];</span>
+<span class="nc" id="L497">      values[ki] = null;</span>
+<span class="nc" id="L498">      pm[ki] = -1;</span>
+<span class="nc" id="L499">      im[sz] = -1;</span>
+<span class="nc" id="L500">      return value;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public T update(int ki, T value) {
+<span class="nc" id="L505">      keyExistsAndValueNotNullOrThrow(ki, value);</span>
+<span class="nc" id="L506">      final int i = pm[ki];</span>
+<span class="nc" id="L507">      T oldValue = (T) values[ki];</span>
+<span class="nc" id="L508">      values[ki] = value;</span>
+<span class="nc" id="L509">      sink(i);</span>
+<span class="nc" id="L510">      swim(i);</span>
+<span class="nc" id="L511">      return oldValue;</span>
+    }
+
+    // Strictly decreases the value associated with 'ki' to 'value'
+    public void decrease(int ki, T value) {
+<span class="nc" id="L516">      keyExistsAndValueNotNullOrThrow(ki, value);</span>
+<span class="nc bnc" id="L517" title="All 2 branches missed.">      if (less(value, values[ki])) {</span>
+<span class="nc" id="L518">        values[ki] = value;</span>
+<span class="nc" id="L519">        swim(pm[ki]);</span>
+      }
+<span class="nc" id="L521">    }</span>
+
+    // Strictly increases the value associated with 'ki' to 'value'
+    public void increase(int ki, T value) {
+<span class="nc" id="L525">      keyExistsAndValueNotNullOrThrow(ki, value);</span>
+<span class="nc bnc" id="L526" title="All 2 branches missed.">      if (less(values[ki], value)) {</span>
+<span class="nc" id="L527">        values[ki] = value;</span>
+<span class="nc" id="L528">        sink(pm[ki]);</span>
+      }
+<span class="nc" id="L530">    }</span>
+
+    /* Helper functions */
+
+    private void sink(int i) {
+<span class="nc bnc" id="L535" title="All 2 branches missed.">      for (int j = minChild(i); j != -1; ) {</span>
+<span class="nc" id="L536">        swap(i, j);</span>
+<span class="nc" id="L537">        i = j;</span>
+<span class="nc" id="L538">        j = minChild(i);</span>
+      }
+<span class="nc" id="L540">    }</span>
+
+    private void swim(int i) {
+<span class="nc bnc" id="L543" title="All 2 branches missed.">      while (less(i, parent[i])) {</span>
+<span class="nc" id="L544">        swap(i, parent[i]);</span>
+<span class="nc" id="L545">        i = parent[i];</span>
+      }
+<span class="nc" id="L547">    }</span>
+
+    // From the parent node at index i find the minimum child below it
+    private int minChild(int i) {
+<span class="nc" id="L551">      int index = -1, from = child[i], to = min(sz, from + D);</span>
+<span class="nc bnc" id="L552" title="All 4 branches missed.">      for (int j = from; j &lt; to; j++) if (less(j, i)) index = i = j;</span>
+<span class="nc" id="L553">      return index;</span>
+    }
+
+    private void swap(int i, int j) {
+<span class="nc" id="L557">      pm[im[j]] = i;</span>
+<span class="nc" id="L558">      pm[im[i]] = j;</span>
+<span class="nc" id="L559">      int tmp = im[i];</span>
+<span class="nc" id="L560">      im[i] = im[j];</span>
+<span class="nc" id="L561">      im[j] = tmp;</span>
+<span class="nc" id="L562">    }</span>
+
+    // Tests if the value of node i &lt; node j
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private boolean less(int i, int j) {
+<span class="nc bnc" id="L567" title="All 2 branches missed.">      return ((Comparable&lt;? super T&gt;) values[im[i]]).compareTo((T) values[im[j]]) &lt; 0;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private boolean less(Object obj1, Object obj2) {
+<span class="nc bnc" id="L572" title="All 2 branches missed.">      return ((Comparable&lt;? super T&gt;) obj1).compareTo((T) obj2) &lt; 0;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L577">      List&lt;Integer&gt; lst = new ArrayList&lt;&gt;(sz);</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">      for (int i = 0; i &lt; sz; i++) lst.add(im[i]);</span>
+<span class="nc" id="L579">      return lst.toString();</span>
+    }
+
+    /* Helper functions to make the code more readable. */
+
+    private void isNotEmptyOrThrow() {
+<span class="nc bnc" id="L585" title="All 2 branches missed.">      if (isEmpty()) throw new NoSuchElementException(&quot;Priority queue underflow&quot;);</span>
+<span class="nc" id="L586">    }</span>
+
+    private void keyExistsAndValueNotNullOrThrow(int ki, Object value) {
+<span class="nc" id="L589">      keyExistsOrThrow(ki);</span>
+<span class="nc" id="L590">      valueNotNullOrThrow(value);</span>
+<span class="nc" id="L591">    }</span>
+
+    private void keyExistsOrThrow(int ki) {
+<span class="nc bnc" id="L594" title="All 2 branches missed.">      if (!contains(ki)) throw new NoSuchElementException(&quot;Index does not exist; received: &quot; + ki);</span>
+<span class="nc" id="L595">    }</span>
+
+    private void valueNotNullOrThrow(Object value) {
+<span class="nc bnc" id="L598" title="All 2 branches missed.">      if (value == null) throw new IllegalArgumentException(&quot;value cannot be null&quot;);</span>
+<span class="nc" id="L599">    }</span>
+
+    private void keyInBoundsOrThrow(int ki) {
+<span class="nc bnc" id="L602" title="All 4 branches missed.">      if (ki &lt; 0 || ki &gt;= N)</span>
+<span class="nc" id="L603">        throw new IllegalArgumentException(&quot;Key index out of bounds; received: &quot; + ki);</span>
+<span class="nc" id="L604">    }</span>
+
+    /* Test functions */
+
+    // Recursively checks if this heap is a min heap. This method is used
+    // for testing purposes to validate the heap invariant.
+    public boolean isMinHeap() {
+<span class="nc" id="L611">      return isMinHeap(0);</span>
+    }
+
+    private boolean isMinHeap(int i) {
+<span class="nc" id="L615">      int from = child[i], to = min(sz, from + D);</span>
+<span class="nc bnc" id="L616" title="All 2 branches missed.">      for (int j = from; j &lt; to; j++) {</span>
+<span class="nc bnc" id="L617" title="All 2 branches missed.">        if (!less(i, j)) return false;</span>
+<span class="nc bnc" id="L618" title="All 2 branches missed.">        if (!isMinHeap(j)) return false;</span>
+      }
+<span class="nc" id="L620">      return true;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConnectedComponentsAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">ConnectedComponentsAdjacencyList.java</span></div><h1>ConnectedComponentsAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * This file contains an algorithm to find all the connected components of an undirected graph. If
+ * the graph you're dealing with is directed have a look at Tarjan's algorithm to find strongly
+ * connected components.
+ *
+ * &lt;p&gt;The approach I will use to find all the strongly connected components is to use a union find
+ * data structure to merge together nodes connected by an edge. An alternative approach would be to
+ * do a breadth first search from each node (except the ones already visited of course) to determine
+ * the individual components.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+
+<span class="nc" id="L17">public class ConnectedComponentsAdjacencyList {</span>
+
+  static class Edge {
+    int from, to, cost;
+
+<span class="nc" id="L22">    public Edge(int from, int to, int cost) {</span>
+<span class="nc" id="L23">      this.from = from;</span>
+<span class="nc" id="L24">      this.to = to;</span>
+<span class="nc" id="L25">      this.cost = cost;</span>
+<span class="nc" id="L26">    }</span>
+  }
+
+  static int countConnectedComponents(Map&lt;Integer, List&lt;Edge&gt;&gt; graph, int n) {
+
+<span class="nc" id="L31">    UnionFind uf = new UnionFind(n);</span>
+
+<span class="nc bnc" id="L33" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L34">      List&lt;Edge&gt; edges = graph.get(i);</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">      if (edges != null) {</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        for (Edge edge : edges) {</span>
+<span class="nc" id="L37">          uf.unify(edge.from, edge.to);</span>
+<span class="nc" id="L38">        }</span>
+      }
+    }
+
+<span class="nc" id="L42">    return uf.components();</span>
+  }
+
+  // Finding connected components example
+  public static void main(String[] args) {
+
+<span class="nc" id="L48">    final int numNodes = 7;</span>
+<span class="nc" id="L49">    Map&lt;Integer, List&lt;Edge&gt;&gt; graph = new HashMap&lt;&gt;();</span>
+
+    // Setup a graph with four connected components
+    // namely: {0,1,2}, {3,4}, {5}, {6}
+<span class="nc" id="L53">    addUndirectedEdge(graph, 0, 1, 1);</span>
+<span class="nc" id="L54">    addUndirectedEdge(graph, 1, 2, 1);</span>
+<span class="nc" id="L55">    addUndirectedEdge(graph, 2, 0, 1);</span>
+<span class="nc" id="L56">    addUndirectedEdge(graph, 3, 4, 1);</span>
+<span class="nc" id="L57">    addUndirectedEdge(graph, 5, 5, 1); // Self loop</span>
+
+<span class="nc" id="L59">    int components = countConnectedComponents(graph, numNodes);</span>
+<span class="nc" id="L60">    System.out.printf(&quot;Number of components: %d\n&quot;, components);</span>
+<span class="nc" id="L61">  }</span>
+
+  // Helper method to setup graph
+  private static void addUndirectedEdge(
+      Map&lt;Integer, List&lt;Edge&gt;&gt; graph, int from, int to, int cost) {
+<span class="nc" id="L66">    List&lt;Edge&gt; list = graph.get(from);</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">    if (list == null) {</span>
+<span class="nc" id="L68">      list = new ArrayList&lt;Edge&gt;();</span>
+<span class="nc" id="L69">      graph.put(from, list);</span>
+    }
+<span class="nc" id="L71">    list.add(new Edge(from, to, cost));</span>
+<span class="nc" id="L72">    list.add(new Edge(to, from, cost));</span>
+<span class="nc" id="L73">  }</span>
+}
+
+// Union find data structure
+class UnionFind {
+
+  // The number of elements in this union find
+  private int size;
+
+  // Used to track the sizes of each of the components
+  private int[] sz;
+
+  // id[i] points to the parent of i, if id[i] = i then i is a root node
+  private int[] id;
+
+  // Tracks the number of components in the union find
+  private int numComponents;
+
+<span class="nc" id="L91">  public UnionFind(int size) {</span>
+
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    if (size &lt;= 0) throw new IllegalArgumentException(&quot;Size &lt;= 0 is not allowed&quot;);</span>
+
+<span class="nc" id="L95">    this.size = numComponents = size;</span>
+<span class="nc" id="L96">    sz = new int[size];</span>
+<span class="nc" id="L97">    id = new int[size];</span>
+
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    for (int i = 0; i &lt; size; i++) {</span>
+<span class="nc" id="L100">      id[i] = i; // Link to itself (self root)</span>
+<span class="nc" id="L101">      sz[i] = 1; // Each component is originally of size one</span>
+    }
+<span class="nc" id="L103">  }</span>
+
+  // Find which component/set 'p' belongs to, takes amortized constant time.
+  public int find(int p) {
+
+    // Find the root of the component/set
+<span class="nc" id="L109">    int root = p;</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">    while (root != id[root]) root = id[root];</span>
+
+    // Compress the path leading back to the root.
+    // Doing this operation is called &quot;path compression&quot;
+    // and is what gives us amortized constant time complexity.
+<span class="nc bnc" id="L115" title="All 2 branches missed.">    while (p != root) {</span>
+<span class="nc" id="L116">      int next = id[p];</span>
+<span class="nc" id="L117">      id[p] = root;</span>
+<span class="nc" id="L118">      p = next;</span>
+<span class="nc" id="L119">    }</span>
+
+<span class="nc" id="L121">    return root;</span>
+  }
+
+  // Return whether or not the elements 'p' and
+  // 'q' are in the same components/set.
+  public boolean connected(int p, int q) {
+<span class="nc bnc" id="L127" title="All 2 branches missed.">    return find(p) == find(q);</span>
+  }
+
+  // Return the size of the components/set 'p' belongs to
+  public int componentSize(int p) {
+<span class="nc" id="L132">    return sz[find(p)];</span>
+  }
+
+  // Return the number of elements in this UnionFind/Disjoint set
+  public int size() {
+<span class="nc" id="L137">    return size;</span>
+  }
+
+  // Returns the number of remaining components/sets
+  public int components() {
+<span class="nc" id="L142">    return numComponents;</span>
+  }
+
+  // Unify the components/sets containing elements 'p' and 'q'
+  public void unify(int p, int q) {
+
+<span class="nc" id="L148">    int root1 = find(p);</span>
+<span class="nc" id="L149">    int root2 = find(q);</span>
+
+    // These elements are already in the same group!
+<span class="nc bnc" id="L152" title="All 2 branches missed.">    if (root1 == root2) return;</span>
+
+    // Merge smaller component/set into the larger one.
+<span class="nc bnc" id="L155" title="All 2 branches missed.">    if (sz[root1] &lt; sz[root2]) {</span>
+<span class="nc" id="L156">      sz[root2] += sz[root1];</span>
+<span class="nc" id="L157">      id[root1] = root2;</span>
+    } else {
+<span class="nc" id="L159">      sz[root1] += sz[root2];</span>
+<span class="nc" id="L160">      id[root2] = root1;</span>
+    }
+
+    // Since the roots found are different we know that the
+    // number of components/sets has decreased by one
+<span class="nc" id="L165">    numComponents--;</span>
+<span class="nc" id="L166">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

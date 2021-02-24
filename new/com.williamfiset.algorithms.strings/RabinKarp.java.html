@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RabinKarp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.strings</a> &gt; <span class="el_source">RabinKarp.java</span></div><h1>RabinKarp.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the Rabin-Karp algorithm using rolling positional hashing.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.strings;
+
+import java.math.*;
+import java.util.*;
+
+<span class="nc" id="L11">public class RabinKarp {</span>
+
+  // Our alphabet size is 95 because there are only 95 printable ASCII characters
+  // which are in the range between [32, 127). We also need to add +1 to our alphabet
+  // size because we're going to redefine the first ASCII character (the space character)
+  // to be 1 instead of 0 to avoid collisions where the string ' ' hashes to the
+  // same value as '   ' since 0*95^0 = 0*95^0 + 0*95^1 + 0*95^2
+  private static final long ALPHABET_BASE = 95 + 1;
+<span class="nc" id="L19">  private static final long[] ALPHABET = new long[127];</span>
+<span class="nc" id="L20">  private static final BigInteger BIG_ALPHA = new BigInteger(String.valueOf(ALPHABET_BASE));</span>
+
+  // More primes: 1009, 1013, 1019, 10007, 10009, 10037, 100003, 100019, 100043, 1000003, 1000033,
+  // 1000037,
+  // 10000019, 10000079, 10000103, 100000007, 100000009, 100000023, 1000000007, 1000000009,
+  // 1000000021, 1000000033
+<span class="nc" id="L26">  private static final long[] MODS = {10_000_019, 10_000_079, 10_000_103};</span>
+<span class="nc" id="L27">  private static final int N_HASHES = MODS.length;</span>
+<span class="nc" id="L28">  private static final BigInteger[] BIG_MODS = new BigInteger[N_HASHES];</span>
+<span class="nc" id="L29">  private static final long[] MOD_INVERSES = new long[N_HASHES];</span>
+
+  static {
+
+    // Assign a mapping from the printable ASCII characters to the natural numbers
+<span class="nc bnc" id="L34" title="All 2 branches missed.">    for (int i = 32, n = 1; i &lt; ALPHABET.length; i++, n++) ALPHABET[i] = n;</span>
+
+    // Compute modular inverses for chosen mod values
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    for (int i = 0; i &lt; N_HASHES; i++) {</span>
+<span class="nc" id="L38">      java.math.BigInteger mod = new java.math.BigInteger(String.valueOf(MODS[i]));</span>
+<span class="nc" id="L39">      MOD_INVERSES[i] = BIG_ALPHA.modInverse(mod).longValue();</span>
+<span class="nc" id="L40">      BIG_MODS[i] = mod;</span>
+    }
+<span class="nc" id="L42">  }</span>
+
+  // Example usage of the Rabin-Karp string matching algorithm
+  public static void main(String[] args) {
+
+<span class="nc" id="L47">    String str = &quot;P@TTerNabcdefP@TTerNP@TTerNabcdefabcdefabcdefabcdefP@TTerN&quot;;</span>
+<span class="nc" id="L48">    String pat = &quot;P@TTerN&quot;;</span>
+
+<span class="nc" id="L50">    System.out.println(rabinKarp(str, pat)); // [0, 13, 20, 51]</span>
+
+    // Pattern is a substring of the text multiple times
+<span class="nc" id="L53">    str = &quot;ababababa&quot;;</span>
+<span class="nc" id="L54">    pat = &quot;a&quot;;</span>
+
+<span class="nc" id="L56">    System.out.println(rabinKarp(str, pat)); // [0, 2, 4, 6, 8]</span>
+
+    // String is smaller than pattern
+<span class="nc" id="L59">    str = &quot;123&quot;;</span>
+<span class="nc" id="L60">    pat = &quot;123456&quot;;</span>
+
+<span class="nc" id="L62">    System.out.println(rabinKarp(str, pat)); // []</span>
+
+    // String and pattern are the same
+<span class="nc" id="L65">    str = &quot;123456&quot;;</span>
+<span class="nc" id="L66">    pat = &quot;123456&quot;;</span>
+
+<span class="nc" id="L68">    System.out.println(rabinKarp(str, pat)); // [0]</span>
+<span class="nc" id="L69">  }</span>
+
+  // Given a text and a pattern Rabin-Karp finds all occurrences
+  // of the pattern in the text in O(n+m) time.
+  public static List&lt;Integer&gt; rabinKarp(String text, String pattern) {
+
+<span class="nc" id="L75">    List&lt;Integer&gt; matches = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L76" title="All 4 branches missed.">    if (text == null || pattern == null) return matches;</span>
+
+    // Find pattern length (PL) and text length (TL)
+<span class="nc" id="L79">    final int PL = pattern.length(), TL = text.length();</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">    if (PL &gt; TL) return matches;</span>
+
+    // Compute the initial hash values
+<span class="nc" id="L83">    long[] patternHash = computeHash(pattern);</span>
+<span class="nc" id="L84">    long[] rollingHash = computeHash(text.substring(0, PL));</span>
+
+<span class="nc" id="L86">    final BigInteger BIG_PL = new BigInteger(String.valueOf(PL));</span>
+<span class="nc" id="L87">    final long[] POWERS = new long[N_HASHES];</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">    for (int i = 0; i &lt; N_HASHES; i++)</span>
+<span class="nc" id="L89">      POWERS[i] = BIG_ALPHA.modPow(BIG_PL, BIG_MODS[i]).longValue();</span>
+
+<span class="nc" id="L91">    for (int i = PL - 1; ; ) {</span>
+
+<span class="nc bnc" id="L93" title="All 2 branches missed.">      if (Arrays.equals(patternHash, rollingHash)) {</span>
+<span class="nc" id="L94">        matches.add(i - PL + 1);</span>
+      }
+<span class="nc bnc" id="L96" title="All 2 branches missed.">      if (++i == TL) return matches;</span>
+
+<span class="nc" id="L98">      char firstValue = text.charAt(i - PL);</span>
+<span class="nc" id="L99">      char lastValue = text.charAt(i);</span>
+
+      // Update rolling hash
+<span class="nc bnc" id="L102" title="All 2 branches missed.">      for (int j = 0; j &lt; patternHash.length; j++) {</span>
+<span class="nc" id="L103">        rollingHash[j] = addRight(rollingHash[j], lastValue, j);</span>
+<span class="nc" id="L104">        rollingHash[j] = removeLeft(rollingHash[j], POWERS[j], firstValue, j);</span>
+      }
+<span class="nc" id="L106">    }</span>
+  }
+
+  // This method performs Rabin-Karp backwards by starting at the end and
+  // doing the rolling hashes in the other direction. This method has no true
+  // advantage over the other rabinKarp method, it is simply for proof of concept.
+  public static List&lt;Integer&gt; rabinKarpBackwards(String text, String pattern) {
+
+<span class="nc" id="L114">    List&lt;Integer&gt; matches = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L115" title="All 4 branches missed.">    if (text == null || pattern == null) return matches;</span>
+
+    // Find pattern length (PL) and text length (TL)
+<span class="nc" id="L118">    final int PL = pattern.length(), TL = text.length();</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">    if (PL &gt; TL) return matches;</span>
+
+<span class="nc" id="L121">    long[] patternHash = computeHash(pattern);</span>
+<span class="nc" id="L122">    long[] rollingHash = computeHash(text.substring(TL - PL, TL));</span>
+
+<span class="nc" id="L124">    final BigInteger BIG_PL = new BigInteger(String.valueOf(PL));</span>
+<span class="nc" id="L125">    final long[] POWERS = new long[N_HASHES];</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">    for (int i = 0; i &lt; N_HASHES; i++)</span>
+<span class="nc" id="L127">      POWERS[i] = BIG_ALPHA.modPow(BIG_PL, BIG_MODS[i]).longValue();</span>
+
+<span class="nc" id="L129">    for (int i = TL - PL; ; ) {</span>
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">      if (Arrays.equals(patternHash, rollingHash)) {</span>
+<span class="nc" id="L132">        matches.add(i);</span>
+      }
+<span class="nc bnc" id="L134" title="All 2 branches missed.">      if (--i &lt; 0) return matches;</span>
+
+<span class="nc" id="L136">      char firstValue = text.charAt(i);</span>
+<span class="nc" id="L137">      char lastValue = text.charAt(i + PL);</span>
+
+      // Update rolling hash
+<span class="nc bnc" id="L140" title="All 2 branches missed.">      for (int j = 0; j &lt; patternHash.length; j++) {</span>
+<span class="nc" id="L141">        rollingHash[j] = addLeft(rollingHash[j], POWERS[j], firstValue, j);</span>
+<span class="nc" id="L142">        rollingHash[j] = removeRight(rollingHash[j], lastValue, j);</span>
+      }
+<span class="nc" id="L144">    }</span>
+  }
+
+  // This function adds a character to the end of the rolling hash
+  private static long addRight(long rollingHash, char lastValue, int modIndex) {
+<span class="nc" id="L149">    rollingHash = (rollingHash * ALPHABET_BASE + ALPHABET[lastValue]) % MODS[modIndex];</span>
+<span class="nc" id="L150">    return (rollingHash + MODS[modIndex]) % MODS[modIndex];</span>
+  }
+
+  // Given a rolling hash x_n*A^n + x_n-1*A^(n-1) + ... + x_2*A^2 + x_1*A^1 + x_0*A^0
+  // where x_i is a character value and 'A' is the alphabet size this method removes
+  // the x_0*A^0 term and divides by A (multiplies by modular inverse)
+  private static long removeRight(long rollingHash, char lastValue, int modIndex) {
+<span class="nc" id="L157">    rollingHash =</span>
+        (((rollingHash - ALPHABET[lastValue]) % MODS[modIndex]) + MODS[modIndex]) % MODS[modIndex];
+<span class="nc" id="L159">    return (rollingHash * MOD_INVERSES[modIndex]) % MODS[modIndex];</span>
+  }
+
+  // Given a rolling hash x_n*A^n + x_n-1*A^(n-1) + ... + x_2*A^2 + x_1*A^1 + x_0*A^0
+  // where x_i is a character value and 'A' is the alphabet size this method adds
+  // an additional term 'x_n+1*A^(n+1)' to the rolling hash.
+  //
+  // firstValue - This is x_n+1, the first character of this string
+  // alphabetBasePower - A^(n+1)
+  private static long addLeft(
+      long rollingHash, long alphabetBasePower, char firstValue, int modIndex) {
+<span class="nc" id="L170">    rollingHash = (ALPHABET[firstValue] * alphabetBasePower + rollingHash) % MODS[modIndex];</span>
+<span class="nc" id="L171">    return (rollingHash + MODS[modIndex]) % MODS[modIndex];</span>
+  }
+
+  // Given a rolling hash x_n*A^n + x_n-1*A^(n-1) + ... + x_2*A^2 + x_1*A^1 + x_0*A^0
+  // where x_i is a character value and 'A' is the alphabet size this method removes
+  // the first term 'x_n*A^n' from the rolling hash.
+  //
+  // firstValue - This is x_n, the first character of this string
+  // alphabetBasePower - A^n
+  private static long removeLeft(
+      long rollingHash, long alphabetBasePower, char firstValue, int modIndex) {
+<span class="nc" id="L182">    rollingHash = (rollingHash - ALPHABET[firstValue] * alphabetBasePower) % MODS[modIndex];</span>
+<span class="nc" id="L183">    return (rollingHash + MODS[modIndex]) % MODS[modIndex];</span>
+  }
+
+  // Computes the hashes for a particular string
+  public static long[] computeHash(String str) {
+
+<span class="nc" id="L189">    long[] rollingHashes = new long[N_HASHES];</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">    for (int k = 0; k &lt; N_HASHES; k++)</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">      for (int i = 0; i &lt; str.length(); i++)</span>
+<span class="nc" id="L192">        rollingHashes[k] = addRight(rollingHashes[k], str.charAt(i), k);</span>
+<span class="nc" id="L193">    return rollingHashes;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

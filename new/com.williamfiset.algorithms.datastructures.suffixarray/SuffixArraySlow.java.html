@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SuffixArraySlow.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.suffixarray</a> &gt; <span class="el_source">SuffixArraySlow.java</span></div><h1>SuffixArraySlow.java</h1><pre class="source lang-java linenums">/**
+ * Naive suffix array implementation.
+ *
+ * &lt;p&gt;Time Complexity: O(n^2log(n))
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.suffixarray;
+
+public class SuffixArraySlow extends SuffixArray {
+
+  private static class Suffix implements Comparable&lt;Suffix&gt; {
+    // Starting position of suffix in text
+    final int index, len;
+    final int[] text;
+
+<span class="fc" id="L17">    public Suffix(int[] text, int index) {</span>
+<span class="fc" id="L18">      this.len = text.length - index;</span>
+<span class="fc" id="L19">      this.index = index;</span>
+<span class="fc" id="L20">      this.text = text;</span>
+<span class="fc" id="L21">    }</span>
+
+    // Compare the two suffixes inspired by Robert Sedgewick and Kevin Wayne
+    @Override
+    public int compareTo(Suffix other) {
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">      if (this == other) return 0;</span>
+<span class="fc" id="L27">      int min_len = Math.min(len, other.len);</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">      for (int i = 0; i &lt; min_len; i++) {</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        if (text[index + i] &lt; other.text[other.index + i]) return -1;</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (text[index + i] &gt; other.text[other.index + i]) return +1;</span>
+      }
+<span class="fc" id="L32">      return len - other.len;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L37">      return new String(text, index, len);</span>
+    }
+  }
+
+  // Contains all the suffixes of the SuffixArray
+  Suffix[] suffixes;
+
+  public SuffixArraySlow(String text) {
+<span class="fc" id="L45">    super(toIntArray(text));</span>
+<span class="fc" id="L46">  }</span>
+
+  public SuffixArraySlow(int[] text) {
+<span class="nc" id="L49">    super(text);</span>
+<span class="nc" id="L50">  }</span>
+
+  // Suffix array construction. This actually takes O(n^2log(n)) time since sorting takes on
+  // average O(nlog(n)) and each String comparison takes O(n).
+  @Override
+  protected void construct() {
+<span class="fc" id="L56">    sa = new int[N];</span>
+<span class="fc" id="L57">    suffixes = new Suffix[N];</span>
+
+<span class="fc bfc" id="L59" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) suffixes[i] = new Suffix(T, i);</span>
+
+<span class="fc" id="L61">    java.util.Arrays.sort(suffixes);</span>
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">    for (int i = 0; i &lt; N; i++) {</span>
+<span class="fc" id="L64">      Suffix suffix = suffixes[i];</span>
+<span class="fc" id="L65">      sa[i] = suffix.index;</span>
+<span class="fc" id="L66">      suffixes[i] = null;</span>
+    }
+
+<span class="fc" id="L69">    suffixes = null;</span>
+<span class="fc" id="L70">  }</span>
+
+  public static void main(String[] args) {
+<span class="nc" id="L73">    SuffixArraySlow sa = new SuffixArraySlow(&quot;ABBABAABAA&quot;);</span>
+<span class="nc" id="L74">    System.out.println(sa);</span>
+<span class="nc" id="L75">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

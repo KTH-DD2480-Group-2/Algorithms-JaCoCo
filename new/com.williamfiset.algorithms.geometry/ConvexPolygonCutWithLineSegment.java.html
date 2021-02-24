@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConvexPolygonCutWithLineSegment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">ConvexPolygonCutWithLineSegment.java</span></div><h1>ConvexPolygonCutWithLineSegment.java</h1><pre class="source lang-java linenums">/**
+ * This algorithm cuts a ordered convex polygon with a line segment and returns the two resulting
+ * pieces.
+ *
+ * &lt;p&gt;Time Complexity: O(nlogn)
+ *
+ * @author Finn Lidbetter
+ */
+package com.williamfiset.algorithms.geometry;
+
+import java.util.*;
+
+<span class="nc" id="L13">public class ConvexPolygonCutWithLineSegment {</span>
+
+  private static final double EPS = 1e-9;
+
+  // Simple 2D point class.
+  public static class Pt {
+    double x, y;
+
+<span class="nc" id="L21">    public Pt(double x, double y) {</span>
+<span class="nc" id="L22">      this.x = x;</span>
+<span class="nc" id="L23">      this.y = y;</span>
+<span class="nc" id="L24">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L28">      return &quot;(&quot; + x + &quot;,&quot; + y + &quot;)&quot;;</span>
+    }
+  }
+
+  // sorts the points in CW direction.
+  public static List&lt;Pt&gt; sortCW(List&lt;Pt&gt; poly) {
+
+<span class="nc" id="L35">    int l = poly.size();</span>
+<span class="nc" id="L36">    double centroidX = 0;</span>
+<span class="nc" id="L37">    double centroidY = 0;</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">    for (int i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L39">      centroidX += poly.get(i).x;</span>
+<span class="nc" id="L40">      centroidY += poly.get(i).y;</span>
+    }
+<span class="nc" id="L42">    centroidX = centroidX / l;</span>
+<span class="nc" id="L43">    centroidY = centroidY / l;</span>
+<span class="nc" id="L44">    Pt center = new Pt(centroidX, centroidY);</span>
+
+<span class="nc" id="L46">    Collections.sort(</span>
+        poly,
+        (a, b) -&gt; {
+<span class="nc" id="L49">          double a1 = (Math.toDegrees(Math.atan2(a.x - center.x, a.y - center.y)) + 360) % 360;</span>
+<span class="nc" id="L50">          double a2 = (Math.toDegrees(Math.atan2(b.x - center.x, b.y - center.y)) + 360) % 360;</span>
+<span class="nc" id="L51">          return (int) (a1 - a2);</span>
+        });
+<span class="nc" id="L53">    return poly;</span>
+  }
+
+  // Cuts a convex polygon by a specified line and returns one part
+  // of the polygon (swapping the endpoints p1 and p2 of the line
+  // will return the other part of the polygon).
+  public static Pt[] cut(Pt[] poly, Pt p1, Pt p2) {
+<span class="nc" id="L60">    int n = poly.length;</span>
+<span class="nc" id="L61">    List&lt;Pt&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">    for (int i = 0, j = n - 1; i &lt; n; j = i++) {</span>
+<span class="nc" id="L63">      int d1 = orientation(p1.x, p1.y, p2.x, p2.y, poly[j].x, poly[j].y);</span>
+<span class="nc" id="L64">      int d2 = orientation(p1.x, p1.y, p2.x, p2.y, poly[i].x, poly[i].y);</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">      if (d1 &gt;= 0) res.add(poly[j]);</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">      if (d1 * d2 &lt; 0)</span>
+<span class="nc" id="L67">        res.add(intersect(p1.x, p1.y, p2.x, p2.y, poly[j].x, poly[j].y, poly[i].x, poly[i].y));</span>
+    }
+<span class="nc" id="L69">    return res.toArray(new Pt[res.size()]);</span>
+  }
+
+  private static Pt intersect(
+      double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
+<span class="nc" id="L74">    double a1 = y2 - y1, a2 = y4 - y3, b1 = x1 - x2, b2 = x3 - x4;</span>
+<span class="nc" id="L75">    double c1 = -(x1 * y2 - x2 * y1), c2 = -(x3 * y4 - x4 * y3);</span>
+<span class="nc" id="L76">    double det = a1 * b2 - a2 * b1;</span>
+<span class="nc" id="L77">    double x = -(c1 * b2 - c2 * b1) / det, y = -(a1 * c2 - a2 * c1) / det;</span>
+<span class="nc" id="L78">    return new Pt(x, y);</span>
+  }
+
+  private static int orientation(double ax, double ay, double bx, double by, double cx, double cy) {
+<span class="nc" id="L82">    bx -= ax;</span>
+<span class="nc" id="L83">    by -= ay;</span>
+<span class="nc" id="L84">    cx -= ax;</span>
+<span class="nc" id="L85">    cy -= ay;</span>
+<span class="nc" id="L86">    double cross = bx * cy - by * cx;</span>
+<span class="nc bnc" id="L87" title="All 4 branches missed.">    return cross &lt; -EPS ? -1 : cross &gt; EPS ? 1 : 0;</span>
+  }
+
+  // takes Pt[] as an argument and returns List&lt;Pt&gt;
+  public static List&lt;Pt&gt; makeList(Pt[] squarePolygon) {
+<span class="nc" id="L92">    List&lt;Pt&gt; list = new ArrayList&lt;Pt&gt;();</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">    for (int i = 0; i &lt; squarePolygon.length; i++) {</span>
+<span class="nc" id="L94">      list.add(squarePolygon[i]);</span>
+    }
+<span class="nc" id="L96">    return list;</span>
+  }
+
+  // takes List&lt;Pt&gt; as an argument and returns Pt[]
+  public static Pt[] makeArray(List&lt;Pt&gt; list) {
+<span class="nc" id="L101">    int l = list.size();</span>
+<span class="nc" id="L102">    Pt[] temp = new Pt[l];</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">    for (int i = 0; i &lt; l; i++) {</span>
+<span class="nc" id="L104">      temp[i] = list.get(i);</span>
+    }
+<span class="nc" id="L106">    return temp;</span>
+  }
+
+  // Example usage
+  public static void main(String[] args) {
+
+<span class="nc" id="L112">    Pt[] squarePolygon = {new Pt(0, 0), new Pt(0, 4), new Pt(4, 0), new Pt(4, 4), new Pt(0, 2)};</span>
+<span class="nc" id="L113">    Pt p1 = new Pt(-1, -1);</span>
+<span class="nc" id="L114">    Pt p2 = new Pt(5, 5);</span>
+
+<span class="nc" id="L116">    List&lt;Pt&gt; list = makeList(squarePolygon);</span>
+<span class="nc" id="L117">    list = sortCW(list);</span>
+<span class="nc" id="L118">    squarePolygon = makeArray(list);</span>
+
+<span class="nc" id="L120">    Pt[] poly1 = cut(squarePolygon, p1, p2);</span>
+<span class="nc" id="L121">    Pt[] poly2 = cut(squarePolygon, p2, p1);</span>
+
+<span class="nc" id="L123">    System.out.println(&quot;First polygon:&quot;);</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">    for (Pt pt : poly1) System.out.println(pt);</span>
+    // Prints:
+    // First polygon:
+    // (0.0,4.0)
+    // (4.0,4.0)
+    // (0.0,0.0)
+    // (0.0,2.0)
+
+<span class="nc" id="L132">    System.out.println(&quot;\nSecond polygon:&quot;);</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">    for (Pt pt : poly2) System.out.println(pt);</span>
+    // Prints:
+    // Second polygon:
+    // (4.0,4.0)
+    // (4.0,0.0)
+    // (0.0,0.0)
+
+<span class="nc" id="L140">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

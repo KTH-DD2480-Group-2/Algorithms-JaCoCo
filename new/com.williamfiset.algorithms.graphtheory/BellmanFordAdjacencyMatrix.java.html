@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BellmanFordAdjacencyMatrix.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">BellmanFordAdjacencyMatrix.java</span></div><h1>BellmanFordAdjacencyMatrix.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the Bellman-Ford algorithm. The algorithm finds the shortest path between a
+ * starting node and all other nodes in the graph. The algorithm also detects negative cycles.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+public class BellmanFordAdjacencyMatrix {
+
+  private int n, start;
+  private boolean solved;
+  private double[] dist;
+  private Integer[] prev;
+  private double[][] matrix;
+
+  /**
+   * An implementation of the Bellman-Ford algorithm. The algorithm finds the shortest path between
+   * a starting node and all other nodes in the graph. The algorithm also detects negative cycles.
+   * If a node is part of a negative cycle then the minimum cost for that node is set to
+   * Double.NEGATIVE_INFINITY.
+   *
+   * @param graph - An adjacency matrix containing directed edges forming the graph
+   * @param start - The id of the starting node
+   */
+<span class="fc" id="L29">  public BellmanFordAdjacencyMatrix(int start, double[][] matrix) {</span>
+<span class="fc" id="L30">    this.n = matrix.length;</span>
+<span class="fc" id="L31">    this.start = start;</span>
+<span class="fc" id="L32">    this.matrix = new double[n][n];</span>
+
+    // Copy input adjacency matrix.
+<span class="fc bfc" id="L35" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) this.matrix[i] = matrix[i].clone();</span>
+<span class="fc" id="L36">  }</span>
+
+  public double[] getShortestPaths() {
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">    if (!solved) solve();</span>
+<span class="fc" id="L40">    return dist;</span>
+  }
+
+  public List&lt;Integer&gt; reconstructShortestPath(int end) {
+<span class="fc bfc" id="L44" title="All 2 branches covered.">    if (!solved) solve();</span>
+<span class="fc" id="L45">    LinkedList&lt;Integer&gt; path = new LinkedList&lt;&gt;();</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    if (dist[end] == Double.POSITIVE_INFINITY) return path;</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">    for (int at = end; prev[at] != null; at = prev[at]) {</span>
+      // Return null since there are an infinite number of shortest paths.
+<span class="fc bfc" id="L49" title="All 2 branches covered.">      if (prev[at] == -1) return null;</span>
+<span class="fc" id="L50">      path.addFirst(at);</span>
+    }
+<span class="fc" id="L52">    path.addFirst(start);</span>
+<span class="fc" id="L53">    return path;</span>
+  }
+
+  public void solve() {
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">    if (solved) return;</span>
+
+    // Initialize the distance to all nodes to be infinity
+    // except for the start node which is zero.
+<span class="fc" id="L61">    dist = new double[n];</span>
+<span class="fc" id="L62">    java.util.Arrays.fill(dist, Double.POSITIVE_INFINITY);</span>
+<span class="fc" id="L63">    dist[start] = 0;</span>
+
+    // Initialize prev array which will allows for shortest path
+    // reconstruction after the algorithm has terminated.
+<span class="fc" id="L67">    prev = new Integer[n];</span>
+
+    // For each vertex, apply relaxation for all the edges
+<span class="fc bfc" id="L70" title="All 2 branches covered.">    for (int k = 0; k &lt; n - 1; k++)</span>
+<span class="fc bfc" id="L71" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++)</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        for (int j = 0; j &lt; n; j++)</span>
+<span class="fc bfc" id="L73" title="All 2 branches covered.">          if (dist[i] + matrix[i][j] &lt; dist[j]) {</span>
+<span class="fc" id="L74">            dist[j] = dist[i] + matrix[i][j];</span>
+<span class="fc" id="L75">            prev[j] = i;</span>
+          }
+
+    // Run algorithm a second time to detect which nodes are part
+    // of a negative cycle. A negative cycle has occurred if we
+    // can find a better path beyond the optimal solution.
+<span class="fc bfc" id="L81" title="All 2 branches covered.">    for (int k = 0; k &lt; n - 1; k++)</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">      for (int i = 0; i &lt; n; i++)</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        for (int j = 0; j &lt; n; j++)</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">          if (dist[i] + matrix[i][j] &lt; dist[j]) {</span>
+<span class="fc" id="L85">            dist[j] = Double.NEGATIVE_INFINITY;</span>
+<span class="fc" id="L86">            prev[j] = -1;</span>
+          }
+
+<span class="fc" id="L89">    solved = true;</span>
+<span class="fc" id="L90">  }</span>
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L94">    int n = 9;</span>
+<span class="nc" id="L95">    double[][] graph = new double[n][n];</span>
+
+    // Setup completely disconnected graph with the distance
+    // from a node to itself to be zero.
+<span class="nc bnc" id="L99" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L100">      java.util.Arrays.fill(graph[i], Double.POSITIVE_INFINITY);</span>
+<span class="nc" id="L101">      graph[i][i] = 0;</span>
+    }
+
+<span class="nc" id="L104">    graph[0][1] = 1;</span>
+<span class="nc" id="L105">    graph[1][2] = 1;</span>
+<span class="nc" id="L106">    graph[2][4] = 1;</span>
+<span class="nc" id="L107">    graph[4][3] = -3;</span>
+<span class="nc" id="L108">    graph[3][2] = 1;</span>
+<span class="nc" id="L109">    graph[1][5] = 4;</span>
+<span class="nc" id="L110">    graph[1][6] = 4;</span>
+<span class="nc" id="L111">    graph[5][6] = 5;</span>
+<span class="nc" id="L112">    graph[6][7] = 4;</span>
+<span class="nc" id="L113">    graph[5][7] = 3;</span>
+
+<span class="nc" id="L115">    int start = 0;</span>
+    BellmanFordAdjacencyMatrix solver;
+<span class="nc" id="L117">    solver = new BellmanFordAdjacencyMatrix(start, graph);</span>
+<span class="nc" id="L118">    double[] d = solver.getShortestPaths();</span>
+
+<span class="nc bnc" id="L120" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++)</span>
+<span class="nc" id="L121">      System.out.printf(&quot;The cost to get from node %d to %d is %.2f\n&quot;, start, i, d[i]);</span>
+
+    // Output:
+    // The cost to get from node 0 to 0 is 0.00
+    // The cost to get from node 0 to 1 is 1.00
+    // The cost to get from node 0 to 2 is -Infinity
+    // The cost to get from node 0 to 3 is -Infinity
+    // The cost to get from node 0 to 4 is -Infinity
+    // The cost to get from node 0 to 5 is 5.00
+    // The cost to get from node 0 to 6 is 5.00
+    // The cost to get from node 0 to 7 is 8.00
+    // The cost to get from node 0 to 8 is Infinity
+<span class="nc" id="L133">    System.out.println();</span>
+
+<span class="nc bnc" id="L135" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+      String strPath;
+<span class="nc" id="L137">      List&lt;Integer&gt; path = solver.reconstructShortestPath(i);</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">      if (path == null) {</span>
+<span class="nc" id="L139">        strPath = &quot;Infinite number of shortest paths.&quot;;</span>
+      } else {
+<span class="nc" id="L141">        List&lt;String&gt; nodes = path.stream().map(Object::toString).collect(Collectors.toList());</span>
+<span class="nc" id="L142">        strPath = String.join(&quot; -&gt; &quot;, nodes);</span>
+      }
+<span class="nc" id="L144">      System.out.printf(&quot;The shortest path from %d to %d is: [%s]\n&quot;, start, i, strPath);</span>
+    }
+    // Outputs:
+    // The shortest path from 0 to 0 is: [0]
+    // The shortest path from 0 to 1 is: [0 -&gt; 1]
+    // The shortest path from 0 to 2 is: [Infinite number of shortest paths.]
+    // The shortest path from 0 to 3 is: [Infinite number of shortest paths.]
+    // The shortest path from 0 to 4 is: [Infinite number of shortest paths.]
+    // The shortest path from 0 to 5 is: [0 -&gt; 1 -&gt; 5]
+    // The shortest path from 0 to 6 is: [0 -&gt; 1 -&gt; 6]
+    // The shortest path from 0 to 7 is: [0 -&gt; 1 -&gt; 5 -&gt; 7]
+    // The shortest path from 0 to 8 is: []
+<span class="nc" id="L156">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KnapsackUnbounded.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.dp</a> &gt; <span class="el_source">KnapsackUnbounded.java</span></div><h1>KnapsackUnbounded.java</h1><pre class="source lang-java linenums">/**
+ * This file contains a dynamic programming solutions to the classic unbounded knapsack problem
+ * where are you are trying to maximize the total profit of items selected without exceeding the
+ * capacity of your knapsack.
+ *
+ * &lt;p&gt;Version 1: Time Complexity: O(nW) Version 1 Space Complexity: O(nW)
+ *
+ * &lt;p&gt;Version 2: Time Complexity: O(nW) Space Complexity: O(W)
+ *
+ * &lt;p&gt;Tested code against: https://www.hackerrank.com/challenges/unbounded-knapsack
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.dp;
+
+<span class="nc" id="L16">public class KnapsackUnbounded {</span>
+
+  /**
+   * @param maxWeight - The maximum weight of the knapsack
+   * @param W - The weights of the items
+   * @param V - The values of the items
+   * @return The maximum achievable profit of selecting a subset of the elements such that the
+   *     capacity of the knapsack is not exceeded
+   */
+  public static int unboundedKnapsack(int maxWeight, int[] W, int[] V) {
+
+<span class="nc bnc" id="L27" title="All 8 branches missed.">    if (W == null || V == null || W.length != V.length || maxWeight &lt; 0)</span>
+<span class="nc" id="L28">      throw new IllegalArgumentException(&quot;Invalid input&quot;);</span>
+
+<span class="nc" id="L30">    final int N = W.length;</span>
+
+    // Initialize a table where individual rows represent items
+    // and columns represent the weight of the knapsack
+<span class="nc" id="L34">    int[][] DP = new int[N + 1][maxWeight + 1];</span>
+
+    // Loop through items
+<span class="nc bnc" id="L37" title="All 2 branches missed.">    for (int i = 1; i &lt;= N; i++) {</span>
+
+      // Get the value and weight of the item
+<span class="nc" id="L40">      int w = W[i - 1], v = V[i - 1];</span>
+
+      // Consider all possible knapsack sizes
+<span class="nc bnc" id="L43" title="All 2 branches missed.">      for (int sz = 1; sz &lt;= maxWeight; sz++) {</span>
+
+        // Try including the current element
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (sz &gt;= w) DP[i][sz] = DP[i][sz - w] + v;</span>
+
+        // Check if not selecting this item at all is more profitable
+<span class="nc bnc" id="L49" title="All 2 branches missed.">        if (DP[i - 1][sz] &gt; DP[i][sz]) DP[i][sz] = DP[i - 1][sz];</span>
+      }
+    }
+
+    // Return the best value achievable
+<span class="nc" id="L54">    return DP[N][maxWeight];</span>
+  }
+
+  public static int unboundedKnapsackSpaceEfficient(int maxWeight, int[] W, int[] V) {
+
+<span class="nc bnc" id="L59" title="All 6 branches missed.">    if (W == null || V == null || W.length != V.length)</span>
+<span class="nc" id="L60">      throw new IllegalArgumentException(&quot;Invalid input&quot;);</span>
+
+<span class="nc" id="L62">    final int N = W.length;</span>
+
+    // Initialize a table where we will only keep track of
+    // the best possible value for each knapsack weight
+<span class="nc" id="L66">    int[] DP = new int[maxWeight + 1];</span>
+
+    // Consider all possible knapsack sizes
+<span class="nc bnc" id="L69" title="All 2 branches missed.">    for (int sz = 1; sz &lt;= maxWeight; sz++) {</span>
+
+      // Loop through items
+<span class="nc bnc" id="L72" title="All 2 branches missed.">      for (int i = 0; i &lt; N; i++) {</span>
+
+        // First check that we can include this item (we can't include it if
+        // it's too heavy for our knapsack). Assumming it fits inside the
+        // knapsack check if including this element would be profitable.
+<span class="nc bnc" id="L77" title="All 4 branches missed.">        if (sz - W[i] &gt;= 0 &amp;&amp; DP[sz - W[i]] + V[i] &gt; DP[sz]) DP[sz] = DP[sz - W[i]] + V[i];</span>
+      }
+    }
+
+    // Return the best value achievable
+<span class="nc" id="L82">    return DP[maxWeight];</span>
+  }
+
+  public static void main(String[] args) {
+
+<span class="nc" id="L87">    int[] W = {3, 6, 2};</span>
+<span class="nc" id="L88">    int[] V = {5, 20, 3};</span>
+<span class="nc" id="L89">    int knapsackValue = unboundedKnapsackSpaceEfficient(10, W, V);</span>
+<span class="nc" id="L90">    System.out.println(&quot;Maximum knapsack value: &quot; + knapsackValue);</span>
+<span class="nc" id="L91">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

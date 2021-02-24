@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TarjanAdjacencyMatrix.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">TarjanAdjacencyMatrix.java</span></div><h1>TarjanAdjacencyMatrix.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of Tarjan's SCC algorithm for a directed graph. Time Complexity: O(V^2)
+ *
+ * @author Micah Stairs
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+
+<span class="nc" id="L10">class TarjanAdjacencyMatrix {</span>
+
+  public static void main(String[] args) {
+
+    // As an example we create a graph with four strongly connected components
+
+<span class="nc" id="L16">    final int NUM_NODES = 10;</span>
+
+<span class="nc" id="L18">    boolean[][] adjMatrix = new boolean[NUM_NODES][NUM_NODES];</span>
+
+    // SCC 1 with nodes 0,1,2
+<span class="nc" id="L21">    adjMatrix[0][1] = true;</span>
+<span class="nc" id="L22">    adjMatrix[1][2] = true;</span>
+<span class="nc" id="L23">    adjMatrix[2][0] = true;</span>
+
+    // SCC 2 with nodes 3,4,5,6
+<span class="nc" id="L26">    adjMatrix[5][4] = true;</span>
+<span class="nc" id="L27">    adjMatrix[5][6] = true;</span>
+<span class="nc" id="L28">    adjMatrix[3][5] = true;</span>
+<span class="nc" id="L29">    adjMatrix[4][3] = true;</span>
+<span class="nc" id="L30">    adjMatrix[4][5] = true;</span>
+<span class="nc" id="L31">    adjMatrix[6][4] = true;</span>
+
+    // SCC 3 with nodes 7,8
+<span class="nc" id="L34">    adjMatrix[7][8] = true;</span>
+<span class="nc" id="L35">    adjMatrix[8][7] = true;</span>
+
+    // SCC 4 is node 9 all alone by itself
+    // Add a few more edges to make things interesting
+<span class="nc" id="L39">    adjMatrix[1][5] = true;</span>
+<span class="nc" id="L40">    adjMatrix[1][7] = true;</span>
+<span class="nc" id="L41">    adjMatrix[2][7] = true;</span>
+<span class="nc" id="L42">    adjMatrix[6][8] = true;</span>
+<span class="nc" id="L43">    adjMatrix[9][8] = true;</span>
+<span class="nc" id="L44">    adjMatrix[9][4] = true;</span>
+
+<span class="nc" id="L46">    Tarjan sccs = new Tarjan(adjMatrix);</span>
+
+<span class="nc" id="L48">    System.out.println(</span>
+<span class="nc" id="L49">        &quot;Strong connected component count: &quot; + sccs.countStronglyConnectedComponents());</span>
+<span class="nc" id="L50">    System.out.println(</span>
+<span class="nc" id="L51">        &quot;Strong connected components:\n&quot; + Arrays.toString(sccs.getStronglyConnectedComponents()));</span>
+
+    // Output:
+    // Strong connected component count: 4
+    // Strong connected components:
+    // [2, 2, 2, 1, 1, 1, 1, 0, 0, 3]
+
+<span class="nc" id="L58">  }</span>
+
+  // Tarjan is used to find/count the Strongly Connected
+  // Components (SCCs) in a directed graph in O(V+E).
+  static class Tarjan {
+
+<span class="nc" id="L64">    private int n, pre, count = 0;</span>
+    private int[] id, low;
+    private boolean[] marked;
+    private boolean[][] adj;
+<span class="nc" id="L68">    private Stack&lt;Integer&gt; stack = new Stack&lt;&gt;();</span>
+
+    // Tarjan input requires an NxN adjacency matrix
+<span class="nc" id="L71">    public Tarjan(boolean[][] adj) {</span>
+<span class="nc" id="L72">      n = adj.length;</span>
+<span class="nc" id="L73">      this.adj = adj;</span>
+<span class="nc" id="L74">      marked = new boolean[n];</span>
+<span class="nc" id="L75">      id = new int[n];</span>
+<span class="nc" id="L76">      low = new int[n];</span>
+<span class="nc bnc" id="L77" title="All 4 branches missed.">      for (int u = 0; u &lt; n; u++) if (!marked[u]) dfs(u);</span>
+<span class="nc" id="L78">    }</span>
+
+    private void dfs(int u) {
+<span class="nc" id="L81">      marked[u] = true;</span>
+<span class="nc" id="L82">      low[u] = pre++;</span>
+<span class="nc" id="L83">      int min = low[u];</span>
+<span class="nc" id="L84">      stack.push(u);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">      for (int v = 0; v &lt; n; v++) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">        if (adj[u][v]) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">          if (!marked[v]) dfs(v);</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">          if (low[v] &lt; min) min = low[v];</span>
+        }
+      }
+<span class="nc bnc" id="L91" title="All 2 branches missed.">      if (min &lt; low[u]) {</span>
+<span class="nc" id="L92">        low[u] = min;</span>
+<span class="nc" id="L93">        return;</span>
+      }
+      int v;
+      do {
+<span class="nc" id="L97">        v = stack.pop();</span>
+<span class="nc" id="L98">        id[v] = count;</span>
+<span class="nc" id="L99">        low[v] = n;</span>
+<span class="nc bnc" id="L100" title="All 2 branches missed.">      } while (v != u);</span>
+<span class="nc" id="L101">      count++;</span>
+<span class="nc" id="L102">    }</span>
+
+    // Returns the id array with the strongly connected components.
+    // If id[i] == id[j] then nodes i and j are part of the same strongly connected component.
+    public int[] getStronglyConnectedComponents() {
+<span class="nc" id="L107">      return id.clone();</span>
+    }
+
+    // Returns the number of strongly connected components in this graph
+    public int countStronglyConnectedComponents() {
+<span class="nc" id="L112">      return count;</span>
+    }
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

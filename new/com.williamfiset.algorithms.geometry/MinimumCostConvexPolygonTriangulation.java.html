@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinimumCostConvexPolygonTriangulation.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.geometry</a> &gt; <span class="el_source">MinimumCostConvexPolygonTriangulation.java</span></div><h1>MinimumCostConvexPolygonTriangulation.java</h1><pre class="source lang-java linenums">/**
+ * This file shows you how to find the minimum cost convex polygon triangulation of a set of points.
+ * Points must be in either clockwise or counterclockwise order.
+ *
+ * &lt;p&gt;Time Complexity: O(n^3)
+ *
+ * @author Bryan Bowles
+ */
+package com.williamfiset.algorithms.geometry;
+
+import java.awt.geom.Point2D;
+
+// Problem explanation: https://www.geeksforgeeks.org/minimum-cost-polygon-triangulation/
+<span class="nc" id="L14">public class MinimumCostConvexPolygonTriangulation {</span>
+
+  // Returns the perimeter (cost) of the triangle
+  private static double cost(Point2D i, Point2D j, Point2D k) {
+<span class="fc" id="L18">    return i.distance(j) + i.distance(k) + j.distance(k);</span>
+  }
+
+  // Input must be a convex polygon with points in CW or CCW order.
+  public static double minimumCostTriangulation(Point2D[] polygon) {
+<span class="fc" id="L23">    int len = polygon.length;</span>
+<span class="fc bfc" id="L24" title="All 2 branches covered.">    if (len &lt; 3) return 0;</span>
+
+<span class="fc" id="L26">    double[][] dp = new double[len][len];</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">    for (int i = 2; i &lt; len; i++) {</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">      for (int j = 0; j + i &lt; len; j++) {</span>
+<span class="fc" id="L29">        dp[j][j + i] = Integer.MAX_VALUE;</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        for (int k = j + 1; k &lt; j + i; k++) {</span>
+<span class="fc" id="L31">          dp[j][j + i] =</span>
+<span class="fc" id="L32">              Math.min(</span>
+                  dp[j][j + i],
+<span class="fc" id="L34">                  dp[j][k] + dp[k][j + i] + cost(polygon[j], polygon[j + i], polygon[k]));</span>
+        }
+      }
+    }
+<span class="fc" id="L38">    return dp[0][len - 1];</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

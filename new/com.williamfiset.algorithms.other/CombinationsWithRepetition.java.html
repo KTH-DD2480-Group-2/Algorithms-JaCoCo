@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CombinationsWithRepetition.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.other</a> &gt; <span class="el_source">CombinationsWithRepetition.java</span></div><h1>CombinationsWithRepetition.java</h1><pre class="source lang-java linenums">/**
+ * Here I show how you can generate all the combinations of a sequence of size r which are repeated
+ * at most k times.
+ *
+ * &lt;p&gt;Time Complexity: O(n+r-1 choose r) = O((n+r-1)!/(r!(n-1)!))
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.other;
+
+<span class="nc" id="L11">public class CombinationsWithRepetition {</span>
+
+  /**
+   * Computes all combinations of elements of 'r' elements which can be repeated at most 'k' times
+   * each.
+   *
+   * @param sequence - The sequence containing all the elements we wish to take combinations from
+   * @param usedCount - Tracks how many of each element we currently have selected
+   * @param at - The current position we're at in the sequence
+   * @param r - The number of elements we're choosing
+   * @param k - The maximum number of times each element is allowed to be picked
+   */
+  private static void combinationsWithRepetition(
+      int[] sequence, int[] usedCount, int at, int r, int k) {
+
+<span class="nc" id="L26">    final int N = sequence.length;</span>
+
+    // We reached the end
+<span class="nc bnc" id="L29" title="All 2 branches missed.">    if (at == N) {</span>
+
+      // We selected 'r' elements in total
+<span class="nc bnc" id="L32" title="All 2 branches missed.">      if (r == 0) {</span>
+
+        // Print combination
+<span class="nc" id="L35">        System.out.print(&quot;{ &quot;);</span>
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        for (int i = 0; i &lt; N; i++)</span>
+<span class="nc bnc" id="L37" title="All 2 branches missed.">          for (int j = 0; j &lt; usedCount[i]; j++) System.out.print(sequence[i] + &quot; &quot;);</span>
+<span class="nc" id="L38">        System.out.println(&quot;}&quot;);</span>
+      }
+
+    } else {
+
+      // For this particular time at position 'at' try including it each of [0, k] times
+<span class="nc bnc" id="L44" title="All 2 branches missed.">      for (int itemCount = 0; itemCount &lt;= k; itemCount++) {</span>
+
+        // Try including this element itemCount number of times (this is possibly more than once)
+<span class="nc" id="L47">        usedCount[at] = itemCount;</span>
+
+<span class="nc" id="L49">        combinationsWithRepetition(sequence, usedCount, at + 1, r - itemCount, k);</span>
+      }
+    }
+<span class="nc" id="L52">  }</span>
+
+  // Given a sequence this method prints all the combinations of size
+  // 'r' in a given sequence which has each element repeated at most 'k' times
+  public static void printCombinationsWithRepetition(int[] sequence, int r, int k) {
+
+<span class="nc bnc" id="L58" title="All 2 branches missed.">    if (sequence == null) return;</span>
+<span class="nc" id="L59">    final int n = sequence.length;</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">    if (r &gt; n) throw new IllegalArgumentException(&quot;r must be &lt;= n&quot;);</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">    if (k &gt; r) throw new IllegalArgumentException(&quot;k must be &lt;= r&quot;);</span>
+
+<span class="nc" id="L63">    int[] usedCount = new int[sequence.length];</span>
+<span class="nc" id="L64">    combinationsWithRepetition(sequence, usedCount, 0, r, k);</span>
+<span class="nc" id="L65">  }</span>
+
+  public static void main(String[] args) {
+
+    // Prints all combinations of size 3 where
+    // each element is repeated at most twice
+<span class="nc" id="L71">    int[] seq = {1, 2, 3, 4};</span>
+<span class="nc" id="L72">    printCombinationsWithRepetition(seq, 3, 2);</span>
+    // prints:
+    // { 3 4 4 }
+    // { 3 3 4 }
+    // { 2 4 4 }
+    // { 2 3 4 }
+    // { 2 3 3 }
+    // { 2 2 4 }
+    // { 2 2 3 }
+    // { 1 4 4 }
+    // { 1 3 4 }
+    // { 1 3 3 }
+    // { 1 2 4 }
+    // { 1 2 3 }
+    // { 1 2 2 }
+    // { 1 1 4 }
+    // { 1 1 3 }
+    // { 1 1 2 }
+
+<span class="nc" id="L91">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

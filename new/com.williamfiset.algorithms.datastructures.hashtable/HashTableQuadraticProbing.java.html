@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HashTableQuadraticProbing.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.hashtable</a> &gt; <span class="el_source">HashTableQuadraticProbing.java</span></div><h1>HashTableQuadraticProbing.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of a hash-table using open addressing with quadratic probing as a collision
+ * resolution method.
+ *
+ * &lt;p&gt;In this implementation we are using the following probing function: H(k, x) = h(k) + f(x) mod
+ * 2^n
+ *
+ * &lt;p&gt;Where h(k) is the hash for the given key, f(x) = (x + x^2) / 2 and n is a natural number. We
+ * are using this probing function because it is guaranteed to find an empty cell (i.e it generates
+ * all the numbers in the range [0, 2^n) without repetition for the first 2^n numbers).
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.hashtable;
+
+public class HashTableQuadraticProbing&lt;K, V&gt; extends HashTableOpenAddressingBase&lt;K, V&gt; {
+
+  public HashTableQuadraticProbing() {
+<span class="fc" id="L19">    super();</span>
+<span class="fc" id="L20">  }</span>
+
+  public HashTableQuadraticProbing(int capacity) {
+<span class="fc" id="L23">    super(capacity);</span>
+<span class="fc" id="L24">  }</span>
+
+  // Designated constructor
+  public HashTableQuadraticProbing(int capacity, double loadFactor) {
+<span class="fc" id="L28">    super(capacity, loadFactor);</span>
+<span class="fc" id="L29">  }</span>
+
+  // Given a number this method finds the next
+  // power of two above this value.
+  private static int nextPowerOfTwo(int n) {
+<span class="fc" id="L34">    return Integer.highestOneBit(n) &lt;&lt; 1;</span>
+  }
+
+  // No setup required for quadratic probing.
+  @Override
+<span class="fc" id="L39">  protected void setupProbing(K key) {}</span>
+
+  @Override
+  protected int probe(int x) {
+    // Quadratic probing function (x^2+x)/2
+<span class="fc" id="L44">    return (x * x + x) &gt;&gt; 1;</span>
+  }
+
+  // Increase the capacity of the hashtable to the next power of two.
+  @Override
+  protected void increaseCapacity() {
+<span class="fc" id="L50">    capacity = nextPowerOfTwo(capacity);</span>
+<span class="fc" id="L51">  }</span>
+
+  // Adjust the capacity of the hashtable to be a power of two.
+  @Override
+  protected void adjustCapacity() {
+<span class="fc" id="L56">    int pow2 = Integer.highestOneBit(capacity);</span>
+<span class="fc bfc" id="L57" title="All 2 branches covered.">    if (capacity == pow2) return;</span>
+<span class="fc" id="L58">    increaseCapacity();</span>
+<span class="fc" id="L59">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

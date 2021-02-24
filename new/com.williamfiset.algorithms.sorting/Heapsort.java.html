@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Heapsort.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.sorting</a> &gt; <span class="el_source">Heapsort.java</span></div><h1>Heapsort.java</h1><pre class="source lang-java linenums">/**
+ * Implementation of heapsort
+ *
+ * &lt;p&gt;Run with:
+ *
+ * &lt;p&gt;$ ./gradlew run -Palgorithm=sorting.Heapsort
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.sorting;
+
+import java.util.*;
+
+<span class="fc" id="L14">public class Heapsort implements InplaceSort {</span>
+
+  @Override
+  public void sort(int[] values) {
+<span class="fc" id="L18">    Heapsort.heapsort(values);</span>
+<span class="fc" id="L19">  }</span>
+
+  private static void heapsort(int[] ar) {
+<span class="pc bpc" id="L22" title="1 of 2 branches missed.">    if (ar == null) return;</span>
+<span class="fc" id="L23">    int n = ar.length;</span>
+
+    // Heapify, converts array into binary heap O(n), see:
+    // http://www.cs.umd.edu/~meesh/351/mount/lectures/lect14-heapsort-analysis-part.pdf
+<span class="fc bfc" id="L27" title="All 2 branches covered.">    for (int i = Math.max(0, (n / 2) - 1); i &gt;= 0; i--) {</span>
+<span class="fc" id="L28">      sink(ar, n, i);</span>
+    }
+
+    // Sorting bit
+<span class="fc bfc" id="L32" title="All 2 branches covered.">    for (int i = n - 1; i &gt;= 0; i--) {</span>
+<span class="fc" id="L33">      swap(ar, 0, i);</span>
+<span class="fc" id="L34">      sink(ar, i, 0);</span>
+    }
+<span class="fc" id="L36">  }</span>
+
+  private static void sink(int[] ar, int n, int i) {
+    while (true) {
+<span class="fc" id="L40">      int left = 2 * i + 1; // Left  node</span>
+<span class="fc" id="L41">      int right = 2 * i + 2; // Right node</span>
+<span class="fc" id="L42">      int largest = i;</span>
+
+      // Right child is larger than parent
+<span class="fc bfc" id="L45" title="All 4 branches covered.">      if (right &lt; n &amp;&amp; ar[right] &gt; ar[largest]) largest = right;</span>
+
+      // Left child is larger than parent
+<span class="fc bfc" id="L48" title="All 4 branches covered.">      if (left &lt; n &amp;&amp; ar[left] &gt; ar[largest]) largest = left;</span>
+
+      // Move down the tree following the largest node
+<span class="fc bfc" id="L51" title="All 2 branches covered.">      if (largest != i) {</span>
+<span class="fc" id="L52">        swap(ar, largest, i);</span>
+<span class="fc" id="L53">        i = largest;</span>
+      } else break;
+<span class="fc" id="L55">    }</span>
+<span class="fc" id="L56">  }</span>
+
+  private static void swap(int[] ar, int i, int j) {
+<span class="fc" id="L59">    int tmp = ar[i];</span>
+<span class="fc" id="L60">    ar[i] = ar[j];</span>
+<span class="fc" id="L61">    ar[j] = tmp;</span>
+<span class="fc" id="L62">  }</span>
+
+  /* TESTING */
+
+  public static void main(String[] args) {
+<span class="nc" id="L67">    Heapsort sorter = new Heapsort();</span>
+<span class="nc" id="L68">    int[] array = {10, 4, 6, 4, 8, -13, 2, 3};</span>
+<span class="nc" id="L69">    sorter.sort(array);</span>
+    // Prints:
+    // [-13, 2, 3, 4, 4, 6, 8, 10]
+<span class="nc" id="L72">    System.out.println(java.util.Arrays.toString(array));</span>
+<span class="nc" id="L73">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

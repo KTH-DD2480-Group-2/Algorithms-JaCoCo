@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>HashTableOpenAddressingBase.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.datastructures.hashtable</a> &gt; <span class="el_source">HashTableOpenAddressingBase.java</span></div><h1>HashTableOpenAddressingBase.java</h1><pre class="source lang-java linenums">/**
+ * Base class for hashtables with an open addressing collision resolution method such as linear
+ * probing, quadratic probing and double hashing.
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.datastructures.hashtable;
+
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.Iterator;
+import java.util.List;
+
+@SuppressWarnings(&quot;unchecked&quot;)
+public abstract class HashTableOpenAddressingBase&lt;K, V&gt; implements Iterable&lt;K&gt; {
+
+  protected double loadFactor;
+  protected int capacity, threshold, modificationCount;
+
+  // 'usedBuckets' counts the total number of used buckets inside the
+  // hash-table (includes cells marked as deleted). While 'keyCount'
+  // tracks the number of unique keys currently inside the hash-table.
+  protected int usedBuckets, keyCount;
+
+  // These arrays store the key-value pairs.
+  protected K[] keys;
+  protected V[] values;
+
+  // Special marker token used to indicate the deletion of a key-value pair
+<span class="fc" id="L30">  protected final K TOMBSTONE = (K) (new Object());</span>
+
+  private static final int DEFAULT_CAPACITY = 7;
+  private static final double DEFAULT_LOAD_FACTOR = 0.65;
+
+  protected HashTableOpenAddressingBase() {
+<span class="fc" id="L36">    this(DEFAULT_CAPACITY, DEFAULT_LOAD_FACTOR);</span>
+<span class="fc" id="L37">  }</span>
+
+  protected HashTableOpenAddressingBase(int capacity) {
+<span class="fc" id="L40">    this(capacity, DEFAULT_LOAD_FACTOR);</span>
+<span class="fc" id="L41">  }</span>
+
+  // Designated constructor
+<span class="fc" id="L44">  protected HashTableOpenAddressingBase(int capacity, double loadFactor) {</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">    if (capacity &lt;= 0) throw new IllegalArgumentException(&quot;Illegal capacity: &quot; + capacity);</span>
+
+<span class="pc bpc" id="L47" title="1 of 6 branches missed.">    if (loadFactor &lt;= 0 || Double.isNaN(loadFactor) || Double.isInfinite(loadFactor))</span>
+<span class="fc" id="L48">      throw new IllegalArgumentException(&quot;Illegal loadFactor: &quot; + loadFactor);</span>
+
+<span class="fc" id="L50">    this.loadFactor = loadFactor;</span>
+<span class="fc" id="L51">    this.capacity = Math.max(DEFAULT_CAPACITY, capacity);</span>
+<span class="fc" id="L52">    adjustCapacity();</span>
+<span class="fc" id="L53">    threshold = (int) (this.capacity * loadFactor);</span>
+
+<span class="fc" id="L55">    keys = (K[]) new Object[this.capacity];</span>
+<span class="fc" id="L56">    values = (V[]) new Object[this.capacity];</span>
+<span class="fc" id="L57">  }</span>
+
+  // These three methods are used to dictate how the probing is to actually
+  // occur for whatever open addressing scheme you are implementing.
+  protected abstract void setupProbing(K key);
+
+  protected abstract int probe(int x);
+
+  // Adjusts the capacity of the hash table after it's been made larger.
+  // This is important to be able to override because the size of the hashtable
+  // controls the functionality of the probing function.
+  protected abstract void adjustCapacity();
+
+  // Increases the capacity of the hash table.
+  protected void increaseCapacity() {
+<span class="fc" id="L72">    capacity = (2 * capacity) + 1;</span>
+<span class="fc" id="L73">  }</span>
+
+  public void clear() {
+<span class="fc bfc" id="L76" title="All 2 branches covered.">    for (int i = 0; i &lt; capacity; i++) {</span>
+<span class="fc" id="L77">      keys[i] = null;</span>
+<span class="fc" id="L78">      values[i] = null;</span>
+    }
+<span class="fc" id="L80">    keyCount = usedBuckets = 0;</span>
+<span class="fc" id="L81">    modificationCount++;</span>
+<span class="fc" id="L82">  }</span>
+
+  // Returns the number of keys currently inside the hash-table
+  public int size() {
+<span class="fc" id="L86">    return keyCount;</span>
+  }
+
+  // Returns the capacity of the hashtable (used mostly for testing)
+  public int getCapacity() {
+<span class="fc" id="L91">    return capacity;</span>
+  }
+
+  // Returns true/false depending on whether the hash-table is empty
+  public boolean isEmpty() {
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">    return keyCount == 0;</span>
+  }
+
+  public V put(K key, V value) {
+<span class="fc" id="L100">    return insert(key, value);</span>
+  }
+
+  public V add(K key, V value) {
+<span class="fc" id="L104">    return insert(key, value);</span>
+  }
+
+  // Returns true/false on whether a given key exists within the hash-table.
+  public boolean containsKey(K key) {
+<span class="fc" id="L109">    return hasKey(key);</span>
+  }
+
+  // Returns a list of keys found in the hash table
+  public List&lt;K&gt; keys() {
+<span class="fc" id="L114">    List&lt;K&gt; hashtableKeys = new ArrayList&lt;&gt;(size());</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">    for (int i = 0; i &lt; capacity; i++)</span>
+<span class="pc bpc" id="L116" title="1 of 4 branches missed.">      if (keys[i] != null &amp;&amp; keys[i] != TOMBSTONE) hashtableKeys.add(keys[i]);</span>
+<span class="fc" id="L117">    return hashtableKeys;</span>
+  }
+
+  // Returns a list of non-unique values found in the hash table
+  public List&lt;V&gt; values() {
+<span class="nc" id="L122">    List&lt;V&gt; hashtableValues = new ArrayList&lt;&gt;(size());</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">    for (int i = 0; i &lt; capacity; i++)</span>
+<span class="nc bnc" id="L124" title="All 4 branches missed.">      if (keys[i] != null &amp;&amp; keys[i] != TOMBSTONE) hashtableValues.add(values[i]);</span>
+<span class="nc" id="L125">    return hashtableValues;</span>
+  }
+
+  // Double the size of the hash-table
+  protected void resizeTable() {
+<span class="fc" id="L130">    increaseCapacity();</span>
+<span class="fc" id="L131">    adjustCapacity();</span>
+
+<span class="fc" id="L133">    threshold = (int) (capacity * loadFactor);</span>
+
+<span class="fc" id="L135">    K[] oldKeyTable = (K[]) new Object[capacity];</span>
+<span class="fc" id="L136">    V[] oldValueTable = (V[]) new Object[capacity];</span>
+
+    // Perform key table pointer swap
+<span class="fc" id="L139">    K[] keyTableTmp = keys;</span>
+<span class="fc" id="L140">    keys = oldKeyTable;</span>
+<span class="fc" id="L141">    oldKeyTable = keyTableTmp;</span>
+
+    // Perform value table pointer swap
+<span class="fc" id="L144">    V[] valueTableTmp = values;</span>
+<span class="fc" id="L145">    values = oldValueTable;</span>
+<span class="fc" id="L146">    oldValueTable = valueTableTmp;</span>
+
+    // Reset the key count and buckets used since we are about to
+    // re-insert all the keys into the hash-table.
+<span class="fc" id="L150">    keyCount = usedBuckets = 0;</span>
+
+<span class="fc bfc" id="L152" title="All 2 branches covered.">    for (int i = 0; i &lt; oldKeyTable.length; i++) {</span>
+<span class="fc bfc" id="L153" title="All 4 branches covered.">      if (oldKeyTable[i] != null &amp;&amp; oldKeyTable[i] != TOMBSTONE)</span>
+<span class="fc" id="L154">        insert(oldKeyTable[i], oldValueTable[i]);</span>
+<span class="fc" id="L155">      oldValueTable[i] = null;</span>
+<span class="fc" id="L156">      oldKeyTable[i] = null;</span>
+    }
+<span class="fc" id="L158">  }</span>
+
+  // Converts a hash value to an index. Essentially, this strips the
+  // negative sign and places the hash value in the domain [0, capacity)
+  protected final int normalizeIndex(int keyHash) {
+<span class="fc" id="L163">    return (keyHash &amp; 0x7FFFFFFF) % capacity;</span>
+  }
+
+  // Finds the greatest common denominator of a and b.
+  protected static final int gcd(int a, int b) {
+<span class="fc bfc" id="L168" title="All 2 branches covered.">    if (b == 0) return a;</span>
+<span class="fc" id="L169">    return gcd(b, a % b);</span>
+  }
+
+  // Place a key-value pair into the hash-table. If the value already
+  // exists inside the hash-table then the value is updated.
+  public V insert(K key, V val) {
+<span class="fc bfc" id="L175" title="All 2 branches covered.">    if (key == null) throw new IllegalArgumentException(&quot;Null key&quot;);</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">    if (usedBuckets &gt;= threshold) resizeTable();</span>
+
+<span class="fc" id="L178">    setupProbing(key);</span>
+<span class="fc" id="L179">    final int offset = normalizeIndex(key.hashCode());</span>
+
+<span class="fc" id="L181">    for (int i = offset, j = -1, x = 1; ; i = normalizeIndex(offset + probe(x++))) {</span>
+
+      // The current slot was previously deleted
+<span class="fc bfc" id="L184" title="All 2 branches covered.">      if (keys[i] == TOMBSTONE) {</span>
+<span class="fc bfc" id="L185" title="All 2 branches covered.">        if (j == -1) j = i;</span>
+
+        // The current cell already contains a key
+<span class="fc bfc" id="L188" title="All 2 branches covered.">      } else if (keys[i] != null) {</span>
+        // The key we're trying to insert already exists in the hash-table,
+        // so update its value with the most recent value
+<span class="fc bfc" id="L191" title="All 2 branches covered.">        if (keys[i].equals(key)) {</span>
+
+<span class="fc" id="L193">          V oldValue = values[i];</span>
+<span class="fc bfc" id="L194" title="All 2 branches covered.">          if (j == -1) {</span>
+<span class="fc" id="L195">            values[i] = val;</span>
+          } else {
+<span class="fc" id="L197">            keys[i] = TOMBSTONE;</span>
+<span class="fc" id="L198">            values[i] = null;</span>
+<span class="fc" id="L199">            keys[j] = key;</span>
+<span class="fc" id="L200">            values[j] = val;</span>
+          }
+<span class="fc" id="L202">          modificationCount++;</span>
+<span class="fc" id="L203">          return oldValue;</span>
+        }
+
+        // Current cell is null so an insertion/update can occur
+      } else {
+        // No previously encountered deleted buckets
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        if (j == -1) {</span>
+<span class="fc" id="L210">          usedBuckets++;</span>
+<span class="fc" id="L211">          keyCount++;</span>
+<span class="fc" id="L212">          keys[i] = key;</span>
+<span class="fc" id="L213">          values[i] = val;</span>
+
+          // Previously seen deleted bucket. Instead of inserting
+          // the new element at i where the null element is insert
+          // it where the deleted token was found.
+        } else {
+<span class="fc" id="L219">          keyCount++;</span>
+<span class="fc" id="L220">          keys[j] = key;</span>
+<span class="fc" id="L221">          values[j] = val;</span>
+        }
+
+<span class="fc" id="L224">        modificationCount++;</span>
+<span class="fc" id="L225">        return null;</span>
+      }
+    }
+  }
+
+  // Returns true/false on whether a given key exists within the hash-table
+  public boolean hasKey(K key) {
+<span class="pc bpc" id="L232" title="1 of 2 branches missed.">    if (key == null) throw new IllegalArgumentException(&quot;Null key&quot;);</span>
+
+<span class="fc" id="L234">    setupProbing(key);</span>
+<span class="fc" id="L235">    final int offset = normalizeIndex(key.hashCode());</span>
+
+    // Start at the original hash value and probe until we find a spot where our key
+    // is or hit a null element in which case our element does not exist.
+<span class="fc" id="L239">    for (int i = offset, j = -1, x = 1; ; i = normalizeIndex(offset + probe(x++))) {</span>
+
+      // Ignore deleted cells, but record where the first index
+      // of a deleted cell is found to perform lazy relocation later.
+<span class="fc bfc" id="L243" title="All 2 branches covered.">      if (keys[i] == TOMBSTONE) {</span>
+
+<span class="fc bfc" id="L245" title="All 2 branches covered.">        if (j == -1) j = i;</span>
+
+        // We hit a non-null key, perhaps it's the one we're looking for.
+<span class="fc bfc" id="L248" title="All 2 branches covered.">      } else if (keys[i] != null) {</span>
+
+        // The key we want is in the hash-table!
+<span class="fc bfc" id="L251" title="All 2 branches covered.">        if (keys[i].equals(key)) {</span>
+
+          // If j != -1 this means we previously encountered a deleted cell.
+          // We can perform an optimization by swapping the entries in cells
+          // i and j so that the next time we search for this key it will be
+          // found faster. This is called lazy deletion/relocation.
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">          if (j != -1) {</span>
+            // Swap the key-value pairs of positions i and j.
+<span class="nc" id="L259">            keys[j] = keys[i];</span>
+<span class="nc" id="L260">            values[j] = values[i];</span>
+<span class="nc" id="L261">            keys[i] = TOMBSTONE;</span>
+<span class="nc" id="L262">            values[i] = null;</span>
+          }
+<span class="fc" id="L264">          return true;</span>
+        }
+
+        // Key was not found in the hash-table :/
+<span class="fc" id="L268">      } else return false;</span>
+    }
+  }
+
+  // Get the value associated with the input key.
+  // NOTE: returns null if the value is null AND also returns
+  // null if the key does not exists.
+  public V get(K key) {
+<span class="pc bpc" id="L276" title="1 of 2 branches missed.">    if (key == null) throw new IllegalArgumentException(&quot;Null key&quot;);</span>
+
+<span class="fc" id="L278">    setupProbing(key);</span>
+<span class="fc" id="L279">    final int offset = normalizeIndex(key.hashCode());</span>
+
+    // Start at the original hash value and probe until we find a spot where our key
+    // is or we hit a null element in which case our element does not exist.
+<span class="fc" id="L283">    for (int i = offset, j = -1, x = 1; ; i = normalizeIndex(offset + probe(x++))) {</span>
+
+      // Ignore deleted cells, but record where the first index
+      // of a deleted cell is found to perform lazy relocation later.
+<span class="fc bfc" id="L287" title="All 2 branches covered.">      if (keys[i] == TOMBSTONE) {</span>
+
+<span class="fc bfc" id="L289" title="All 2 branches covered.">        if (j == -1) j = i;</span>
+
+        // We hit a non-null key, perhaps it's the one we're looking for.
+<span class="fc bfc" id="L292" title="All 2 branches covered.">      } else if (keys[i] != null) {</span>
+
+        // The key we want is in the hash-table!
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        if (keys[i].equals(key)) {</span>
+
+          // If j != -1 this means we previously encountered a deleted cell.
+          // We can perform an optimization by swapping the entries in cells
+          // i and j so that the next time we search for this key it will be
+          // found faster. This is called lazy deletion/relocation.
+<span class="fc bfc" id="L301" title="All 2 branches covered.">          if (j != -1) {</span>
+            // Swap key-values pairs at indexes i and j.
+<span class="fc" id="L303">            keys[j] = keys[i];</span>
+<span class="fc" id="L304">            values[j] = values[i];</span>
+<span class="fc" id="L305">            keys[i] = TOMBSTONE;</span>
+<span class="fc" id="L306">            values[i] = null;</span>
+<span class="fc" id="L307">            return values[j];</span>
+          } else {
+<span class="fc" id="L309">            return values[i];</span>
+          }
+        }
+
+        // Element was not found in the hash-table :/
+<span class="fc" id="L314">      } else return null;</span>
+    }
+  }
+
+  // Removes a key from the map and returns the value.
+  // NOTE: returns null if the value is null AND also returns
+  // null if the key does not exists.
+  public V remove(K key) {
+<span class="pc bpc" id="L322" title="1 of 2 branches missed.">    if (key == null) throw new IllegalArgumentException(&quot;Null key&quot;);</span>
+
+<span class="fc" id="L324">    setupProbing(key);</span>
+<span class="fc" id="L325">    final int offset = normalizeIndex(key.hashCode());</span>
+
+    // Starting at the original hash probe until we find a spot where our key is
+    // or we hit a null element in which case our element does not exist.
+<span class="fc" id="L329">    for (int i = offset, x = 1; ; i = normalizeIndex(offset + probe(x++))) {</span>
+
+      // Ignore deleted cells
+<span class="fc bfc" id="L332" title="All 2 branches covered.">      if (keys[i] == TOMBSTONE) continue;</span>
+
+      // Key was not found in hash-table.
+<span class="fc bfc" id="L335" title="All 2 branches covered.">      if (keys[i] == null) return null;</span>
+
+      // The key we want to remove is in the hash-table!
+<span class="fc bfc" id="L338" title="All 2 branches covered.">      if (keys[i].equals(key)) {</span>
+<span class="fc" id="L339">        keyCount--;</span>
+<span class="fc" id="L340">        modificationCount++;</span>
+<span class="fc" id="L341">        V oldValue = values[i];</span>
+<span class="fc" id="L342">        keys[i] = TOMBSTONE;</span>
+<span class="fc" id="L343">        values[i] = null;</span>
+<span class="fc" id="L344">        return oldValue;</span>
+      }
+    }
+  }
+
+  // Return a String view of this hash-table.
+  @Override
+  public String toString() {
+<span class="nc" id="L352">    StringBuilder sb = new StringBuilder();</span>
+
+<span class="nc" id="L354">    sb.append(&quot;{&quot;);</span>
+<span class="nc bnc" id="L355" title="All 2 branches missed.">    for (int i = 0; i &lt; capacity; i++)</span>
+<span class="nc bnc" id="L356" title="All 4 branches missed.">      if (keys[i] != null &amp;&amp; keys[i] != TOMBSTONE) sb.append(keys[i] + &quot; =&gt; &quot; + values[i] + &quot;, &quot;);</span>
+<span class="nc" id="L357">    sb.append(&quot;}&quot;);</span>
+
+<span class="nc" id="L359">    return sb.toString();</span>
+  }
+
+  @Override
+  public Iterator&lt;K&gt; iterator() {
+    // Before the iteration begins record the number of modifications
+    // done to the hash-table. This value should not change as we iterate
+    // otherwise a concurrent modification has occurred :0
+<span class="fc" id="L367">    final int MODIFICATION_COUNT = modificationCount;</span>
+
+<span class="fc" id="L369">    return new Iterator&lt;K&gt;() {</span>
+<span class="fc" id="L370">      int index, keysLeft = keyCount;</span>
+
+      @Override
+      public boolean hasNext() {
+        // The contents of the table have been altered
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        if (MODIFICATION_COUNT != modificationCount) throw new ConcurrentModificationException();</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">        return keysLeft != 0;</span>
+      }
+
+      // Find the next element and return it
+      @Override
+      public K next() {
+<span class="pc bpc" id="L382" title="1 of 4 branches missed.">        while (keys[index] == null || keys[index] == TOMBSTONE) index++;</span>
+<span class="fc" id="L383">        keysLeft--;</span>
+<span class="fc" id="L384">        return keys[index++];</span>
+      }
+
+      @Override
+      public void remove() {
+<span class="nc" id="L389">        throw new UnsupportedOperationException();</span>
+      }
+    };
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

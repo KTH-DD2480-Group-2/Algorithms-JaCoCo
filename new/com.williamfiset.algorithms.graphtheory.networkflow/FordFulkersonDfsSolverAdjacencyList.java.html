@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FordFulkersonDfsSolverAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">FordFulkersonDfsSolverAdjacencyList.java</span></div><h1>FordFulkersonDfsSolverAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of the Ford-Fulkerson (FF) method with a DFS as a method of finding augmenting
+ * paths. FF allows you to find the max flow through a directed graph and the min cut as a
+ * byproduct.
+ *
+ * &lt;p&gt;Time Complexity: O(fE), where f is the max flow and E is the number of edges
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import static java.lang.Math.min;
+
+import java.util.List;
+
+public class FordFulkersonDfsSolverAdjacencyList extends NetworkFlowSolverBase {
+
+  /**
+   * Creates an instance of a flow network solver. Use the {@link #addEdge(int, int, int)} method to
+   * add edges to the graph.
+   *
+   * @param n - The number of nodes in the graph including source and sink nodes.
+   * @param s - The index of the source node, 0 &lt;= s &lt; n
+   * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+   */
+  public FordFulkersonDfsSolverAdjacencyList(int n, int s, int t) {
+<span class="fc" id="L27">    super(n, s, t);</span>
+<span class="fc" id="L28">  }</span>
+
+  // Performs the Ford-Fulkerson method applying a depth first search as
+  // a means of finding an augmenting path.
+  @Override
+  public void solve() {
+
+    // Find max flow by adding all augmenting path flows.
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    for (long f = dfs(s, INF); f != 0; f = dfs(s, INF)) {</span>
+<span class="fc" id="L37">      markAllNodesAsUnvisited();</span>
+<span class="fc" id="L38">      maxFlow += f;</span>
+    }
+
+    // Find min cut.
+<span class="fc bfc" id="L42" title="All 4 branches covered.">    for (int i = 0; i &lt; n; i++) if (visited(i)) minCut[i] = true;</span>
+<span class="fc" id="L43">  }</span>
+
+  private long dfs(int node, long flow) {
+    // At sink node, return augmented path flow.
+<span class="fc bfc" id="L47" title="All 2 branches covered.">    if (node == t) return flow;</span>
+
+<span class="fc" id="L49">    List&lt;Edge&gt; edges = graph[node];</span>
+<span class="fc" id="L50">    visit(node);</span>
+
+<span class="fc bfc" id="L52" title="All 2 branches covered.">    for (Edge edge : edges) {</span>
+<span class="fc" id="L53">      long rcap = edge.remainingCapacity();</span>
+<span class="fc bfc" id="L54" title="All 4 branches covered.">      if (rcap &gt; 0 &amp;&amp; !visited(edge.to)) {</span>
+<span class="fc" id="L55">        long bottleNeck = dfs(edge.to, min(flow, rcap));</span>
+
+        // Augment flow with bottle neck value
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (bottleNeck &gt; 0) {</span>
+<span class="fc" id="L59">          edge.augment(bottleNeck);</span>
+<span class="fc" id="L60">          return bottleNeck;</span>
+        }
+      }
+<span class="fc" id="L63">    }</span>
+<span class="fc" id="L64">    return 0;</span>
+  }
+
+  /* Example */
+
+  public static void main(String[] args) {
+    // exampleFromSlides();
+    // testSmallFlowGraph();
+<span class="nc" id="L72">    exampleFromSlides2();</span>
+<span class="nc" id="L73">  }</span>
+
+  private static void exampleFromSlides2() {
+<span class="nc" id="L76">    int n = 12;</span>
+<span class="nc" id="L77">    int s = n - 2;</span>
+<span class="nc" id="L78">    int t = n - 1;</span>
+
+    FordFulkersonDfsSolverAdjacencyList solver;
+<span class="nc" id="L81">    solver = new FordFulkersonDfsSolverAdjacencyList(n, s, t);</span>
+
+<span class="nc" id="L83">    solver.addEdge(s, 1, 2);</span>
+<span class="nc" id="L84">    solver.addEdge(s, 2, 1);</span>
+<span class="nc" id="L85">    solver.addEdge(s, 0, 7);</span>
+
+<span class="nc" id="L87">    solver.addEdge(0, 3, 2);</span>
+<span class="nc" id="L88">    solver.addEdge(0, 4, 4);</span>
+
+<span class="nc" id="L90">    solver.addEdge(1, 4, 5);</span>
+<span class="nc" id="L91">    solver.addEdge(1, 5, 6);</span>
+
+<span class="nc" id="L93">    solver.addEdge(2, 3, 4);</span>
+<span class="nc" id="L94">    solver.addEdge(2, 7, 8);</span>
+
+<span class="nc" id="L96">    solver.addEdge(3, 6, 7);</span>
+<span class="nc" id="L97">    solver.addEdge(3, 7, 1);</span>
+
+<span class="nc" id="L99">    solver.addEdge(4, 5, 8);</span>
+<span class="nc" id="L100">    solver.addEdge(4, 8, 3);</span>
+
+<span class="nc" id="L102">    solver.addEdge(5, 8, 3);</span>
+
+<span class="nc" id="L104">    solver.addEdge(6, t, 1);</span>
+<span class="nc" id="L105">    solver.addEdge(7, t, 3);</span>
+<span class="nc" id="L106">    solver.addEdge(8, t, 4);</span>
+
+<span class="nc" id="L108">    System.out.println(solver.getMaxFlow());</span>
+
+<span class="nc" id="L110">    List&lt;Edge&gt;[] g = solver.getGraph();</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">    for (List&lt;Edge&gt; edges : g) {</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">      for (Edge e : edges) {</span>
+<span class="nc bnc" id="L113" title="All 4 branches missed.">        if (e.to == s || e.from == t) continue;</span>
+<span class="nc bnc" id="L114" title="All 6 branches missed.">        if (e.from == s || e.to == t || e.from &lt; e.to) System.out.println(e.toString(s, t));</span>
+        // System.out.println(e.residual.toString(s, t));
+<span class="nc" id="L116">      }</span>
+    }
+<span class="nc" id="L118">  }</span>
+
+  private static void exampleFromSlides() {
+<span class="nc" id="L121">    int n = 6;</span>
+<span class="nc" id="L122">    int s = n - 2;</span>
+<span class="nc" id="L123">    int t = n - 1;</span>
+
+    FordFulkersonDfsSolverAdjacencyList solver;
+<span class="nc" id="L126">    solver = new FordFulkersonDfsSolverAdjacencyList(n, s, t);</span>
+
+<span class="nc" id="L128">    solver.addEdge(s, 1, 10);</span>
+<span class="nc" id="L129">    solver.addEdge(1, 3, 15);</span>
+<span class="nc" id="L130">    solver.addEdge(3, 0, 6);</span>
+<span class="nc" id="L131">    solver.addEdge(0, 2, 25);</span>
+<span class="nc" id="L132">    solver.addEdge(2, t, 10);</span>
+
+<span class="nc" id="L134">    solver.addEdge(s, 0, 10);</span>
+<span class="nc" id="L135">    solver.addEdge(3, t, 10);</span>
+
+<span class="nc" id="L137">    System.out.println(solver.getMaxFlow());</span>
+
+<span class="nc" id="L139">    List&lt;Edge&gt;[] g = solver.getGraph();</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">    for (List&lt;Edge&gt; edges : g) {</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">      for (Edge e : edges) {</span>
+<span class="nc" id="L142">        System.out.println(e.toString(s, t));</span>
+        // System.out.println(e.residual.toString(s, t));
+<span class="nc" id="L144">      }</span>
+    }
+<span class="nc" id="L146">  }</span>
+
+  // Testing graph from:
+  // http://crypto.cs.mcgill.ca/~crepeau/COMP251/KeyNoteSlides/07demo-maxflowCS-C.pdf
+  private static void testSmallFlowGraph() {
+<span class="nc" id="L151">    int n = 6;</span>
+<span class="nc" id="L152">    int s = n - 1;</span>
+<span class="nc" id="L153">    int t = n - 2;</span>
+
+    FordFulkersonDfsSolverAdjacencyList solver;
+<span class="nc" id="L156">    solver = new FordFulkersonDfsSolverAdjacencyList(n, s, t);</span>
+
+    // Source edges
+<span class="nc" id="L159">    solver.addEdge(s, 0, 10);</span>
+<span class="nc" id="L160">    solver.addEdge(s, 1, 10);</span>
+
+    // Sink edges
+<span class="nc" id="L163">    solver.addEdge(2, t, 10);</span>
+<span class="nc" id="L164">    solver.addEdge(3, t, 10);</span>
+
+    // Middle edges
+<span class="nc" id="L167">    solver.addEdge(0, 1, 2);</span>
+<span class="nc" id="L168">    solver.addEdge(0, 2, 4);</span>
+<span class="nc" id="L169">    solver.addEdge(0, 3, 8);</span>
+<span class="nc" id="L170">    solver.addEdge(1, 3, 9);</span>
+<span class="nc" id="L171">    solver.addEdge(3, 2, 6);</span>
+
+<span class="nc" id="L173">    System.out.println(solver.getMaxFlow()); // 19</span>
+<span class="nc" id="L174">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

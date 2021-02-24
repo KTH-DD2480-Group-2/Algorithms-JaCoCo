@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TarjanSccSolverAdjacencyList.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">TarjanSccSolverAdjacencyList.java</span></div><h1>TarjanSccSolverAdjacencyList.java</h1><pre class="source lang-java linenums">/**
+ * An implementation of Tarjan's Strongly Connected Components algorithm using an adjacency list.
+ *
+ * &lt;p&gt;Verified against: -
+ * https://www.hackerearth.com/practice/algorithms/graphs/strongly-connected-components/tutorial/ -
+ * https://open.kattis.com/problems/equivalences - https://open.kattis.com/problems/runningmom
+ *
+ * &lt;p&gt;Time complexity: O(V+E)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory;
+
+import static java.lang.Math.min;
+
+import java.util.*;
+
+public class TarjanSccSolverAdjacencyList {
+
+  private int n;
+  private List&lt;List&lt;Integer&gt;&gt; graph;
+
+  private boolean solved;
+  private int sccCount, id;
+  private boolean[] visited;
+  private int[] ids, low, sccs;
+  private Deque&lt;Integer&gt; stack;
+
+  private static final int UNVISITED = -1;
+
+<span class="fc" id="L31">  public TarjanSccSolverAdjacencyList(List&lt;List&lt;Integer&gt;&gt; graph) {</span>
+<span class="fc bfc" id="L32" title="All 2 branches covered.">    if (graph == null) throw new IllegalArgumentException(&quot;Graph cannot be null.&quot;);</span>
+<span class="fc" id="L33">    n = graph.size();</span>
+<span class="fc" id="L34">    this.graph = graph;</span>
+<span class="fc" id="L35">  }</span>
+
+  // Returns the number of strongly connected components in the graph.
+  public int sccCount() {
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">    if (!solved) solve();</span>
+<span class="fc" id="L40">    return sccCount;</span>
+  }
+
+  // Get the connected components of this graph. If two indexes
+  // have the same value then they're in the same SCC.
+  public int[] getSccs() {
+<span class="fc bfc" id="L46" title="All 2 branches covered.">    if (!solved) solve();</span>
+<span class="fc" id="L47">    return sccs;</span>
+  }
+
+  public void solve() {
+<span class="pc bpc" id="L51" title="1 of 2 branches missed.">    if (solved) return;</span>
+
+<span class="fc" id="L53">    ids = new int[n];</span>
+<span class="fc" id="L54">    low = new int[n];</span>
+<span class="fc" id="L55">    sccs = new int[n];</span>
+<span class="fc" id="L56">    visited = new boolean[n];</span>
+<span class="fc" id="L57">    stack = new ArrayDeque&lt;&gt;();</span>
+<span class="fc" id="L58">    Arrays.fill(ids, UNVISITED);</span>
+
+<span class="fc bfc" id="L60" title="All 2 branches covered.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">      if (ids[i] == UNVISITED) {</span>
+<span class="fc" id="L62">        dfs(i);</span>
+      }
+    }
+
+<span class="fc" id="L66">    solved = true;</span>
+<span class="fc" id="L67">  }</span>
+
+  private void dfs(int at) {
+<span class="fc" id="L70">    ids[at] = low[at] = id++;</span>
+<span class="fc" id="L71">    stack.push(at);</span>
+<span class="fc" id="L72">    visited[at] = true;</span>
+
+<span class="fc bfc" id="L74" title="All 2 branches covered.">    for (int to : graph.get(at)) {</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">      if (ids[to] == UNVISITED) {</span>
+<span class="fc" id="L76">        dfs(to);</span>
+      }
+<span class="fc bfc" id="L78" title="All 2 branches covered.">      if (visited[to]) {</span>
+<span class="fc" id="L79">        low[at] = min(low[at], low[to]);</span>
+      }
+      /*
+       TODO(william): investigate whether the proper way to update the lowlinks
+       is the following bit of code. From my experience this doesn't seem to
+       matter if the output is placed in a separate output array, but this needs
+       further investigation.
+
+       if (ids[to] == UNVISITED) {
+         dfs(to);
+         low[at] = min(low[at], low[to]);
+       }
+       if (visited[to]) {
+         low[at] = min(low[at], ids[to]);
+       }
+      */
+
+<span class="fc" id="L96">    }</span>
+
+    // On recursive callback, if we're at the root node (start of SCC)
+    // empty the seen stack until back to root.
+<span class="fc bfc" id="L100" title="All 2 branches covered.">    if (ids[at] == low[at]) {</span>
+<span class="fc" id="L101">      for (int node = stack.pop(); ; node = stack.pop()) {</span>
+<span class="fc" id="L102">        visited[node] = false;</span>
+<span class="fc" id="L103">        sccs[node] = sccCount;</span>
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (node == at) break;</span>
+      }
+<span class="fc" id="L106">      sccCount++;</span>
+    }
+<span class="fc" id="L108">  }</span>
+
+  // Initializes adjacency list with n nodes.
+  public static List&lt;List&lt;Integer&gt;&gt; createGraph(int n) {
+<span class="nc" id="L112">    List&lt;List&lt;Integer&gt;&gt; graph = new ArrayList&lt;&gt;(n);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.add(new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L114">    return graph;</span>
+  }
+
+  // Adds a directed edge from node 'from' to node 'to'
+  public static void addEdge(List&lt;List&lt;Integer&gt;&gt; graph, int from, int to) {
+<span class="nc" id="L119">    graph.get(from).add(to);</span>
+<span class="nc" id="L120">  }</span>
+
+  /* Example usage: */
+
+  public static void main(String[] arg) {
+<span class="nc" id="L125">    int n = 8;</span>
+<span class="nc" id="L126">    List&lt;List&lt;Integer&gt;&gt; graph = createGraph(n);</span>
+
+<span class="nc" id="L128">    addEdge(graph, 6, 0);</span>
+<span class="nc" id="L129">    addEdge(graph, 6, 2);</span>
+<span class="nc" id="L130">    addEdge(graph, 3, 4);</span>
+<span class="nc" id="L131">    addEdge(graph, 6, 4);</span>
+<span class="nc" id="L132">    addEdge(graph, 2, 0);</span>
+<span class="nc" id="L133">    addEdge(graph, 0, 1);</span>
+<span class="nc" id="L134">    addEdge(graph, 4, 5);</span>
+<span class="nc" id="L135">    addEdge(graph, 5, 6);</span>
+<span class="nc" id="L136">    addEdge(graph, 3, 7);</span>
+<span class="nc" id="L137">    addEdge(graph, 7, 5);</span>
+<span class="nc" id="L138">    addEdge(graph, 1, 2);</span>
+<span class="nc" id="L139">    addEdge(graph, 7, 3);</span>
+<span class="nc" id="L140">    addEdge(graph, 5, 0);</span>
+
+<span class="nc" id="L142">    TarjanSccSolverAdjacencyList solver = new TarjanSccSolverAdjacencyList(graph);</span>
+
+<span class="nc" id="L144">    int[] sccs = solver.getSccs();</span>
+<span class="nc" id="L145">    Map&lt;Integer, List&lt;Integer&gt;&gt; multimap = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L147" title="All 2 branches missed.">      if (!multimap.containsKey(sccs[i])) multimap.put(sccs[i], new ArrayList&lt;&gt;());</span>
+<span class="nc" id="L148">      multimap.get(sccs[i]).add(i);</span>
+    }
+
+    // Prints:
+    // Number of Strongly Connected Components: 3
+    // Nodes: [0, 1, 2] form a Strongly Connected Component.
+    // Nodes: [3, 7] form a Strongly Connected Component.
+    // Nodes: [4, 5, 6] form a Strongly Connected Component.
+<span class="nc" id="L156">    System.out.printf(&quot;Number of Strongly Connected Components: %d\n&quot;, solver.sccCount());</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">    for (List&lt;Integer&gt; scc : multimap.values()) {</span>
+<span class="nc" id="L158">      System.out.println(&quot;Nodes: &quot; + scc + &quot; form a Strongly Connected Component.&quot;);</span>
+<span class="nc" id="L159">    }</span>
+<span class="nc" id="L160">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

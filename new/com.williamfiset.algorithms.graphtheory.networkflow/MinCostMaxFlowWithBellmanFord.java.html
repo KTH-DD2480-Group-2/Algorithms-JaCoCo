@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MinCostMaxFlowWithBellmanFord.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow</a> &gt; <span class="el_source">MinCostMaxFlowWithBellmanFord.java</span></div><h1>MinCostMaxFlowWithBellmanFord.java</h1><pre class="source lang-java linenums">/**
+ * Min Cost Max Flow algorithm implemented with Bellman-Ford as a means of finding augmenting paths
+ * to support negative edge weights.
+ *
+ * &lt;p&gt;Time Complexity: O(EÂ²VÂ²)
+ *
+ * @author William Fiset, william.alexandre.fiset@gmail.com
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow;
+
+import static java.lang.Math.min;
+
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+
+public class MinCostMaxFlowWithBellmanFord extends NetworkFlowSolverBase {
+
+  /**
+   * Creates a min-cost maximum flow network solver. To construct the flow network use the {@link
+   * NetworkFlowSolverBase#addEdge} method to add edges to the graph.
+   *
+   * @param n - The number of nodes in the graph including source and sink nodes.
+   * @param s - The index of the source node, 0 &lt;= s &lt; n
+   * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+   */
+  public MinCostMaxFlowWithBellmanFord(int n, int s, int t) {
+<span class="fc" id="L28">    super(n, s, t);</span>
+<span class="fc" id="L29">  }</span>
+
+  @Override
+  public void solve() {
+
+    // Sum up the bottlenecks on each augmenting path to find the max flow and min cost.
+    List&lt;Edge&gt; path;
+<span class="fc bfc" id="L36" title="All 2 branches covered.">    while ((path = getAugmentingPath()).size() != 0) {</span>
+
+      // Find bottle neck edge value along path.
+<span class="fc" id="L39">      long bottleNeck = Long.MAX_VALUE;</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">      for (Edge edge : path) bottleNeck = min(bottleNeck, edge.remainingCapacity());</span>
+
+      // Retrace path while augmenting the flow
+<span class="fc bfc" id="L43" title="All 2 branches covered.">      for (Edge edge : path) {</span>
+<span class="fc" id="L44">        edge.augment(bottleNeck);</span>
+<span class="fc" id="L45">        minCost += bottleNeck * edge.originalCost;</span>
+<span class="fc" id="L46">      }</span>
+<span class="fc" id="L47">      maxFlow += bottleNeck;</span>
+<span class="fc" id="L48">    }</span>
+
+    // TODO(williamfiset): Compute mincut.
+<span class="fc" id="L51">  }</span>
+
+  /**
+   * Use the Bellman-Ford algorithm (which work with negative edge weights) to find an augmenting
+   * path through the flow network.
+   */
+  private List&lt;Edge&gt; getAugmentingPath() {
+<span class="fc" id="L58">    long[] dist = new long[n];</span>
+<span class="fc" id="L59">    Arrays.fill(dist, INF);</span>
+<span class="fc" id="L60">    dist[s] = 0;</span>
+
+<span class="fc" id="L62">    Edge[] prev = new Edge[n];</span>
+
+    // For each vertex, relax all the edges in the graph, O(VE)
+<span class="fc bfc" id="L65" title="All 2 branches covered.">    for (int i = 0; i &lt; n - 1; i++) {</span>
+<span class="fc bfc" id="L66" title="All 2 branches covered.">      for (int from = 0; from &lt; n; from++) {</span>
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        for (Edge edge : graph[from]) {</span>
+<span class="fc bfc" id="L68" title="All 4 branches covered.">          if (edge.remainingCapacity() &gt; 0 &amp;&amp; dist[from] + edge.cost &lt; dist[edge.to]) {</span>
+<span class="fc" id="L69">            dist[edge.to] = dist[from] + edge.cost;</span>
+<span class="fc" id="L70">            prev[edge.to] = edge;</span>
+          }
+<span class="fc" id="L72">        }</span>
+      }
+    }
+
+    // Retrace augmenting path from sink back to the source.
+<span class="fc" id="L77">    LinkedList&lt;Edge&gt; path = new LinkedList&lt;&gt;();</span>
+<span class="fc bfc" id="L78" title="All 2 branches covered.">    for (Edge edge = prev[t]; edge != null; edge = prev[edge.from]) path.addFirst(edge);</span>
+<span class="fc" id="L79">    return path;</span>
+  }
+
+  /* Example usage. */
+
+  public static void main(String[] args) {
+<span class="nc" id="L85">    testSmallNetwork();</span>
+<span class="nc" id="L86">  }</span>
+
+  private static void testSmallNetwork() {
+<span class="nc" id="L89">    int n = 6;</span>
+<span class="nc" id="L90">    int s = n - 1;</span>
+<span class="nc" id="L91">    int t = n - 2;</span>
+    MinCostMaxFlowWithBellmanFord solver;
+<span class="nc" id="L93">    solver = new MinCostMaxFlowWithBellmanFord(n, s, t);</span>
+
+<span class="nc" id="L95">    solver.addEdge(s, 1, 4, 10);</span>
+<span class="nc" id="L96">    solver.addEdge(s, 2, 2, 30);</span>
+<span class="nc" id="L97">    solver.addEdge(1, 2, 2, 10);</span>
+<span class="nc" id="L98">    solver.addEdge(1, t, 0, 9999);</span>
+<span class="nc" id="L99">    solver.addEdge(2, t, 4, 10);</span>
+
+    // Prints: Max flow: 4, Min cost: 140
+<span class="nc" id="L102">    System.out.printf(&quot;Max flow: %d, Min cost: %d\n&quot;, solver.getMaxFlow(), solver.getMinCost());</span>
+<span class="nc" id="L103">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

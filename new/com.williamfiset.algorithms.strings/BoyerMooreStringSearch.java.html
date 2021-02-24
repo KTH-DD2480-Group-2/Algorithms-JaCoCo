@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BoyerMooreStringSearch.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.strings</a> &gt; <span class="el_source">BoyerMooreStringSearch.java</span></div><h1>BoyerMooreStringSearch.java</h1><pre class="source lang-java linenums">/**
+ * Performs Boyer-Moore search on a given string with a given pattern
+ *
+ * &lt;p&gt;./gradlew run -Palgorithm=strings.BoyerMooreStringSearch
+ */
+package com.williamfiset.algorithms.strings;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.util.Objects.isNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="fc" id="L15">public class BoyerMooreStringSearch {</span>
+
+  private static final int MAX_ALPHABET_SIZE = 256;
+
+  /**
+   * Performs Boyer-Moore search on a given string with a given pattern
+   *
+   * @param text the string being searched in
+   * @param pattern the string being searched for
+   * @return List of indexes where the pattern occurs
+   */
+  public List&lt;Integer&gt; findOccurrences(String text, String pattern) {
+<span class="fc bfc" id="L27" title="All 2 branches covered.">    if (isNull(text)</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        || isNull(pattern)</span>
+<span class="fc bfc" id="L29" title="All 2 branches covered.">        || pattern.length() &gt; text.length()</span>
+<span class="pc bpc" id="L30" title="1 of 2 branches missed.">        || pattern.length() == 0) {</span>
+<span class="fc" id="L31">      return new ArrayList&lt;&gt;();</span>
+    }
+<span class="fc" id="L33">    List&lt;Integer&gt; occurrences = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L34">    int[] skipTable = generateSkipTable(pattern);</span>
+
+<span class="fc" id="L36">    int n = pattern.length();</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">    for (int textIndex = n - 1, patternIndex = n - 1; textIndex &lt; text.length(); ) {</span>
+      // Found a match!
+<span class="fc bfc" id="L39" title="All 4 branches covered.">      if (patternIndex &gt;= 0 &amp;&amp; pattern.charAt(patternIndex) == text.charAt(textIndex)) {</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (patternIndex == 0) {</span>
+<span class="fc" id="L41">          occurrences.add(textIndex);</span>
+        } else {
+<span class="fc" id="L43">          textIndex--;</span>
+        }
+<span class="fc" id="L45">        patternIndex--;</span>
+      } else {
+<span class="fc" id="L47">        textIndex += n - min(max(patternIndex, 0), skipTable[text.charAt(textIndex)] + 1);</span>
+<span class="fc" id="L48">        patternIndex = n - 1;</span>
+      }
+    }
+<span class="fc" id="L51">    return occurrences;</span>
+  }
+
+  private int[] generateSkipTable(String pattern) {
+<span class="fc" id="L55">    int[] skipTable = new int[MAX_ALPHABET_SIZE];</span>
+<span class="fc bfc" id="L56" title="All 2 branches covered.">    for (int i = 0; i &lt; pattern.length(); i++) {</span>
+<span class="fc" id="L57">      skipTable[(int) pattern.charAt(i)] = i;</span>
+    }
+<span class="fc" id="L59">    return skipTable;</span>
+  }
+
+  public static void main(String[] args) {
+<span class="nc" id="L63">    BoyerMooreStringSearch searcher = new BoyerMooreStringSearch();</span>
+<span class="nc" id="L64">    String t = &quot;ABABAAABAABAB&quot;;</span>
+<span class="nc" id="L65">    String p = &quot;AA&quot;;</span>
+
+    // Prints: [4, 5, 8]
+<span class="nc" id="L68">    System.out.println(searcher.findOccurrences(t, p));</span>
+<span class="nc" id="L69">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

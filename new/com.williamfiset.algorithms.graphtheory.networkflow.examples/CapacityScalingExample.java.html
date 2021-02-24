@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CapacityScalingExample.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory.networkflow.examples</a> &gt; <span class="el_source">CapacityScalingExample.java</span></div><h1>CapacityScalingExample.java</h1><pre class="source lang-java linenums">/**
+ * An implementation the Ford-Fulkerson method with a DFS using capacity scaling to find the maximum
+ * flow of a flow graph.
+ *
+ * &lt;p&gt;Time Complexity: O(E^2log(U)), where E is the number of edges and U is the maximum capacity
+ * value in the initial flow graph.
+ *
+ * &lt;p&gt;Download the code: $ git clone https://github.com/williamfiset/Algorithms
+ *
+ * &lt;p&gt;Change directory to the root of the Algorithms directory: $ cd Algorithms
+ *
+ * &lt;p&gt;Build: $ javac
+ * src/main/java/com/williamfiset/algorithms/graphtheory/networkflow/examples/CapacityScalingExample.java
+ *
+ * &lt;p&gt;Run: $ java -cp src/main/java/
+ * com/williamfiset/algorithms/graphtheory/networkflow/examples/CapacityScalingExample
+ */
+package com.williamfiset.algorithms.graphtheory.networkflow.examples;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="nc" id="L26">public class CapacityScalingExample {</span>
+
+  private static class Edge {
+    public int from, to;
+    public Edge residual;
+    public long flow;
+    public final long capacity;
+
+<span class="nc" id="L34">    public Edge(int from, int to, long capacity) {</span>
+<span class="nc" id="L35">      this.from = from;</span>
+<span class="nc" id="L36">      this.to = to;</span>
+<span class="nc" id="L37">      this.capacity = capacity;</span>
+<span class="nc" id="L38">    }</span>
+
+    public boolean isResidual() {
+<span class="nc bnc" id="L41" title="All 2 branches missed.">      return capacity == 0;</span>
+    }
+
+    public long remainingCapacity() {
+<span class="nc" id="L45">      return capacity - flow;</span>
+    }
+
+    public void augment(long bottleNeck) {
+<span class="nc" id="L49">      flow += bottleNeck;</span>
+<span class="nc" id="L50">      residual.flow -= bottleNeck;</span>
+<span class="nc" id="L51">    }</span>
+
+    public String toString(int s, int t) {
+<span class="nc bnc" id="L54" title="All 4 branches missed.">      String u = (from == s) ? &quot;s&quot; : ((from == t) ? &quot;t&quot; : String.valueOf(from));</span>
+<span class="nc bnc" id="L55" title="All 4 branches missed.">      String v = (to == s) ? &quot;s&quot; : ((to == t) ? &quot;t&quot; : String.valueOf(to));</span>
+<span class="nc" id="L56">      return String.format(</span>
+          &quot;Edge %s -&gt; %s | flow = %3d | capacity = %3d | is residual: %s&quot;,
+<span class="nc" id="L58">          u, v, flow, capacity, isResidual());</span>
+    }
+  }
+
+  private abstract static class NetworkFlowSolverBase {
+
+    // To avoid overflow, set infinity to a value less than Long.MAX_VALUE;
+    static final long INF = Long.MAX_VALUE / 2;
+
+    // Inputs: n = number of nodes, s = source, t = sink
+    final int n, s, t;
+
+    // 'visited' and 'visitedToken' are variables used in graph sub-routines to
+    // track whether a node has been visited or not. In particular, node 'i' was
+    // recently visited if visited[i] == visitedToken is true. This is handy
+    // because to mark all nodes as unvisited simply increment the visitedToken.
+<span class="nc" id="L74">    private int visitedToken = 1;</span>
+    private int[] visited;
+
+    // Indicates whether the network flow algorithm has ran. The solver only
+    // needs to run once because it always yields the same result.
+    protected boolean solved;
+
+    // The maximum flow. Calculated by calling the {@link #solve} method.
+    protected long maxFlow;
+
+    // The adjacency list representing the flow graph.
+    protected List&lt;Edge&gt;[] graph;
+
+    /**
+     * Creates an instance of a flow network solver. Use the {@link #addEdge} method to add edges to
+     * the graph.
+     *
+     * @param n - The number of nodes in the graph including s and t.
+     * @param s - The index of the source node, 0 &lt;= s &lt; n
+     * @param t - The index of the sink node, 0 &lt;= t &lt; n and t != s
+     */
+<span class="nc" id="L95">    public NetworkFlowSolverBase(int n, int s, int t) {</span>
+<span class="nc" id="L96">      this.n = n;</span>
+<span class="nc" id="L97">      this.s = s;</span>
+<span class="nc" id="L98">      this.t = t;</span>
+<span class="nc" id="L99">      initializeEmptyFlowGraph();</span>
+<span class="nc" id="L100">      visited = new int[n];</span>
+<span class="nc" id="L101">    }</span>
+
+    // Constructs an empty graph with n nodes including s and t.
+    @SuppressWarnings(&quot;unchecked&quot;)
+    private void initializeEmptyFlowGraph() {
+<span class="nc" id="L106">      graph = new List[n];</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">      for (int i = 0; i &lt; n; i++) graph[i] = new ArrayList&lt;Edge&gt;();</span>
+<span class="nc" id="L108">    }</span>
+
+    /**
+     * Adds a directed edge (and its residual edge) to the flow graph.
+     *
+     * @param from - The index of the node the directed edge starts at.
+     * @param to - The index of the node the directed edge ends at.
+     * @param capacity - The capacity of the edge
+     */
+    public void addEdge(int from, int to, long capacity) {
+<span class="nc bnc" id="L118" title="All 2 branches missed.">      if (capacity &lt;= 0) throw new IllegalArgumentException(&quot;Forward edge capacity &lt;= 0&quot;);</span>
+<span class="nc" id="L119">      Edge e1 = new Edge(from, to, capacity);</span>
+<span class="nc" id="L120">      Edge e2 = new Edge(to, from, 0);</span>
+<span class="nc" id="L121">      e1.residual = e2;</span>
+<span class="nc" id="L122">      e2.residual = e1;</span>
+<span class="nc" id="L123">      graph[from].add(e1);</span>
+<span class="nc" id="L124">      graph[to].add(e2);</span>
+<span class="nc" id="L125">    }</span>
+
+    /**
+     * Returns the residual graph after the solver has been executed. This allows you to inspect the
+     * {@link Edge#flow} and {@link Edge#capacity} values of each edge. This is useful if you are
+     * debugging or want to figure out which edges were used during the max flow.
+     */
+    public List&lt;Edge&gt;[] getGraph() {
+<span class="nc" id="L133">      execute();</span>
+<span class="nc" id="L134">      return graph;</span>
+    }
+
+    // Returns the maximum flow from the source to the sink.
+    public long getMaxFlow() {
+<span class="nc" id="L139">      execute();</span>
+<span class="nc" id="L140">      return maxFlow;</span>
+    }
+
+    // Marks node 'i' as visited.
+    public void visit(int i) {
+<span class="nc" id="L145">      visited[i] = visitedToken;</span>
+<span class="nc" id="L146">    }</span>
+
+    // Returns true/false depending on whether node 'i' has been visited or not.
+    public boolean visited(int i) {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">      return visited[i] == visitedToken;</span>
+    }
+
+    // Resets all nodes as unvisited. This is especially useful to do
+    // between iterations finding augmenting paths, O(1)
+    public void markAllNodesAsUnvisited() {
+<span class="nc" id="L156">      visitedToken++;</span>
+<span class="nc" id="L157">    }</span>
+
+    // Wrapper method that ensures we only call solve() once
+    private void execute() {
+<span class="nc bnc" id="L161" title="All 2 branches missed.">      if (solved) return;</span>
+<span class="nc" id="L162">      solved = true;</span>
+<span class="nc" id="L163">      solve();</span>
+<span class="nc" id="L164">    }</span>
+
+    // Method to implement which solves the network flow problem.
+    public abstract void solve();
+  }
+
+  private static class CapacityScalingSolver extends NetworkFlowSolverBase {
+
+    private long delta;
+
+    /**
+     * Creates an instance of a flow network solver. Use the {@link #addEdge(int, int, int)} method
+     * to add edges to the graph.
+     *
+     * @param n - The number of nodes in the graph including source and sink nodes.
+     * @param s - The index of the source node, 0 &lt;= s &lt; n
+     * @param t - The index of the sink node, 0 &lt;= t &lt; n, t != s
+     */
+    public CapacityScalingSolver(int n, int s, int t) {
+<span class="nc" id="L183">      super(n, s, t);</span>
+<span class="nc" id="L184">    }</span>
+
+    /**
+     * Adds a directed edge (and residual edge) to the flow graph.
+     *
+     * @param from - The index of the node the directed edge starts at.
+     * @param to - The index of the node the directed edge end at.
+     * @param capacity - The capacity of the edge.
+     */
+    @Override
+    public void addEdge(int from, int to, long capacity) {
+<span class="nc" id="L195">      super.addEdge(from, to, capacity);</span>
+<span class="nc" id="L196">      delta = max(delta, capacity);</span>
+<span class="nc" id="L197">    }</span>
+
+    // Performs the Ford-Fulkerson method applying a depth first search as
+    // a means of finding an augmenting path.
+    @Override
+    public void solve() {
+      // Start delta at the largest power of 2 &lt;= the largest capacity.
+      // Equivalent of: delta = (long) pow(2, (int)floor(log(delta)/log(2)))
+<span class="nc" id="L205">      delta = Long.highestOneBit(delta);</span>
+
+      // Repeatedly find augmenting paths from source to sink using only edges
+      // with a remaining capacity &gt;= delta. Half delta every time we become unable
+      // to find an augmenting path from source to sink until the graph is saturated.
+<span class="nc bnc" id="L210" title="All 2 branches missed.">      for (long f = 0; delta &gt; 0; delta /= 2) {</span>
+        do {
+<span class="nc" id="L212">          markAllNodesAsUnvisited();</span>
+<span class="nc" id="L213">          f = dfs(s, INF);</span>
+<span class="nc" id="L214">          maxFlow += f;</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">        } while (f != 0);</span>
+      }
+<span class="nc" id="L217">    }</span>
+
+    private long dfs(int node, long flow) {
+      // At sink node, return augmented path flow.
+<span class="nc bnc" id="L221" title="All 2 branches missed.">      if (node == t) return flow;</span>
+<span class="nc" id="L222">      visit(node);</span>
+
+<span class="nc bnc" id="L224" title="All 2 branches missed.">      for (Edge edge : graph[node]) {</span>
+<span class="nc" id="L225">        long cap = edge.remainingCapacity();</span>
+<span class="nc bnc" id="L226" title="All 4 branches missed.">        if (cap &gt;= delta &amp;&amp; !visited(edge.to)) {</span>
+
+<span class="nc" id="L228">          long bottleNeck = dfs(edge.to, min(flow, cap));</span>
+
+          // Augment flow with bottle neck value
+<span class="nc bnc" id="L231" title="All 2 branches missed.">          if (bottleNeck &gt; 0) {</span>
+<span class="nc" id="L232">            edge.augment(bottleNeck);</span>
+<span class="nc" id="L233">            return bottleNeck;</span>
+          }
+        }
+<span class="nc" id="L236">      }</span>
+<span class="nc" id="L237">      return 0;</span>
+    }
+  }
+
+  /* EXAMPLE */
+
+  public static void main(String[] args) {
+    // n is the number of nodes including the source and the sink.
+<span class="nc" id="L245">    int n = 6;</span>
+
+<span class="nc" id="L247">    int s = n - 2;</span>
+<span class="nc" id="L248">    int t = n - 1;</span>
+
+<span class="nc" id="L250">    NetworkFlowSolverBase solver = new CapacityScalingSolver(n, s, t);</span>
+
+    // Edges from source
+<span class="nc" id="L253">    solver.addEdge(s, 0, 6);</span>
+<span class="nc" id="L254">    solver.addEdge(s, 1, 14);</span>
+
+    // Middle edges
+<span class="nc" id="L257">    solver.addEdge(0, 1, 1);</span>
+<span class="nc" id="L258">    solver.addEdge(0, 2, 5);</span>
+<span class="nc" id="L259">    solver.addEdge(1, 2, 7);</span>
+<span class="nc" id="L260">    solver.addEdge(1, 3, 10);</span>
+<span class="nc" id="L261">    solver.addEdge(2, 3, 1);</span>
+
+    // Edges to sink
+<span class="nc" id="L264">    solver.addEdge(2, t, 11);</span>
+<span class="nc" id="L265">    solver.addEdge(3, t, 12);</span>
+
+    // Prints:
+    // Maximum Flow is: 20
+<span class="nc" id="L269">    System.out.printf(&quot;Maximum Flow is: %d\n&quot;, solver.getMaxFlow());</span>
+
+<span class="nc" id="L271">    List&lt;Edge&gt;[] resultGraph = solver.getGraph();</span>
+
+    // Displays all edges part of the resulting residual graph.
+<span class="nc bnc" id="L274" title="All 4 branches missed.">    for (List&lt;Edge&gt; edges : resultGraph) for (Edge e : edges) System.out.println(e.toString(s, t));</span>
+<span class="nc" id="L275">  }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>

@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AStar_GridHeuristic.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Algorithms</a> &gt; <a href="index.source.html" class="el_package">com.williamfiset.algorithms.graphtheory</a> &gt; <span class="el_source">AStar_GridHeuristic.java</span></div><h1>AStar_GridHeuristic.java</h1><pre class="source lang-java linenums">/** NOTE: This algorithm is still a work in progress! See issue #18 to track progress. */
+package com.williamfiset.algorithms.graphtheory;
+
+import java.util.*;
+
+<span class="nc" id="L6">public class AStar_GridHeuristic {</span>
+
+  // An edge class to represent a directed edge
+  // between two nodes with a certain non-negative cost.
+  static class Edge {
+    double cost;
+    int from, to;
+
+<span class="nc" id="L14">    public Edge(int from, int to, double cost) {</span>
+<span class="nc bnc" id="L15" title="All 2 branches missed.">      if (cost &lt; 0) throw new IllegalArgumentException(&quot;No negative edge weights&quot;);</span>
+<span class="nc" id="L16">      this.from = from;</span>
+<span class="nc" id="L17">      this.to = to;</span>
+<span class="nc" id="L18">      this.cost = cost;</span>
+<span class="nc" id="L19">    }</span>
+
+    @Override
+    public String toString() {
+<span class="nc" id="L23">      return from + &quot;:&quot; + to;</span>
+    }
+  }
+
+  // Node class to track the nodes to visit while running A*
+  private static class Node implements Comparable&lt;Node&gt; {
+
+    int id;
+    double f, g, h;
+
+    private static final double EPS = 1e-7;
+
+<span class="nc" id="L35">    public Node(int nodeID, double gg, double hh) {</span>
+<span class="nc" id="L36">      id = nodeID;</span>
+<span class="nc" id="L37">      g = gg;</span>
+<span class="nc" id="L38">      h = hh;</span>
+<span class="nc" id="L39">      f = g + h;</span>
+<span class="nc" id="L40">    }</span>
+
+    // Sort by f cost and break ties with h
+    @Override
+    public int compareTo(Node other) {
+<span class="nc bnc" id="L45" title="All 2 branches missed.">      if (Math.abs(f - other.f) &lt; EPS) {</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">        if (Math.abs(h - other.h) &lt; EPS) return 0;</span>
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        return (h - other.h) &gt; 0 ? +1 : -1;</span>
+      }
+<span class="nc bnc" id="L49" title="All 2 branches missed.">      return (f - other.f) &gt; 0 ? +1 : -1;</span>
+    }
+  }
+
+  // Run A* algorithm on a directed graph to find the shortest path
+  // from a starting node to an ending node. If there is no path between the
+  // starting node and the destination node the returned value is set to be
+  // Double.POSITIVE_INFINITY.
+  public static double astar(
+      double[] X, double[] Y, Map&lt;Integer, List&lt;Edge&gt;&gt; graph, int start, int end, int n) {
+
+    // In the event that you wish to rebuild the shortest path
+    // you can do so using the prev array and starting at some node 'end'
+    // and finding the previous node using prev[end] and the previous node
+    // after that prev[prev[end]] etc... working all the way back until
+    // the index of start is found. Simply uncomment where the prev array is used.
+    // int[] prev = new int[n];
+
+<span class="nc" id="L67">    double[] G = new double[n];</span>
+<span class="nc" id="L68">    double[] F = new double[n];</span>
+<span class="nc" id="L69">    Arrays.fill(G, Double.POSITIVE_INFINITY);</span>
+<span class="nc" id="L70">    Arrays.fill(F, Double.POSITIVE_INFINITY);</span>
+<span class="nc" id="L71">    G[start] = 0;</span>
+<span class="nc" id="L72">    F[start] = heuristic(X, Y, start, end);</span>
+
+<span class="nc" id="L74">    Set&lt;Integer&gt; openSet = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L75">    Set&lt;Integer&gt; closedSet = new HashSet&lt;&gt;();</span>
+
+    // Keep a priority queue of the next most promising node to visit
+<span class="nc" id="L78">    PriorityQueue&lt;Node&gt; pq = new PriorityQueue&lt;&gt;();</span>
+<span class="nc" id="L79">    pq.offer(new Node(start, G[start], F[start]));</span>
+<span class="nc" id="L80">    openSet.add(start);</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">    while (!pq.isEmpty()) {</span>
+
+<span class="nc" id="L84">      Node node = pq.poll();</span>
+<span class="nc" id="L85">      openSet.remove(node.id);</span>
+<span class="nc" id="L86">      closedSet.add(node.id);</span>
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">      if (node.id == end) return G[end];</span>
+
+<span class="nc" id="L90">      List&lt;Edge&gt; edges = graph.get(node.id);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">      if (edges != null) {</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        for (int i = 0; i &lt; edges.size(); i++) {</span>
+
+<span class="nc" id="L94">          Edge edge = edges.get(i);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">          if (closedSet.contains(edge.to)) continue;</span>
+
+<span class="nc" id="L97">          double g = node.g + edge.cost;</span>
+<span class="nc" id="L98">          double h = heuristic(X, Y, edge.to, end);</span>
+
+<span class="nc bnc" id="L100" title="All 4 branches missed.">          if (g &lt; G[edge.to] || !openSet.contains(edge.to)) {</span>
+
+<span class="nc" id="L102">            G[edge.to] = g;</span>
+            // prev[edge.to] = edge.from;
+
+<span class="nc bnc" id="L105" title="All 2 branches missed.">            if (!openSet.contains(edge.to)) {</span>
+<span class="nc" id="L106">              pq.offer(new Node(edge.to, g, h));</span>
+<span class="nc" id="L107">              openSet.add(edge.to);</span>
+            }
+          }
+        }
+      }
+<span class="nc" id="L112">    }</span>
+
+    // End node is unreachable
+<span class="nc" id="L115">    return Double.POSITIVE_INFINITY;</span>
+  }
+
+  // Euclidean distance is used as a heuristic
+  static double heuristic(double[] X, double[] Y, int at, int end) {
+    // double dx = Math.abs(X[at] - X[end]);
+    // double dy = Math.abs(Y[at] - Y[end]);
+    // return dx*dx + dy*dy; // Avoid square root
+    // return Math.sqrt(dx*dx + dy*dy);
+<span class="nc" id="L124">    return 0;</span>
+  }
+
+  // Run a random test between A* and Dijkstra
+  public static void main(String[] args) {
+
+<span class="nc" id="L130">    Random RANDOM = new Random();</span>
+
+<span class="nc" id="L132">    int n = 20 * 20;</span>
+<span class="nc" id="L133">    Map&lt;Integer, List&lt;Edge&gt;&gt; graph = new HashMap&lt;&gt;();</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">    for (int i = 0; i &lt; n; i++) graph.put(i, new ArrayList&lt;&gt;());</span>
+
+<span class="nc" id="L136">    double[] X = new double[n];</span>
+<span class="nc" id="L137">    double[] Y = new double[n];</span>
+<span class="nc" id="L138">    int N = (int) Math.sqrt(n);</span>
+
+<span class="nc" id="L140">    int connections = (n * (n - 1));</span>
+<span class="nc" id="L141">    int[] locations = new int[connections * 2];</span>
+
+<span class="nc" id="L143">    boolean[][] m = new boolean[n][n];</span>
+
+<span class="nc bnc" id="L145" title="All 2 branches missed.">    for (int k = 0; k &lt; connections; k++) {</span>
+
+<span class="nc" id="L147">      int i = RANDOM.nextInt(N);</span>
+<span class="nc" id="L148">      int j = RANDOM.nextInt(N);</span>
+<span class="nc" id="L149">      int ii = RANDOM.nextInt(N);</span>
+<span class="nc" id="L150">      int jj = RANDOM.nextInt(N);</span>
+
+<span class="nc" id="L152">      int node1 = i * N + j;</span>
+<span class="nc" id="L153">      int node2 = ii * N + jj;</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">      if (m[node1][node2]) continue;</span>
+
+<span class="nc" id="L156">      locations[2 * k] = node1;</span>
+<span class="nc" id="L157">      locations[2 * k + 1] = node2;</span>
+
+<span class="nc" id="L159">      X[node1] = i;</span>
+<span class="nc" id="L160">      Y[node1] = j;</span>
+<span class="nc" id="L161">      X[node2] = ii;</span>
+<span class="nc" id="L162">      Y[node2] = jj;</span>
+
+<span class="nc" id="L164">      addEdge(graph, node1, node2, i, j, ii, jj);</span>
+<span class="nc" id="L165">      m[node1][node2] = true;</span>
+    }
+
+<span class="nc" id="L168">    System.out.println(graph);</span>
+
+<span class="nc bnc" id="L170" title="All 2 branches missed.">    for (int i = 0; i &lt; 10 * n; i++) {</span>
+
+<span class="nc" id="L172">      int s = locations[RANDOM.nextInt(2 * connections)];</span>
+<span class="nc" id="L173">      int e = locations[RANDOM.nextInt(2 * connections)];</span>
+
+<span class="nc" id="L175">      double d = dijkstra(graph, s, e, n);</span>
+<span class="nc" id="L176">      double a = astar(X, Y, graph, s, e, n);</span>
+      // System.out.println(a + &quot; &quot; + d);
+<span class="nc bnc" id="L178" title="All 2 branches missed.">      if (a != d) {</span>
+<span class="nc" id="L179">        System.out.println(&quot;ERROR: &quot; + a + &quot; &quot; + d + &quot; &quot; + s + &quot; &quot; + e);</span>
+        // System.out.println(graph);
+<span class="nc" id="L181">        break;</span>
+      }
+<span class="nc" id="L183">      System.out.println();</span>
+    }
+<span class="nc" id="L185">  }</span>
+
+  static void addEdge(
+      Map&lt;Integer, List&lt;Edge&gt;&gt; graph, int f, int t, int fx, int fy, int tx, int ty) {
+<span class="nc" id="L189">    double dx = Math.abs(fx - tx);</span>
+<span class="nc" id="L190">    double dy = Math.abs(fy - ty);</span>
+<span class="nc" id="L191">    graph.get(f).add(new Edge(f, t, dx + dy));</span>
+<span class="nc" id="L192">  }</span>
+
+  // Node class to track the nodes to visit while running Dijkstra's
+  private static class DNode implements Comparable&lt;DNode&gt; {
+    int id;
+    double value;
+    private static final double EPS = 1e-7;
+
+<span class="nc" id="L200">    public DNode(int nodeID, double nodeValue) {</span>
+<span class="nc" id="L201">      id = nodeID;</span>
+<span class="nc" id="L202">      value = nodeValue;</span>
+<span class="nc" id="L203">    }</span>
+
+    @Override
+    public int compareTo(DNode other) {
+<span class="nc bnc" id="L207" title="All 2 branches missed.">      if (Math.abs(value - other.value) &lt; EPS) return 0;</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">      return (value - other.value) &gt; 0 ? +1 : -1;</span>
+    }
+  }
+
+  // Run Dijkstra's algorithm on a directed graph to find the shortest path
+  // from a starting node to an ending node. If there is no path between the
+  // starting node and the destination node the returned value is set to be
+  // Double.POSITIVE_INFINITY.
+  public static double dijkstra(Map&lt;Integer, List&lt;Edge&gt;&gt; graph, int start, int end, int n) {
+
+    // Maintain an array of the minimum distance to each node
+<span class="nc" id="L219">    double[] dists = new double[n];</span>
+<span class="nc" id="L220">    Arrays.fill(dists, Double.POSITIVE_INFINITY);</span>
+<span class="nc" id="L221">    dists[start] = 0;</span>
+
+    // Keep a priority queue of the next most promising node to visit
+<span class="nc" id="L224">    PriorityQueue&lt;DNode&gt; pq = new PriorityQueue&lt;&gt;();</span>
+<span class="nc" id="L225">    pq.offer(new DNode(start, 0.0));</span>
+
+    // Track which nodes have already been visited
+<span class="nc" id="L228">    boolean[] visited = new boolean[n];</span>
+
+    // In the event that you wish to rebuild the shortest path
+    // you can do so using the prev array and starting at some node 'end'
+    // and finding the previous node using prev[end] and the previous node
+    // after that prev[prev[end]] etc... working all the way back until
+    // the index of start is found. Simply uncomment where the prev array is used.
+    // int[] prev = new int[n];
+
+<span class="nc bnc" id="L237" title="All 2 branches missed.">    while (!pq.isEmpty()) {</span>
+
+<span class="nc" id="L239">      DNode node = pq.poll();</span>
+<span class="nc" id="L240">      visited[node.id] = true;</span>
+
+      // We already found a better path before we got to
+      // processing this node so we can ignore it.
+<span class="nc bnc" id="L244" title="All 2 branches missed.">      if (node.value &gt; dists[node.id]) continue;</span>
+
+<span class="nc" id="L246">      List&lt;Edge&gt; edges = graph.get(node.id);</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">      if (edges != null) {</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">        for (int i = 0; i &lt; edges.size(); i++) {</span>
+<span class="nc" id="L249">          Edge edge = edges.get(i);</span>
+
+          // You cannot get a shorter path by revisiting
+          // a node you have already visited before
+<span class="nc bnc" id="L253" title="All 2 branches missed.">          if (visited[edge.to]) continue;</span>
+
+          // Update minimum cost if applicable
+<span class="nc" id="L256">          double newDist = dists[edge.from] + edge.cost;</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">          if (newDist &lt; dists[edge.to]) {</span>
+            // prev[edge.to] = edge.from;
+<span class="nc" id="L259">            dists[edge.to] = newDist;</span>
+<span class="nc" id="L260">            pq.offer(new DNode(edge.to, dists[edge.to]));</span>
+          }
+        }
+      }
+
+      // Once we've visited all the nodes spanning from the end
+      // node we know we can return the minimum distance value to
+      // the end node because it cannot get any better after this point.
+<span class="nc bnc" id="L268" title="All 2 branches missed.">      if (node.id == end) {</span>
+        //         int v = 0;
+        // for (boolean b : visited) if (b) v++;
+        // System.out.println(&quot;V: &quot; + v);
+<span class="nc" id="L272">        return dists[end];</span>
+      }
+<span class="nc" id="L274">    }</span>
+
+    // End node is unreachable
+<span class="nc" id="L277">    return Double.POSITIVE_INFINITY;</span>
+  }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
